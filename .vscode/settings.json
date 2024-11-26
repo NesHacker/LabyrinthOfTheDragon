@@ -2,5 +2,7 @@
   "files.associations": {
     "*.asm": "gbz80",
     "*.inc": "gbz80",
+    "cgb.h": "c",
+    "stdint.h": "c"
   }
 }

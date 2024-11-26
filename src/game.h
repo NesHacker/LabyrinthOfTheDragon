@@ -1,19 +1,15 @@
 /**
  * Main game state and related functions.
  */
-
 #ifndef _GAME_H
 #define _GAME_H
 
 /**
- * Initializes the hero character's state and sprites.
+ * Enumeration of all main states for the game.
  */
-void init_hero(void);
-
-/**
- * Updates and animates the sprites for the hero character.
- */
-void update_hero(void);
+typedef enum GameState {
+  MAIN_MENU
+} GameState;
 
 /**
  * Initializes graphics, sound, and game state.
@@ -26,13 +22,14 @@ void init_game(void);
 void game_loop(void);
 
 /**
- * Executes rendering logic that must occurr during a VBLANK.
- * Note: unsure if this is needed given the GBDK abstractions, should test if
- * updating VRAM before the vsync() call has any effect.
+ * Executes rendering logic that must occur during a VBLANK.
  */
 void render(void);
 
-void draw_text_box(void);
-void draw_text(const char *);
+/**
+ * Sets the main game state.
+ * @param s Game state to set.
+ */
+void set_game_state(GameState s);
 
 #endif

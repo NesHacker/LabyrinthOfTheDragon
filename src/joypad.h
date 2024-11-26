@@ -38,7 +38,7 @@ extern uint8_t joypad_released;
  * @param b Button bitmask.
  * @return `true` If the button was pressed this frame.
  */
-#define was_pressed(b)  (joypad_down & (b))
+#define was_pressed(b)  (joypad_pressed & (b))
 
 /**
  * @param b Button bitmask.
