@@ -5,8 +5,8 @@
 #include "data.h"
 #include "joypad.h"
 #include "textbox.h"
+#include "tilemaps.bank00.h"
 #include "util.h"
-
 
 TextboxState textbox_state = TEXTBOX_CLOSED;
 Timer textbox_timer;

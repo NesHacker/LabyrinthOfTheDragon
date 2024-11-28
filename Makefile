@@ -8,8 +8,13 @@ ifndef GBDK_HOME
 	GBDK_HOME = ~/gbdk/
 endif
 
+# These are used to control the number of banks of each type in the LCC flags
+# down below
+ROM_BANKS=16
+RAM_BANKS=4
+
 LCC = $(GBDK_HOME)bin/lcc
-LCCFLAGS = -Wm-yC
+LCCFLAGS = -Wm-yC -Wm-yt0x1B -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS)
 PNG2BIN := ./tools/png2bin
 COLOR2BIN := ./tools/color2bin
 

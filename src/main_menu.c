@@ -3,65 +3,201 @@
 #include <stdint.h>
 
 #include "data.h"
+#include "global.h"
 #include "joypad.h"
 #include "main_menu.h"
+#include "tilemaps.bank00.h"
 #include "util.h"
 
 /**
- * Palettes used by the main menu screen.
+ * Top level state for the main menu.
  */
-const uint16_t main_menu_palettes[] = {
-  // Palette 0
-  RGB_BLACK,
-  RGB8(80, 80, 80),
-  RGB8(160, 160, 160),
-  RGB_WHITE,
-  // Palette 1 ("NES")
-  RGB_BLACK,
-  RGB8(80, 80, 80),
-  RGB8(160, 160, 160),
-  RGB8(196, 19, 39),
-  // Palette 2 "HACKER"
-  RGB_BLACK,
-  RGB8(80, 80, 80),
-  RGB8(160, 160, 160),
-  RGB8(113, 113, 113),
-  // Palette 3 (Book and Monster Sprite)
-  RGB_BLACK,
-  RGB8(160, 160, 160),
-  RGB8(80, 80, 80),
-  RGB_WHITE,
-};
-
-
-#define CURSOR_NEW_GAME 0
-#define CURSOR_CONTINUE 1
+MainMenuState main_menu_state = TITLE;
 
 /**
- * Position of the cursor on the main menu.
+ * Initializes the save select screen.
  */
-uint8_t cursor = 0;
+void init_save_select(void) {
+  lcd_off();
+
+  // TODO Need to load data from Save RAM and update graphics appropriately
+  
+  // Load the save select screen tilemap
+  load_tilemap(tilemap_save_select, 20, 18);
+  
+  // Reset the cursor sprite and state
+  cursor = SAVE_SELECT_CURSOR_SAVE1;
+  set_bkg_palette(4, 3, save_1_selected_palettes);
+  set_sprite_palette(0, 1, save_1_selected_palettes);
+  set_sprite_tile(SPRITE_CURSOR, 0x9E);
+  set_sprite_prop(SPRITE_CURSOR, 0x08);
+  move_sprite(SPRITE_CURSOR, 22, 52);
+
+  // Set up the animated "hero" sprites for each save file
+  set_sprite_palette(1, 4, hero_palettes);
+
+  // Hero 1
+  set_sprite_tile(SPRITE_HERO1, 0x00);
+  set_sprite_tile(SPRITE_HERO1 + 1, 0x01);
+  set_sprite_tile(SPRITE_HERO1 + 2, 0x10);
+  set_sprite_tile(SPRITE_HERO1 + 3, 0x11);
+
+  set_sprite_prop(SPRITE_HERO1, 0x02);
+  set_sprite_prop(SPRITE_HERO1 + 1, 0x02);
+  set_sprite_prop(SPRITE_HERO1 + 2, 0x02);
+  set_sprite_prop(SPRITE_HERO1 + 3, 0x02);
+
+  move_sprite(SPRITE_HERO1, HERO1_X, HERO1_Y);
+  move_sprite(SPRITE_HERO1 + 1, HERO1_X + 8, HERO1_Y);
+  move_sprite(SPRITE_HERO1 + 2, HERO1_X, HERO1_Y + 8);
+  move_sprite(SPRITE_HERO1 + 3, HERO1_X + 8, HERO1_Y + 8);
+
+  // Hero 2
+  set_sprite_tile(SPRITE_HERO2, 0x40);
+  set_sprite_tile(SPRITE_HERO2 + 1, 0x41);
+  set_sprite_tile(SPRITE_HERO2 + 2, 0x50);
+  set_sprite_tile(SPRITE_HERO2 + 3, 0x51);
+
+  set_sprite_prop(SPRITE_HERO2, 0x01);
+  set_sprite_prop(SPRITE_HERO2 + 1, 0x01);
+  set_sprite_prop(SPRITE_HERO2 + 2, 0x01);
+  set_sprite_prop(SPRITE_HERO2 + 3, 0x01);
+
+  move_sprite(SPRITE_HERO2, HERO2_X, HERO2_Y);
+  move_sprite(SPRITE_HERO2 + 1, HERO2_X + 8, HERO2_Y);
+  move_sprite(SPRITE_HERO2 + 2, HERO2_X, HERO2_Y + 8);
+  move_sprite(SPRITE_HERO2 + 3, HERO2_X + 8, HERO2_Y + 8);
+
+  // Hero 3
+  set_sprite_tile(SPRITE_HERO3, 0x60);
+  set_sprite_tile(SPRITE_HERO3 + 1, 0x61);
+  set_sprite_tile(SPRITE_HERO3 + 2, 0x70);
+  set_sprite_tile(SPRITE_HERO3 + 3, 0x71);
+
+  set_sprite_prop(SPRITE_HERO3, 0x01);
+  set_sprite_prop(SPRITE_HERO3 + 1, 0x01);
+  set_sprite_prop(SPRITE_HERO3 + 2, 0x01);
+  set_sprite_prop(SPRITE_HERO3 + 3, 0x01);
+
+  move_sprite(SPRITE_HERO3, HERO3_X, HERO3_Y);
+  move_sprite(SPRITE_HERO3 + 1, HERO3_X + 8, HERO3_Y);
+  move_sprite(SPRITE_HERO3 + 2, HERO3_X, HERO3_Y + 8);
+  move_sprite(SPRITE_HERO3 + 3, HERO3_X + 8, HERO3_Y + 8);
+
+  init_timer(walk_timer, 12);
+
+  lcd_on();
+}
+
+void move_save_select_cursor(void) {
+  if (was_pressed(J_UP)) {
+    cursor = (cursor == SAVE_SELECT_CURSOR_SAVE1)
+      ? SAVE_SELECT_CURSOR_ERASE
+      : cursor - 1;
+  } else if (was_pressed(J_DOWN)) {
+    cursor = (cursor == SAVE_SELECT_CURSOR_ERASE)
+      ? SAVE_SELECT_CURSOR_SAVE1
+      : cursor + 1;
+  } else {
+    return;
+  }
+
+  switch (cursor) {
+  case SAVE_SELECT_CURSOR_SAVE1:
+    move_sprite(SPRITE_CURSOR, 22, 52);
+    set_bkg_palette(4, 3, save_1_selected_palettes);
+    for (uint8_t s = 0; s < 4; s++) {
+      set_sprite_prop(SPRITE_HERO1 + s, 0x02);
+      set_sprite_prop(SPRITE_HERO2 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO3 + s, 0x01);
+    }
+    break;
+  case SAVE_SELECT_CURSOR_SAVE2:
+    move_sprite(SPRITE_CURSOR, 22, 84);
+    set_bkg_palette(4, 3, save_2_selected_palettes);
+    for (uint8_t s = 0; s < 4; s++) {
+      set_sprite_prop(SPRITE_HERO1 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO2 + s, 0x03);
+      set_sprite_prop(SPRITE_HERO3 + s, 0x01);
+    }
+    break;
+  case SAVE_SELECT_CURSOR_SAVE3:
+    move_sprite(SPRITE_CURSOR, 22, 116);
+    set_bkg_palette(4, 3, save_3_selected_palettes);
+    for (uint8_t s = 0; s < 4; s++) {
+      set_sprite_prop(SPRITE_HERO1 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO2 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO3 + s, 0x04);
+    }
+    break;
+  case SAVE_SELECT_CURSOR_ERASE:
+    move_sprite(SPRITE_CURSOR, 100, 143);
+    set_bkg_palette(4, 3, save_none_selected_palettes);
+    for (uint8_t s = 0; s < 4; s++) {
+      set_sprite_prop(SPRITE_HERO1 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO2 + s, 0x01);
+      set_sprite_prop(SPRITE_HERO3 + s, 0x01);
+    }
+    break;
+  }
+}
+
+void update_save_select_sprites(void) {
+  // Update hero walking animation
+  if (update_timer(walk_timer)) {
+    reset_timer(walk_timer);
+    walk_frame ^= 1;
+  }
+
+  const uint8_t walk_tile_offset = walk_frame << 1;
+  const uint8_t hero1_offset = (cursor == SAVE_SELECT_CURSOR_SAVE1)
+    ? walk_tile_offset
+    : 0;
+  const uint8_t hero2_offset = (cursor == SAVE_SELECT_CURSOR_SAVE2)
+    ? walk_tile_offset
+    : 0;
+  const uint8_t hero3_offset = (cursor == SAVE_SELECT_CURSOR_SAVE3)
+    ? walk_tile_offset
+    : 0;
+
+  set_sprite_tile(SPRITE_HERO1 + 0, 0x00 + hero1_offset);
+  set_sprite_tile(SPRITE_HERO1 + 1, 0x01 + hero1_offset);
+  set_sprite_tile(SPRITE_HERO1 + 2, 0x10 + hero1_offset);
+  set_sprite_tile(SPRITE_HERO1 + 3, 0x11 + hero1_offset);
+
+  set_sprite_tile(SPRITE_HERO2 + 0, 0x40 + hero2_offset);
+  set_sprite_tile(SPRITE_HERO2 + 1, 0x41 + hero2_offset);
+  set_sprite_tile(SPRITE_HERO2 + 2, 0x50 + hero2_offset);
+  set_sprite_tile(SPRITE_HERO2 + 3, 0x51 + hero2_offset);
+
+  set_sprite_tile(SPRITE_HERO3 + 0, 0x60 + hero3_offset);
+  set_sprite_tile(SPRITE_HERO3 + 1, 0x61 + hero3_offset);
+  set_sprite_tile(SPRITE_HERO3 + 2, 0x70 + hero3_offset);
+  set_sprite_tile(SPRITE_HERO3 + 3, 0x71 + hero3_offset);
+}
 
 void init_main_menu(void) {
   scroll_bkg(0, 0);
   load_tilemap(tilemap_title_screen, 20, 18);
-  set_bkg_palette(0, 4, main_menu_palettes);
+  set_bkg_palette(0, 8, main_menu_palettes);
   cursor = 0;
 }
 
 void update_main_menu(void) {
-  uint8_t *top_vram = (void *)(0x9800 + 12 * 0x20 + 4);
-  uint8_t *bottom_vram = (void *)(0x9800 + 14 * 0x20 + 4);
-
-  if (was_pressed(J_UP | J_DOWN)) {
-    VBK_REG = VBK_TILES;
-    if (cursor == 0) {
-      set_vram_byte(top_vram, 0x00);
-      set_vram_byte(bottom_vram, 0xFE);
-    } else {
-      set_vram_byte(top_vram, 0xFE);
-      set_vram_byte(bottom_vram, 0x00);
+  switch (main_menu_state) {
+  case TITLE:
+    if (was_pressed(J_A | J_B | J_START)) {
+      main_menu_state = SAVE_SELECT;
+      init_save_select();
     }
-    cursor ^= 1; 
+    break;
+  case SAVE_SELECT:
+    move_save_select_cursor();
+    update_save_select_sprites();
+    
+    break;
   }
+}
+
+void draw_main_menu(void) {
 }

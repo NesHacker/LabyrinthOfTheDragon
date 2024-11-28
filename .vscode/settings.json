@@ -3,6 +3,7 @@
     "*.asm": "gbz80",
     "*.inc": "gbz80",
     "cgb.h": "c",
-    "stdint.h": "c"
+    "stdint.h": "c",
+    "main_menu.h": "c"
   }
 }

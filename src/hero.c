@@ -2,11 +2,9 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
+#include "global.h"
 #include "hero.h"
 #include "util.h"
-
-Timer walk_timer;
-uint8_t walk_frame;
 
 void init_hero(void) {
   const uint8_t x = 0x80;

@@ -1,8 +1,8 @@
 /**
- * Main game state and related functions.
+ * Main game state and functions.
  */
-#ifndef _GAME_H
-#define _GAME_H
+#ifndef _MAIN_H
+#define _MAIN_H
 
 /**
  * Enumeration of all main states for the game.

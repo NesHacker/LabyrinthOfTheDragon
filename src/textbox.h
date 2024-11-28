@@ -15,6 +15,9 @@ typedef enum TextboxState {
   TEXTBOX_FINISHED
 } TextboxState;
 
+#define TILEMAP_TEXTBOX_W 20
+#define TILEMAP_TEXTBOX_H 6
+
 #define TEXTBOX_CLEAR_DELAY     10
 #define TEXTBOX_CHAR_DELAY      4
 #define TEXTBOX_SCROLL_DELAY    6
