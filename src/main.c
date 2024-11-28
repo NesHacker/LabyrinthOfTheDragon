@@ -20,15 +20,12 @@ void set_game_state(GameState s) NONBANKED {
 
   switch (game_state) {
   case MAIN_MENU:
-    lcd_off();
     init_main_menu();
-    lcd_on();
     break;
   }
 }
 
 void init_game(void) {
-  load_tilesets();
   init_text_box();
   init_main_menu();
 }

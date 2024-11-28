@@ -6,8 +6,10 @@
 #include "global.h"
 #include "joypad.h"
 #include "main_menu.h"
-#include "tilemaps.bank00.h"
 #include "util.h"
+
+#include "tiles.bank01.h"
+#include "tilemaps.bank00.h"
 
 /**
  * Top level state for the main menu.
@@ -23,7 +25,7 @@ void init_save_select(void) {
   // TODO Need to load data from Save RAM and update graphics appropriately
   
   // Load the save select screen tilemap
-  load_tilemap(tilemap_save_select, 20, 18);
+  load_screen(0, tilemap_save_select);
   
   // Reset the cursor sprite and state
   cursor = SAVE_SELECT_CURSOR_SAVE1;
@@ -143,7 +145,6 @@ void move_save_select_cursor(void) {
 }
 
 void update_save_select_sprites(void) {
-  // Update hero walking animation
   if (update_timer(walk_timer)) {
     reset_timer(walk_timer);
     walk_frame ^= 1;
@@ -177,10 +178,23 @@ void update_save_select_sprites(void) {
 }
 
 void init_main_menu(void) {
+  lcd_off();
+  
+  // Load tiles
+  VBK_REG = VBK_BANK_0;
+  load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);
+  VBK_REG = VBK_BANK_1;
+  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
+
+  // Load tilesets and palettes
   scroll_bkg(0, 0);
-  load_tilemap(tilemap_title_screen, 20, 18);
+  load_screen(0, tilemap_title_screen);
   set_bkg_palette(0, 8, main_menu_palettes);
+  
+  // Initialize menu state
   cursor = 0;
+
+  lcd_on();
 }
 
 void update_main_menu(void) {
