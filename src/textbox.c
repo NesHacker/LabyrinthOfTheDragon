@@ -53,7 +53,7 @@ void clear_textbox(void) {
 
 void update_textbox(void) {
   uint8_t *scroll_vram = 0;
-  uint8_t *arrow_vram = (void *)(0x9C00 + 4 * 0x20 + 18);
+  uint8_t *arrow_vram = VRAM_WINDOW_XY(4, 18);
   uint8_t x = 0;
 
   switch (textbox_state) {

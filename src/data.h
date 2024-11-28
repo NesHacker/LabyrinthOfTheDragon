@@ -40,6 +40,20 @@
 #define VRAM_WINDOW (void *)0x9C00
 
 /**
+ * Computes the background tilemap VRAM address for the given column and row.
+ * @param x Column in VRAM.
+ * @param y Row in VRAM.
+ */
+#define VRAM_BACKGROUND_XY(x, y)  (void *)(0x9800 + (x) + 0x20 * (y))
+
+/**
+ * Computes the window tilemap VRAM address for the given column and row.
+ * @param x Column in VRAM.
+ * @param y Row in VRAM.
+ */
+#define VRAM_WINDOW_XY(x, y)  (void *)(0x9C00 + (x) + 0x20 * (y))
+
+/**
  * Adds a number of page (64 tiles) offsets to the given tile source pointer.
  * @param ptr Source data pointer.
  * @param n Number of pages by which offset.
@@ -47,10 +61,11 @@
 #define TILE_PAGE(ptr,n) (void *)((ptr) + 0x80 * 16 * ((n)-1))
 
 // Function prototypes
-void load_tiles(uint8_t bank, uint8_t *src, uint8_t *dst, uint8_t n);
-void load_tile_page(uint8_t bank, uint8_t *src, uint8_t *dst);
-void load_tilemap(uint8_t b, uint8_t *src, uint8_t *dst, uint8_t n);
-void load_screen(uint8_t b, uint8_t *src);
+void load_tiles(uint8_t, uint8_t *, uint8_t *, uint8_t);
+void load_tile_page(uint8_t, uint8_t *, uint8_t *);
+void load_tilemap(uint8_t, uint8_t *, uint8_t *, uint8_t);
+void load_screen(uint8_t, uint8_t *);
+void load_full_tilemap(uint8_t, uint8_t *, uint8_t *);
 
 // Banked data externs
 INCBIN_EXTERN(tile_data_dungeon)
@@ -63,6 +78,5 @@ INCBIN_EXTERN(tilemap_textbox)
 INCBIN_EXTERN(tilemap_title_screen)
 INCBIN_EXTERN(tilemap_name_entry)
 INCBIN_EXTERN(tilemap_save_select)
-
 
 #endif

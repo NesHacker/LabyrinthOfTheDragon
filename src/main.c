@@ -12,25 +12,33 @@
 uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
-
 GameState game_state = MAIN_MENU;
 
+/**
+ * Sets the main game state and executes any initialization code related to that
+ * state.
+ * @param s Game state to set.
+ */
 void set_game_state(GameState s) NONBANKED {
-  game_state = s;
-
-  switch (game_state) {
+  switch (game_state = s) {
   case MAIN_MENU:
     init_main_menu();
     break;
   }
 }
 
-void init_game(void) {
+/**
+ * Initializes the game.
+ */
+void initialize(void) {
   init_text_box();
   init_main_menu();
 }
 
-void game_loop(void) {
+/**
+ * Executes core gameloop logic.
+ */
+void game_loop(void) NONBANKED {
   switch (game_state) {
   case MAIN_MENU:
     update_main_menu();
@@ -38,7 +46,10 @@ void game_loop(void) {
   }
 }
 
-void render(void) {
+/**
+ * Executes rendering logic that must occur during a VBLANK.
+ */
+void render(void) NONBANKED {
   switch (game_state) {
   case MAIN_MENU:
     draw_main_menu();
@@ -58,7 +69,7 @@ void main(void) {
     | LCDCF_BGON
     | LCDCF_WINON
     | LCDCF_WIN9C00;
-  init_game();
+  initialize();
   lcd_on();
 
   // Start the main game loop
