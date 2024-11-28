@@ -2,7 +2,6 @@
 
 #include <gb/gb.h>
 #include <gbdk/incbin.h>
-#include "data.h"
 
 INCBIN(tilemap_textbox, "res/tilemaps/textbox.tilemap")
 INCBIN(tilemap_title_screen, "res/tilemaps/title_screen.tilemap")

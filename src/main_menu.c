@@ -8,9 +8,6 @@
 #include "main_menu.h"
 #include "util.h"
 
-#include "tiles.bank01.h"
-#include "tilemaps.bank00.h"
-
 /**
  * Top level state for the main menu.
  */

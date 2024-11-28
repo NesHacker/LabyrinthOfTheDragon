@@ -26,8 +26,9 @@ endif
 # You can set the name of the .gb ROM file here
 PROJECTNAME    = TheMonsterManual
 
-BINS	    = $(PROJECTNAME).gb
-CSOURCES   := $(wildcard src/*.c)
+BINS = $(PROJECTNAME).gb
+CSOURCES := $(wildcard src/*.c)
+DATASOURCES := $(wildcard data/*.c)
 ASMSOURCES := $(wildcard src/*.s)
 
 TILEPNG := $(wildcard assets/tiles/*.png)
@@ -53,8 +54,8 @@ compile.bat: Makefile
 	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ \-p/mkdir/ | grep -v make >> compile.bat
 
 # Compile and link all source files in a single call to LCC
-$(BINS):	$(CSOURCES) $(ASMSOURCES)
-	$(LCC) $(LCCFLAGS) -o $@ $(CSOURCES) $(ASMSOURCES)
+$(BINS):	$(CSOURCES) $(ASMSOURCES) $(DATASOURCES)
+	$(LCC) $(LCCFLAGS) -o $@ $(CSOURCES) $(ASMSOURCES) $(DATASOURCES)
 
 clean:
 	rm -f *.o *.lst *.map *.gb *.ihx *.sym *.cdb *.adb *.asm *.noi *.rst

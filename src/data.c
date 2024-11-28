@@ -1,6 +1,5 @@
 #include <gb/gb.h>
 #include "data.h"
-#include "tiles.bank01.h"
 
 /**
  * Safely copies data from the given bank and data address into the given

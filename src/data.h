@@ -5,6 +5,9 @@
 #ifndef _DATA_H
 #define _DATA_H
 
+#include <gb/gb.h>
+#include <gbdk/incbin.h>
+
 /**
  * Creates a pointer to VRAM at the given offset.
  * @param offset Offset in VRAM for the pointer.
@@ -43,17 +46,23 @@
  */
 #define TILE_PAGE(ptr,n) (void *)((ptr) + 0x80 * 16 * ((n)-1))
 
-void load_tilesets(void);
-
-void load_font_tiles(void);
-void load_character_tiles(void);
-void load_dungeon_tiles(void);
-void load_objects_tiles(void);
-void load_world_map_tiles(void);
-
+// Function prototypes
 void load_tiles(uint8_t bank, uint8_t *src, uint8_t *dst, uint8_t n);
 void load_tile_page(uint8_t bank, uint8_t *src, uint8_t *dst);
 void load_tilemap(uint8_t b, uint8_t *src, uint8_t *dst, uint8_t n);
 void load_screen(uint8_t b, uint8_t *src);
+
+// Banked data externs
+INCBIN_EXTERN(tile_data_dungeon)
+INCBIN_EXTERN(tile_data_font)
+INCBIN_EXTERN(tile_data_hero)
+INCBIN_EXTERN(tile_data_objects)
+INCBIN_EXTERN(tile_data_world_map)
+
+INCBIN_EXTERN(tilemap_textbox) 
+INCBIN_EXTERN(tilemap_title_screen)
+INCBIN_EXTERN(tilemap_name_entry)
+INCBIN_EXTERN(tilemap_save_select)
+
 
 #endif
