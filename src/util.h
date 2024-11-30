@@ -14,7 +14,6 @@ typedef struct Timer {
   uint8_t duration;
 } Timer;
 
-
 /**
  * Initializes a timer with the given duration.
  * @param t The timer to initialize.
@@ -63,5 +62,9 @@ typedef struct Timer {
 #define INCBIN_EXTERN_16(VARNAME)  extern const uint16_t VARNAME[]; \
   extern const void __size_ ## VARNAME; \
   extern const void __bank_ ## VARNAME;
+
+// Function prototypes
+void clear_background(void);
+void draw_text(uint8_t *vram, char *text, uint8_t attr);
 
 #endif
