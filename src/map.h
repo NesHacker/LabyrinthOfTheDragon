@@ -19,10 +19,19 @@
 #include <stdint.h>
 
 /**
- * A column & row position for a position in a 16 x 16 map page. The values are
- * packed as two 4-bit nibbles in a single byte: [4-bit column][4-bit row].
+ * Main state enumaration for the world map play controller.
  */
-typedef uint8_t ColRow;
+typedef enum MapState {
+  /**
+   * Denotes that the player is standing still and the world map controller is
+   * awaiting input.
+   */
+  MAP_STATE_WAITING,
+  /**
+   * Denotes that the player is moving within the map.
+   */
+  MAP_STATE_MOVING,
+} MapState;
 
 /**
  * Enumeration of all types of map exit tiles.
@@ -60,9 +69,13 @@ typedef struct MapExit {
    */
   uint8_t page_id;
   /**
-   * Column & row position for the exit on the page.
+   * Column of the exit.
    */
-  ColRow col_row;
+  uint8_t col;
+  /**
+   * Row of the exit.
+   */
+  uint8_t row;
   /**
    * The destination map id.
    */
@@ -72,9 +85,13 @@ typedef struct MapExit {
    */
   uint8_t to_page_id;
   /**
-   * The column & row where the player should appear on the destination map.
+   * Column to place the character on the destination page.
    */
-  ColRow to_col_row;
+  uint8_t to_col;
+  /**
+   * Row to place the character on the destination page.
+   */
+  uint8_t to_row;
 } MapExit;
 
 /**
