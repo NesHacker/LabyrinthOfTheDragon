@@ -1,15 +1,10 @@
 /*
  * Map.h - general structures and functions for handling the world map state.
  * 
- * The world of the game is represeted as a series of maps, with each map having
- * at least one page.
- * 
- * Pages are a series of bytes representing a 16px by 16px tile on the screen,
- * with each page having 256 = 16 columns by 16 rows of tile data.
- * 
- * Each tile in a page is represented by a byte containing a 6-bit tile number
- * (which is used to lookup graphics data loaded into VRAM) along with a 2-bit
- * tile attribute (see enum MapAttribute below).
+ * The game world is represented by a series of areas, with each area having
+ * at least one 16x16 tile map that fills an entire background tilemap. Maps are
+ * connected to one another (both within an area, and across areas) via exits
+ * and can extensively scripted using function pointer callbacks.
  */
 
 #ifndef _MAP_H
@@ -20,7 +15,7 @@
 #include "util.h"
 
 /**
- * Main state enumaration for the world map play controller.
+ * Main state enumaration for the world map controller.
  */
 typedef enum MapState {
   /**
@@ -64,11 +59,11 @@ typedef enum ExitType {
  * Represents a map exit and provides information about the destination for the
  * exit.
  */
-typedef struct MapExit {
+typedef struct Exit {
   /**
-   * Page where the exit tile resides.
+   * Map where the exit tile resides.
    */
-  uint8_t page_id;
+  uint8_t map_id;
   /**
    * Column of the exit.
    */
@@ -78,13 +73,13 @@ typedef struct MapExit {
    */
   uint8_t row;
   /**
+   * The destination area id.
+   */
+  uint8_t to_area;
+  /**
    * The destination map id.
    */
-  uint8_t to_map_id;
-  /**
-   * The page id on the destination map.
-   */
-  uint8_t to_page_id;
+  uint8_t to_map;
   /**
    * Column to place the character on the destination page.
    */
@@ -93,20 +88,22 @@ typedef struct MapExit {
    * Row to place the character on the destination page.
    */
   uint8_t to_row;
-} MapExit;
+} Exit;
 
 /**
  * Holds the bank and data pointer for a map page.
  */
-typedef struct MapPage {
+typedef struct Map {
   uint8_t bank;
   uint8_t *data;
-} MapPage;
+} Map;
 
 /**
- * Contains callbacks and data for a game map.
+ * Contains callbacks and data for a game area. Areas define tilesets, palettes,
+ * maps, and callbacks used by the world map controller to produce adventure
+ * gameplay for the game.
  */
-typedef struct Map {
+typedef struct Area {
   /**
    * Default starting column for the player if the map is loaded directly and
    * not via an exit from another map.
@@ -122,17 +119,12 @@ typedef struct Map {
   /**
    * List of all pages for the map.
    */
-  MapPage *pages;
+  Map *maps;
 
   /**
    * Number of pages in the map.
    */
   uint8_t num_pages;
-
-  /**
-   * List of exits for all pages on the map.
-   */
-  //MapExit *exits;
 
   /**
    * Bank for the map's tile data.
@@ -149,6 +141,12 @@ typedef struct Map {
    */
   uint16_t *palettes;
   
+  /**
+   * List of exits for all pages on the map.
+   */
+  // TODO Handle exits
+  // MapExit *exits;
+
   /**
    * Bank where the map's callback functions reside.
    */
@@ -191,7 +189,7 @@ typedef struct Map {
    * Called when the map is active and the player moves into a special tile.
    */
   void (*on_special)(uint8_t col, uint8_t row);
-} Map;
+} Area;
 
 /**
  * Mask used to isolate a map data byte's "tile id".
@@ -228,43 +226,43 @@ typedef enum MapTileAttribute {
 } MapTileAttribute;
 
 /**
- * Pointer to the map that is currently loaded.
+ * Pointer to the area that is currently loaded.
  */
-extern Map *map_current;
+extern Area *current_area;
 
 /**
- * Id of the page that is loaded on the map.
+ * Id of the currently loaded map.
  */
-extern uint8_t map_page;
+extern uint8_t current_map;
 
 /**
  * A 16 x 16 (256 entry) array that contains the tile attribute type for every
- * tile in the currently loaded page.
+ * tile in the current map.
  */
 extern MapTileAttribute map_tile_attributes[256];
 
 /**
- * Current column the player occupies in the active map.
+ * Column the player occupies in the active map.
  */
 extern uint8_t map_col;
 
 /**
- * Current row the player occupies in the active map.
+ * Row the player occupies in the active map.
  */
 extern uint8_t map_row;
 
 /**
- * Initialize the world map state.
+ * Initialize the world map controller.
  */
 void init_map(void) NONBANKED;
 
 /**
- * Game loop update routine for the world map state.
+ * Update callback for the world map controller.
  */
 void update_map(void) NONBANKED;
 
 /**
- * VBLANK draw routine for the world map state.
+ * VBLANK draw routine for the world map controller.
  */
 void draw_map(void) NONBANKED;
 

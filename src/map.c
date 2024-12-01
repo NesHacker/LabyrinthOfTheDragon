@@ -9,7 +9,7 @@
 #include "map.h"
 #include "util.h"
 
-Map *map_current;
+Area *current_area;
 MapState map_state;
 uint8_t map_scroll_x = 0;
 uint8_t map_scroll_y = 0;
@@ -42,7 +42,7 @@ const uint8_t map_tile_lookup[64] = {
 /**
  * Sets the map position x & y coordinates from the current column and row.
  */
-inline void set_map_xy_from_col_row() {
+inline void set_map_xy_from_col_row(void) {
   map_x = map_col << 4;
   map_y = map_row << 4;
 }
@@ -99,32 +99,11 @@ void update_map_positions(void) {
 // BEGIN TEST MAP DATA
 // -----------------------------------------------------------------------------
 
-void map0_on_init(void) {
-}
-
-void map0_on_update(void) {
-}
-
-void map0_on_draw(void) {
-}
-
-void map0_on_enter(uint8_t n) {
-}
-
-void map0_on_exit(uint8_t col, uint8_t row) {
-}
-
-void map0_on_move(uint8_t col, uint8_t row) {
-}
-
-void map0_on_special(uint8_t col, uint8_t row) {
-}
-
-const MapPage map0_pages[] = {
+const Map area0_maps[] = {
   { 2, map_example_0 }
 };
 
-const uint16_t map0_palettes[] = {
+const uint16_t area0_palettes[] = {
   // Palette 0 (default)
   RGB_WHITE,
   RGB8(100, 100, 140),
@@ -138,60 +117,52 @@ const uint16_t map0_palettes[] = {
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
 };
 
-Map map0 = {
-  2,                  // Default column & row
-  14,
-  map0_pages,         // Map pages
-  1,                  // Number of pages in the map
+Area area0 = {
+  2, 14,                // Default column & row
+  area0_maps,           // Maps
+  1,                    // Number of pages in the map
+  1,                    // Tile bank
+  tile_data_dungeon,    // Tile data
+  area0_palettes,       // Palettes
   // TODO Handle exits
-  1,                  // Tile bank
-  tile_data_dungeon,  // Tile data
-  map0_palettes,      // Palettes
-  0,                  // Callback bank
-  map0_on_init,
-  map0_on_update,
-  map0_on_draw,
-  map0_on_enter,
-  map0_on_exit,
-  map0_on_move,
-  map0_on_special
+  // TODO Handle callbacks
 };
 
 // -----------------------------------------------------------------------------
 // END TEST MAP DATA
 // -----------------------------------------------------------------------------
 
-void load_map(Map *m) {
-  // Load tileset and palettes
-  VBK_REG = VBK_BANK_0;
-  load_tile_page(m->tile_bank, m->bg_tile_data, VRAM_BG_TILES);
-  load_tile_page(m->tile_bank, m->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
-  set_bkg_palette(0, 6, m->palettes);
-  
-  // Initialize map state
-  map_current = m;
-  map_col = m->default_start_column;
-  map_row = m->default_start_row;
+void load_area(Area *a) {
+  // Initialize area state
+  current_area = a;
+  map_col = a->default_start_column;
+  map_row = a->default_start_row;
   map_state = MAP_STATE_WAITING;
   set_map_xy_from_col_row();
   update_map_positions();
+
+  // Load tileset and palettes
+  VBK_REG = VBK_BANK_0;
+  load_tile_page(a->tile_bank, a->bg_tile_data, VRAM_BG_TILES);
+  load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
+  set_bkg_palette(0, 6, a->palettes);
 }
 
-void load_map_page(uint8_t page_id) {
-  MapPage *page = &map_current->pages[page_id];
+void load_map(uint8_t map_id) {
+  Map *map = &current_area->maps[map_id];
 
   uint8_t _prev_bank = _current_bank;  
-  SWITCH_ROM(page->bank);
+  SWITCH_ROM(map->bank);
   
-  uint8_t *page_data = page->data;
+  uint8_t *map_data = map->data;
   uint8_t *vram_top = VRAM_BACKGROUND;
   uint8_t *vram_bottom = VRAM_BACKGROUND_XY(0, 1);
-  MapTileAttribute *page_attributes = map_tile_attributes;
+  MapTileAttribute *map_attributes = map_tile_attributes;
 
   for (uint8_t y = 0; y < 16; y++) {
     for (uint8_t x = 0; x < 16; x++) {
-      uint8_t data = *page_data++;
-      uint8_t attr = *page_data++;
+      uint8_t data = *map_data++;
+      uint8_t attr = *map_data++;
       uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
       
       // Set tilemap attributes
@@ -216,7 +187,7 @@ void load_map_page(uint8_t page_id) {
       }
 
       // Load the tile type into main memory
-      *page_attributes++ = data >> 6;
+      *map_attributes++ = data >> 6;
     }
     vram_top += 32;
     vram_bottom += 32;
@@ -228,8 +199,8 @@ void load_map_page(uint8_t page_id) {
 void init_map(void) {
   lcd_off();
   init_hero();
-  load_map(&map0);
-  load_map_page(0);
+  load_area(&area0);
+  load_map(0);
   lcd_on();
 }
 
