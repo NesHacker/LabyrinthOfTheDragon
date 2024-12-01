@@ -140,9 +140,9 @@ typedef struct Map {
   uint8_t tile_bank;
   
   /**
-   * Pointer to a 16x16 (256 tile) page of tile data that is used for the map.
+   * Pointer to the background tile data for the map.
    */
-  uint8_t *tile_data;
+  uint8_t *bg_tile_data;
   
   /**
    * Palettes to use for the dungeon.
@@ -241,7 +241,17 @@ extern uint8_t map_page;
  * A 16 x 16 (256 entry) array that contains the tile attribute type for every
  * tile in the currently loaded page.
  */
-extern MapTileAttribute map_page_attributes[256];
+extern MapTileAttribute map_tile_attributes[256];
+
+/**
+ * Current column the player occupies in the active map.
+ */
+extern uint8_t map_col;
+
+/**
+ * Current row the player occupies in the active map.
+ */
+extern uint8_t map_row;
 
 /**
  * Initialize the world map state.

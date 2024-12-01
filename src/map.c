@@ -14,7 +14,7 @@ MapState map_state;
 uint8_t map_scroll_x = 0;
 uint8_t map_scroll_y = 0;
 uint8_t map_page;
-MapTileAttribute map_page_attributes[256];
+MapTileAttribute map_tile_attributes[256];
 
 uint8_t map_x = 0;
 uint8_t map_y = 0;
@@ -131,7 +131,7 @@ const uint16_t map0_palettes[] = {
   RGB8(40, 60, 40),
   RGB8(32, 0, 0),
   // Palette 1-5
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB8(8, 16, 0),
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
@@ -161,16 +161,20 @@ Map map0 = {
 // END TEST MAP DATA
 // -----------------------------------------------------------------------------
 
-
 void load_map(Map *m) {
+  // Load tileset and palettes
+  VBK_REG = VBK_BANK_0;
+  load_tile_page(m->tile_bank, m->bg_tile_data, VRAM_BG_TILES);
+  load_tile_page(m->tile_bank, m->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
+  set_bkg_palette(0, 6, m->palettes);
+  
+  // Initialize map state
   map_current = m;
-  load_tile_full(m->tile_bank, m->tile_data, VRAM_BG_TILES);
   map_col = m->default_start_column;
   map_row = m->default_start_row;
-  set_bkg_palette(0, 6, m->palettes);
+  map_state = MAP_STATE_WAITING;
   set_map_xy_from_col_row();
   update_map_positions();
-  map_state = MAP_STATE_WAITING;
 }
 
 void load_map_page(uint8_t page_id) {
@@ -182,14 +186,23 @@ void load_map_page(uint8_t page_id) {
   uint8_t *page_data = page->data;
   uint8_t *vram_top = VRAM_BACKGROUND;
   uint8_t *vram_bottom = VRAM_BACKGROUND_XY(0, 1);
-  MapTileAttribute *attributes = map_page_attributes;
+  MapTileAttribute *page_attributes = map_tile_attributes;
 
-  VBK_REG = VBK_TILES;
   for (uint8_t y = 0; y < 16; y++) {
     for (uint8_t x = 0; x < 16; x++) {
       uint8_t data = *page_data++;
+      uint8_t attr = *page_data++;
       uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
       
+      // Set tilemap attributes
+      VBK_REG = VBK_ATTRIBUTES;
+      *vram_top = attr;
+      *(vram_top + 1) = attr;
+      *vram_bottom = attr;
+      *(vram_bottom + 1) = attr;
+
+      // Set tile from data
+      VBK_REG = VBK_TILES;
       if (tile == 0) {
         *vram_top++ = 0;
         *vram_top++ = 0;
@@ -203,19 +216,10 @@ void load_map_page(uint8_t page_id) {
       }
 
       // Load the tile type into main memory
-      *attributes++ = data >> 6;
+      *page_attributes++ = data >> 6;
     }
     vram_top += 32;
     vram_bottom += 32;
-  }
-
-  // Currently map data doesn't include attribute information, if we want
-  // to add it in the future we'd need to use the (tile, attr) pairs format
-  // and take this data into account.
-  VBK_REG = VBK_ATTRIBUTES;
-  uint8_t *vram_attr = VRAM_BACKGROUND;
-  for (uint16_t k = 0; k < 32 * 32; k++) {
-    *vram_attr++ = 0;
   }
 
   SWITCH_ROM(_prev_bank);
@@ -251,7 +255,7 @@ bool can_move(Direction d) {
   }
 
   uint16_t k = row * 16 + col;
-  MapTileAttribute t = map_page_attributes[k];
+  MapTileAttribute t = map_tile_attributes[k];
 
   return t != MAP_WALL;
 }
