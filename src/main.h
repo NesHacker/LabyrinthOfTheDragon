@@ -8,7 +8,8 @@
  * Enumeration of all main states for the game.
  */
 typedef enum GameState {
-  MAIN_MENU
+  MAIN_MENU,
+  WORLD_MAP,
 } GameState;
 
 

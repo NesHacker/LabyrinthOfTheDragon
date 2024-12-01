@@ -4,6 +4,7 @@
     "*.inc": "gbz80",
     "cgb.h": "c",
     "stdint.h": "c",
-    "main_menu.h": "c"
+    "main_menu.h": "c",
+    "incbin.h": "c"
   }
 }

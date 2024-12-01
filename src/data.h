@@ -79,4 +79,5 @@ INCBIN_EXTERN(tilemap_title_screen)
 INCBIN_EXTERN(tilemap_name_entry)
 INCBIN_EXTERN(tilemap_save_select)
 
+INCBIN_EXTERN(map_example_0)
 #endif

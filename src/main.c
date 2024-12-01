@@ -5,6 +5,7 @@
 #include "data.h"
 #include "joypad.h"
 #include "main.h"
+#include "map.h"
 #include "main_menu.h"
 #include "textbox.h"
 #include "util.h"
@@ -24,6 +25,9 @@ void set_game_state(GameState s) NONBANKED {
   case MAIN_MENU:
     init_main_menu();
     break;
+  case WORLD_MAP:
+    init_map();
+    break;
   }
 }
 
@@ -32,7 +36,9 @@ void set_game_state(GameState s) NONBANKED {
  */
 void initialize(void) {
   init_text_box();
-  init_main_menu();
+  // init_main_menu();
+  init_map();
+  game_state = WORLD_MAP;
 }
 
 /**
@@ -42,6 +48,9 @@ void game_loop(void) NONBANKED {
   switch (game_state) {
   case MAIN_MENU:
     update_main_menu();
+    break;
+  case WORLD_MAP:
+    update_map();
     break;
   }
 }
@@ -53,6 +62,9 @@ void render(void) NONBANKED {
   switch (game_state) {
   case MAIN_MENU:
     draw_main_menu();
+    break;
+  case WORLD_MAP:
+    draw_map();
     break;
   }
 }
