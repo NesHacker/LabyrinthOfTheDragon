@@ -233,7 +233,7 @@ extern Area *current_area;
 /**
  * Id of the currently loaded map.
  */
-extern uint8_t current_map;
+extern uint8_t current_map_id;
 
 /**
  * A 16 x 16 (256 entry) array that contains the tile attribute type for every
@@ -254,16 +254,16 @@ extern uint8_t map_row;
 /**
  * Initialize the world map controller.
  */
-void init_map(void) NONBANKED;
+void init_world_map(void) NONBANKED;
 
 /**
  * Update callback for the world map controller.
  */
-void update_map(void) NONBANKED;
+void update_world_map(void) NONBANKED;
 
 /**
  * VBLANK draw routine for the world map controller.
  */
-void draw_map(void) NONBANKED;
+void draw_world_map(void) NONBANKED;
 
 #endif

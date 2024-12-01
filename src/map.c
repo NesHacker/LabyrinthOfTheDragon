@@ -10,17 +10,44 @@
 #include "util.h"
 
 Area *current_area;
-MapState map_state;
-uint8_t map_scroll_x = 0;
-uint8_t map_scroll_y = 0;
-uint8_t map_page;
-MapTileAttribute map_tile_attributes[256];
-
-uint8_t map_x = 0;
-uint8_t map_y = 0;
+uint8_t current_map_id;
 uint8_t map_col = 0;
 uint8_t map_row = 0;
+MapTileAttribute map_tile_attributes[256];
+
+/**
+ * State of the world map controller.
+ */
+MapState map_state;
+
+/**
+ * Absolute x position of the hero on the map.
+ */
+uint8_t map_x = 0;
+
+/**
+ * Absolute y position of the hero on the map.
+ */
+uint8_t map_y = 0;
+
+/**
+ * Horizontal background scroll for the current map.
+ */
+uint8_t map_scroll_x = 0;
+
+/**
+ * Vertical background scroll for the current map.
+ */
+uint8_t map_scroll_y = 0;
+
+/**
+ * Direction the map is currently moving.
+ */
 Direction map_move_direction = NO_DIRECTION;
+
+/**
+ * Frame counter for the current map move.
+ */
 uint8_t map_move_counter = 0;
 
 /**
@@ -110,7 +137,7 @@ const uint16_t area0_palettes[] = {
   RGB8(40, 60, 40),
   RGB8(32, 0, 0),
   // Palette 1-5
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB8(8, 16, 0),
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB8(24, 0, 0),
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
   RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
@@ -132,6 +159,10 @@ Area area0 = {
 // END TEST MAP DATA
 // -----------------------------------------------------------------------------
 
+/**
+ * Loads an area state and assets and initializes the world map controller.
+ * @param a Area to load.
+ */
 void load_area(Area *a) {
   // Initialize area state
   current_area = a;
@@ -194,14 +225,6 @@ void load_map(uint8_t map_id) {
   }
 
   SWITCH_ROM(_prev_bank);
-}
-
-void init_map(void) {
-  lcd_off();
-  init_hero();
-  load_area(&area0);
-  load_map(0);
-  lcd_on();
 }
 
 bool can_move(Direction d) {
@@ -269,7 +292,15 @@ void update_map_move(void) {
   }
 }
 
-void update_map(void) {
+void init_world_map(void) {
+  lcd_off();
+  init_hero();
+  load_area(&area0);
+  load_map(0);
+  lcd_on();
+}
+
+void update_world_map(void) {
   switch (map_state) {
   case MAP_STATE_WAITING:
     check_move();
@@ -282,5 +313,5 @@ void update_map(void) {
   move_bkg(map_scroll_x, map_scroll_y);
 }
 
-void draw_map(void) {
+void draw_world_map(void) {
 }

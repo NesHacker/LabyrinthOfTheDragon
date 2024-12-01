@@ -26,7 +26,7 @@ void set_game_state(GameState s) NONBANKED {
     init_main_menu();
     break;
   case WORLD_MAP:
-    init_map();
+    init_world_map();
     break;
   }
 }
@@ -34,23 +34,23 @@ void set_game_state(GameState s) NONBANKED {
 /**
  * Initializes the game.
  */
-void initialize(void) {
+inline void initialize(void) {
   init_text_box();
   // init_main_menu();
-  init_map();
+  init_world_map();
   game_state = WORLD_MAP;
 }
 
 /**
  * Executes core gameloop logic.
  */
-void game_loop(void) NONBANKED {
+inline void game_loop(void) {
   switch (game_state) {
   case MAIN_MENU:
     update_main_menu();
     break;
   case WORLD_MAP:
-    update_map();
+    update_world_map();
     break;
   }
 }
@@ -58,13 +58,13 @@ void game_loop(void) NONBANKED {
 /**
  * Executes rendering logic that must occur during a VBLANK.
  */
-void render(void) NONBANKED {
+inline void render(void) {
   switch (game_state) {
   case MAIN_MENU:
     draw_main_menu();
     break;
   case WORLD_MAP:
-    draw_map();
+    draw_world_map();
     break;
   }
 }
