@@ -14,24 +14,7 @@ MapState map_state;
 uint8_t map_scroll_x = 0;
 uint8_t map_scroll_y = 0;
 uint8_t map_page;
-MapTileAttribute map_page_attributes[256] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-};
+MapTileAttribute map_page_attributes[256];
 
 uint8_t map_x = 0;
 uint8_t map_y = 0;
@@ -50,10 +33,10 @@ const uint8_t map_tile_lookup[64] = {
   0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
   0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
   0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
-  0x80, 0x82, 0x84, 0x86, 0x88, 0x8A, 0x8C, 0x8E,
-  0xA0, 0xA2, 0xA4, 0xA6, 0xA8, 0xAA, 0xAC, 0xAE,
-  0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE,
-  0xE0, 0xE2, 0xE4, 0xE6, 0xE8, 0xEA, 0xEC, 0xEE,
+  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
+  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
+  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
+  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
 };
 
 /**
@@ -141,6 +124,20 @@ const MapPage map0_pages[] = {
   { 2, map_example_0 }
 };
 
+const uint16_t map0_palettes[] = {
+  // Palette 0 (default)
+  RGB_WHITE,
+  RGB8(100, 100, 140),
+  RGB8(40, 60, 40),
+  RGB8(32, 0, 0),
+  // Palette 1-5
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+};
+
 Map map0 = {
   2,                  // Default column & row
   14,
@@ -149,6 +146,7 @@ Map map0 = {
   // TODO Handle exits
   1,                  // Tile bank
   tile_data_dungeon,  // Tile data
+  map0_palettes,      // Palettes
   0,                  // Callback bank
   map0_on_init,
   map0_on_update,
@@ -169,6 +167,7 @@ void load_map(Map *m) {
   load_tile_full(m->tile_bank, m->tile_data, VRAM_BG_TILES);
   map_col = m->default_start_column;
   map_row = m->default_start_row;
+  set_bkg_palette(0, 6, m->palettes);
   set_map_xy_from_col_row();
   update_map_positions();
   map_state = MAP_STATE_WAITING;
@@ -222,17 +221,9 @@ void load_map_page(uint8_t page_id) {
   SWITCH_ROM(_prev_bank);
 }
 
-const uint16_t map_palette[] = {
-  RGB_WHITE,
-  RGB8(100, 100, 140),
-  RGB8(40, 60, 40),
-  RGB8(32, 0, 0)
-};
-
 void init_map(void) {
   lcd_off();
   init_hero();
-  set_bkg_palette(0, 1, map_palette);
   load_map(&map0);
   load_map_page(0);
   lcd_on();
@@ -249,13 +240,13 @@ bool can_move(Direction d) {
     if (row == 0) return false;
     row--;
   } else if (d == DOWN) {
-    if (row == 31) return false;
+    if (row == 15) return false;
     row++;
   } else if (d == LEFT) {
     if (col == 0) return false;
     col--;
   } else if (d == RIGHT) {
-    if (col == 31) return false;
+    if (col == 15) return false;
     col++;
   }
 

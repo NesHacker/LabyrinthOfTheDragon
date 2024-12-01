@@ -145,6 +145,11 @@ typedef struct Map {
   uint8_t *tile_data;
   
   /**
+   * Palettes to use for the dungeon.
+   */
+  uint16_t *palettes;
+  
+  /**
    * Bank where the map's callback functions reside.
    */
   uint8_t callback_bank;
