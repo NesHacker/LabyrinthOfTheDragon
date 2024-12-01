@@ -9,10 +9,13 @@
 
 HeroState hero_state = HERO_STILL;
 Direction hero_direction = DOWN;
+uint8_t hero_x = 0 + 8;
+uint8_t hero_y = 0 + 16;
 
 void init_hero(void) {
-  const uint8_t x = 8 + 16 * 4;
-  const uint8_t y = 16 + 16 * 4;
+  // const uint8_t x = 8 + 16 * 4;
+  // const uint8_t y = 16 + 16 * 4;
+  
   const uint8_t offset = 0x00;
   const uint8_t frame = (walk_frame << 1) + offset;
 
@@ -30,20 +33,19 @@ void init_hero(void) {
   init_timer(walk_timer, 8);
 
   set_sprite_tile(0, frame);
-  set_sprite_prop(0, 0);
-  move_sprite(0, x, y);
-
   set_sprite_tile(1, frame + 0x01);
-  set_sprite_prop(1, 0);
-  move_sprite(1, x + 8, y);
-
   set_sprite_tile(2, frame + 0x10);
-  set_sprite_prop(2, 0);
-  move_sprite(2, x, y + 8);
-
   set_sprite_tile(3, frame + 0x11);
+
+  set_sprite_prop(0, 0);
+  set_sprite_prop(1, 0);
+  set_sprite_prop(2, 0);
   set_sprite_prop(3, 0);
-  move_sprite(3, x + 8, y + 8);
+
+  move_sprite(0, hero_x + 8, hero_y + 16);
+  move_sprite(1, hero_x + 8 + 8, hero_y + 16);
+  move_sprite(2, hero_x + 8, hero_y + 8 + 16);
+  move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
 }
 
 void update_hero(void) {
@@ -91,6 +93,11 @@ void update_hero(void) {
     set_sprite_prop(2, 0b00100000);
     set_sprite_prop(3, 0b00100000);
   }
+
+  move_sprite(0, hero_x + 8, hero_y + 16);
+  move_sprite(1, hero_x + 8 + 8, hero_y + 16);
+  move_sprite(2, hero_x + 8, hero_y + 8 + 16);
+  move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
 }
 
 void clear_hero(void) {

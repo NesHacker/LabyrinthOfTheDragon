@@ -1,6 +1,7 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "data.h"
 #include "hero.h"
@@ -10,12 +11,34 @@
 
 Map *map_current;
 MapState map_state;
-uint8_t player_col;
-uint8_t player_row;
 uint8_t map_scroll_x = 0;
 uint8_t map_scroll_y = 0;
 uint8_t map_page;
-MapTileAttribute map_page_attributes[256];
+MapTileAttribute map_page_attributes[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+};
+
+uint8_t map_x = 0;
+uint8_t map_y = 0;
+uint8_t map_col = 0;
+uint8_t map_row = 0;
+Direction map_move_direction = NO_DIRECTION;
+uint8_t map_move_counter = 0;
 
 /**
  * Lookup table that converts map_tile ids into graphic tile ids. The graphics
@@ -33,7 +56,65 @@ const uint8_t map_tile_lookup[64] = {
   0xE0, 0xE2, 0xE4, 0xE6, 0xE8, 0xEA, 0xEC, 0xEE,
 };
 
-// Test map data
+/**
+ * Sets the map position x & y coordinates from the current column and row.
+ */
+inline void set_map_xy_from_col_row() {
+  map_x = map_col << 4;
+  map_y = map_row << 4;
+}
+
+/**
+ * Begins a map move in the given direction.
+ */
+inline void start_map_move(Direction d) {
+  map_move_direction = d;
+  map_move_counter = 16;
+  map_state = MAP_STATE_MOVING;
+  hero_state = HERO_WALKING;
+}
+
+/**
+ * Stops a map move.
+ */
+inline void stop_map_move(void) {
+  map_move_direction = NO_DIRECTION;
+  map_state = MAP_STATE_WAITING;
+  hero_state = HERO_STILL;
+}
+
+/**
+ * Sets the x & y positions for the hero and the screen scroll based on the
+ * current global map position.
+ */
+void update_map_positions(void) {
+  // Update the horizontal positions
+  if (map_x <= 64) {
+    map_scroll_x = 0;
+    hero_x = map_x;
+  } else if (map_x < 160) {
+    map_scroll_x = map_x - 64;
+    hero_x = 64;
+  } else {
+    map_scroll_x = 96;
+    hero_x = map_x - 96;
+  }
+  // Update the vertical positions
+  if (map_y <= 64) {
+    map_scroll_y = 0;
+    hero_y = map_y;
+  } else if (map_y < 176) {
+    map_scroll_y = map_y - 64;
+    hero_y = 64;
+  } else {
+    map_scroll_y = 176 - 64;
+    hero_y = map_y - 112;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// BEGIN TEST MAP DATA
+// -----------------------------------------------------------------------------
 
 void map0_on_init(void) {
 }
@@ -78,11 +159,18 @@ Map map0 = {
   map0_on_special
 };
 
+// -----------------------------------------------------------------------------
+// END TEST MAP DATA
+// -----------------------------------------------------------------------------
+
+
 void load_map(Map *m) {
   map_current = m;
   load_tile_full(m->tile_bank, m->tile_data, VRAM_BG_TILES);
-  player_col = m->default_start_column;
-  player_row = m->default_start_row;
+  map_col = m->default_start_column;
+  map_row = m->default_start_row;
+  set_map_xy_from_col_row();
+  update_map_positions();
   map_state = MAP_STATE_WAITING;
 }
 
@@ -95,7 +183,7 @@ void load_map_page(uint8_t page_id) {
   uint8_t *page_data = page->data;
   uint8_t *vram_top = VRAM_BACKGROUND;
   uint8_t *vram_bottom = VRAM_BACKGROUND_XY(0, 1);
-  uint8_t *attributes = map_page_attributes;
+  MapTileAttribute *attributes = map_page_attributes;
 
   VBK_REG = VBK_TILES;
   for (uint8_t y = 0; y < 16; y++) {
@@ -116,7 +204,7 @@ void load_map_page(uint8_t page_id) {
       }
 
       // Load the tile type into main memory
-      *attributes++ = data >> 5;
+      *attributes++ = data >> 6;
     }
     vram_top += 32;
     vram_bottom += 32;
@@ -143,61 +231,75 @@ const uint16_t map_palette[] = {
 
 void init_map(void) {
   lcd_off();
-  
   init_hero();
-
-  VBK_REG = VBK_BANK_0;
-  load_tiles(1, tile_data_dungeon, VRAM_BG_TILES, 0x80);
   set_bkg_palette(0, 1, map_palette);
-  
   load_map(&map0);
   load_map_page(0);
-
-  map_scroll_x = 0;
-  map_scroll_y = 0;
-  move_bkg(0, 0);
-
   lcd_on();
 }
 
-int8_t map_dx = 0;
-int8_t map_dy = 0;
-uint8_t move_counter = 0;
+bool can_move(Direction d) {
+  uint8_t col = map_col;
+  uint8_t row = map_row;
+
+  // Even if the hero cannot move in the direction, update the heading
+  hero_direction = d;
+
+  if (d == UP) {
+    if (row == 0) return false;
+    row--;
+  } else if (d == DOWN) {
+    if (row == 31) return false;
+    row++;
+  } else if (d == LEFT) {
+    if (col == 0) return false;
+    col--;
+  } else if (d == RIGHT) {
+    if (col == 31) return false;
+    col++;
+  }
+
+  uint16_t k = row * 16 + col;
+  MapTileAttribute t = map_page_attributes[k];
+
+  return t != MAP_WALL;
+}
 
 void check_move(void) {
-  if (is_down(J_UP)) {
-    map_dx = 0;
-    map_dy = -1;
-    move_counter = 16;
-    map_state = MAP_STATE_MOVING;
-    hero_direction = UP;
-    hero_state = HERO_WALKING;
-  } else if (is_down(J_DOWN)) {
-    map_dx = 0;
-    map_dy = 1;
-    move_counter = 16;
-    map_state = MAP_STATE_MOVING;
-    hero_direction = DOWN;
-    hero_state = HERO_WALKING;
-  } else if (is_down(J_LEFT)) {
-    map_dx = -1;
-    map_dy = 0;
-    move_counter = 16;
-    map_state = MAP_STATE_MOVING;
-    hero_direction = LEFT;
-    hero_state = HERO_WALKING;
-  } else if (is_down(J_RIGHT)) {
-    map_dx = 1;
-    map_dy = 0;
-    move_counter = 16;
-    map_state = MAP_STATE_MOVING;
-    hero_direction = RIGHT;
-    hero_state = HERO_WALKING;
-  } else {
-    map_dx = 0;
-    map_dy = 0;
-    map_state = MAP_STATE_WAITING;
-    hero_state = HERO_STILL;
+  if (is_down(J_UP) && can_move(UP))
+    start_map_move(UP);
+  else if (is_down(J_DOWN) && can_move(DOWN))
+    start_map_move(DOWN);
+  else if (is_down(J_LEFT) && can_move(LEFT))
+    start_map_move(LEFT);
+  else if (is_down(J_RIGHT) && can_move(RIGHT))
+    start_map_move(RIGHT);
+  else
+    stop_map_move();
+}
+
+void update_map_move(void) {
+  switch (map_move_direction) {
+  case UP:
+    map_y--;
+    break;
+  case DOWN:
+    map_y++;
+    break;
+  case LEFT:
+    map_x--;
+    break;
+  case RIGHT:
+    map_x++;
+    break;
+  }
+
+  update_map_positions();
+
+  if (--map_move_counter == 0) {
+    map_col = map_x >> 4;
+    map_row = map_y >> 4;
+    check_move();
   }
 }
 
@@ -207,11 +309,7 @@ void update_map(void) {
     check_move();
     break;
   case MAP_STATE_MOVING:
-    map_scroll_x += map_dx;
-    map_scroll_y += map_dy;
-    if (--move_counter == 0) {
-      check_move();
-    }
+    update_map_move();
     break;
   }
   update_hero();

@@ -7,6 +7,13 @@
 #include <stdint.h>
 
 /**
+ * Universal direction type.
+ */
+typedef enum Direction {
+  NO_DIRECTION, DOWN, UP, LEFT, RIGHT
+} Direction;
+
+/**
  * Basic timer structure for handling frame count timers.
  */
 typedef struct Timer {

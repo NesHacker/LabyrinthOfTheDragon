@@ -17,6 +17,7 @@
 
 #include <gb/gb.h>
 #include <stdint.h>
+#include "util.h"
 
 /**
  * Main state enumaration for the world map play controller.

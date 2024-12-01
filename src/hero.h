@@ -1,15 +1,17 @@
 #ifndef _HERO_H
 #define _HERO_H
 
+#include "util.h"
+
 typedef enum HeroState {
   HERO_STILL,
   HERO_WALKING,
 } HeroState;
 
-typedef enum Direction { DOWN, UP, LEFT, RIGHT } Direction;
-
 extern HeroState hero_state;
 extern Direction hero_direction;
+extern uint8_t hero_x;
+extern uint8_t hero_y;
 
 /**
  * Initializes the hero character's state and sprites.
