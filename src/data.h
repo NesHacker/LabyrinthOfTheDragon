@@ -1,5 +1,5 @@
 /**
- * Fixed bank data loading utility routines.
+ * Banked data loading utility routines.
  */
 
 #ifndef _DATA_H
@@ -60,12 +60,57 @@
  */
 #define TILE_PAGE(ptr,n) (void *)((ptr) + 0x80 * 16 * ((n)-1))
 
-// Function prototypes
-void load_tiles(uint8_t, uint8_t *, uint8_t *, uint8_t);
-void load_tile_page(uint8_t, uint8_t *, uint8_t *);
-void load_tilemap(uint8_t, uint8_t *, uint8_t *, uint8_t);
-void load_screen(uint8_t, uint8_t *);
-void load_full_tilemap(uint8_t, uint8_t *, uint8_t *);
+/**
+ * Safely copies data from the given bank and data address into the given
+ * destination address.
+ * @param bank Id of the bank from which to load the data.
+ * @param src Pointer to source data for the tiles.
+ * @param dst Pointer to the destination for the copy.
+ * @param n Number of tiles to copy.
+ */
+void load_tiles(uint8_t bank, uint8_t *src, uint8_t *dst, uint8_t n) NONBANKED;
+
+/**
+ * Loads a page of 64 tiledata bytes into VRAM at the given destination address.
+ * @param bank Id of the bank from which to load the data.
+ * @param src Pointer to source data for the tiles.
+ * @param dst Pointer to the destination in VRAM.
+ */
+void load_tile_page(uint8_t bank, uint8_t *src, uint8_t *dst) NONBANKED;
+
+/**
+ * Loads the first page of 64 tile data bytes into the first bank and the next
+ * 64 tile data bytes into second bank of the given VRAM destination.
+ * @param bank Id of the bank from which to load the data.
+ * @param src Pointer to the source data for the tiles.
+ * @param dst Pointer to the destination in VRAM.
+ */
+void load_tile_full(uint8_t bank, uint8_t *src, uint8_t *dst) NONBANKED;
+
+/**
+ * Loads a given number of tiles from a tile + attr source into the given memory
+ * location in vram.
+ * @param b Bank from which to load the data.
+ * @param src Source data for the tilemap.
+ * @param dst Pointer to the destination for the copy.
+ * @param n Number of tile bytes to copy.
+ */
+void load_tilemap(uint8_t b, uint8_t *src, uint8_t *dst, uint8_t n) NONBANKED;
+
+/**
+ * Loads a 20x18 tile + attr screen onto the background.
+ * @param b Bank from which to load the data.
+ * @param src Pointer to the data to load.
+ */
+void load_screen(uint8_t b, uint8_t *src);
+
+/**
+ * Loads a full 32x32 tile+attr map.
+ * @param b Bank where the source data resides.
+ * @param src Pointer to the first byte of the source data.
+ * @param dst Pointer (in VRAM) where the data should be written.
+ */
+void load_full_tilemap(uint8_t b, uint8_t *src, uint8_t *dst) NONBANKED;
 
 // Banked data externs
 INCBIN_EXTERN(tile_data_dungeon)

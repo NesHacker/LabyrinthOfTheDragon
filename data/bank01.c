@@ -12,11 +12,7 @@ INCBIN(tile_data_hero, "res/tiles/hero.bin")
 // 2KB World Objects
 INCBIN(tile_data_objects, "res/tiles/objects.bin")
 
-// 4KB Standard dungeon tiles
+// 4K Dungeon tiles
 INCBIN(tile_data_dungeon, "res/tiles/dungeon.bin")
 
-// 4K World Map
-INCBIN(tile_data_world_map, "res/tiles/world_map.bin")
-
-// 2KB of 16KB remaining
-
+// 6KB of 16KB remaining
