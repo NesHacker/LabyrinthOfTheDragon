@@ -51,6 +51,13 @@ Direction map_move_direction = NO_DIRECTION;
 uint8_t map_move_counter = 0;
 
 /**
+ * Used to prevent directional input after an exit transition until the player
+ * has released a d-pad direction. Basically if you don't do this then for some
+ * exits the player will just hop between exits in a jarring way.
+ */
+bool has_released_dpad = true;
+
+/**
  * Lookup table that converts map_tile ids into graphic tile ids. The graphics
  * for map tiles are laid out in a way that allows for easy editing, this makes
  * it easy to compute the position for a tile given a 6-bit tile id.
@@ -168,7 +175,7 @@ const Exit area0_exits[] = {
 
 const uint16_t area0_palettes[] = {
   // Palette 0 (default)
-  RGB_WHITE,
+  RGB8(190, 200, 190),
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
   RGB8(32, 0, 0),
@@ -294,6 +301,11 @@ bool can_move(Direction d) {
 }
 
 void check_move(void) {
+  if (!has_released_dpad) {
+    has_released_dpad = was_released(J_DOWN | J_UP | J_LEFT | J_RIGHT);
+    return;
+  }
+
   if (is_down(J_UP) && can_move(UP))
     start_map_move(UP);
   else if (is_down(J_DOWN) && can_move(DOWN))
@@ -335,6 +347,7 @@ bool handle_exit(void) {
     set_map_xy_from_col_row();
     update_map_positions();
     hero_direction = x->heading;
+    has_released_dpad = false;
 
     lcd_on();
   
