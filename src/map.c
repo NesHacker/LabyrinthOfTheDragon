@@ -127,7 +127,43 @@ void update_map_positions(void) {
 // -----------------------------------------------------------------------------
 
 const Map area0_maps[] = {
-  { 2, map_example_0 }
+  { 2, map_example_0 },
+  { 2, map_example_1 }
+};
+
+const Exit area0_exits[] = {
+  {
+    0,      // map_id
+    2, 2,   // col, row
+    0,      // to_area
+    1,      // to_map
+    2, 3,   // to_col, to_row
+    DOWN,   // heading
+  },
+  {
+    0,      // map_id
+    9, 9,   // col, row
+    0,      // to_area
+    1,      // to_map
+    9, 10,    // to_col, to_row
+    DOWN
+  },
+  {
+    1,      // map_id
+    2, 2,   // col, row
+    0,      // to_area
+    0,      // to_map
+    2, 3,    // to_col, to_row
+    DOWN
+  },
+  {
+    1,      // map_id
+    9, 9,   // col, row
+    0,      // to_area
+    0,      // to_map
+    9, 10,    // to_col, to_row
+    DOWN
+  },
 };
 
 const uint16_t area0_palettes[] = {
@@ -145,13 +181,15 @@ const uint16_t area0_palettes[] = {
 };
 
 Area area0 = {
+  0,                    // Id
   2, 14,                // Default column & row
   area0_maps,           // Maps
-  1,                    // Number of pages in the map
+  2,                    // Number of maps in the area
   1,                    // Tile bank
   tile_data_dungeon,    // Tile data
   area0_palettes,       // Palettes
-  // TODO Handle exits
+  area0_exits,          // Exits
+  4,                    // Number of exits in the area
   // TODO Handle callbacks
 };
 
@@ -180,6 +218,7 @@ void load_area(Area *a) {
 }
 
 void load_map(uint8_t map_id) {
+  current_map_id = map_id;
   Map *map = &current_area->maps[map_id];
 
   uint8_t _prev_bank = _current_bank;  
@@ -267,6 +306,44 @@ void check_move(void) {
     stop_map_move();
 }
 
+inline MapTileAttribute get_map_tile_attribute(void) {
+  return map_tile_attributes[map_col + map_row * 16];
+}
+
+bool handle_exit(void) {
+  MapTileAttribute a = get_map_tile_attribute();
+  if (a != MAP_EXIT)
+    return false;
+
+  for (uint8_t k = 0; k < current_area->num_exits; k++) {
+    Exit *x = &current_area->exits[k];
+    if (x->map_id != current_map_id) continue;
+    if (x->col != map_col) continue;
+    if (x->row != map_row) continue;
+  
+    // TODO add animated transition
+  
+    if (x->to_area != current_area->id) {
+      // TODO Handle area spanning exits
+    }
+
+    lcd_off();
+    stop_map_move();
+    load_map(x->to_map);
+    map_col = x->to_col;
+    map_row = x->to_row;
+    set_map_xy_from_col_row();
+    update_map_positions();
+    hero_direction = x->heading;
+
+    lcd_on();
+  
+    return true;
+  }
+  
+  return false;
+}
+
 void update_map_move(void) {
   switch (map_move_direction) {
   case UP:
@@ -288,7 +365,9 @@ void update_map_move(void) {
   if (--map_move_counter == 0) {
     map_col = map_x >> 4;
     map_row = map_y >> 4;
-    check_move();
+    if (!handle_exit()) {
+      check_move();
+    }
   }
 }
 

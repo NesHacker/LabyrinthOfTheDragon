@@ -88,6 +88,10 @@ typedef struct Exit {
    * Row to place the character on the destination page.
    */
   uint8_t to_row;
+  /**
+   * Direction the hero should face after taking an exit.
+   */
+  Direction heading;
 } Exit;
 
 /**
@@ -104,6 +108,12 @@ typedef struct Map {
  * gameplay for the game.
  */
 typedef struct Area {
+  /**
+   * Id for the area. This should be the same as its index in the areas
+   * table.
+   */
+  uint8_t id;
+
   /**
    * Default starting column for the player if the map is loaded directly and
    * not via an exit from another map.
@@ -124,7 +134,7 @@ typedef struct Area {
   /**
    * Number of pages in the map.
    */
-  uint8_t num_pages;
+  uint8_t num_maps;
 
   /**
    * Bank for the map's tile data.
@@ -144,8 +154,12 @@ typedef struct Area {
   /**
    * List of exits for all pages on the map.
    */
-  // TODO Handle exits
-  // MapExit *exits;
+  Exit *exits;
+
+  /**
+   * Number of exit entries for the area.
+   */
+  uint8_t num_exits;
 
   /**
    * Bank where the map's callback functions reside.
