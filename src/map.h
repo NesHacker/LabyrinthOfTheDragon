@@ -27,6 +27,21 @@ typedef enum MapState {
    * Denotes that the player is moving within the map.
    */
   MAP_STATE_MOVING,
+  /**
+   * Denotes that the graphics are fading out for a progressive map/area load.
+   */
+  MAP_STATE_FADE_OUT,
+  /**
+   * Denotes that the graphics are fading back in after a progessive map/area
+   * load.
+   */
+  MAP_STATE_FADE_IN,
+  /**
+   * Denotes that the current map is being loaded. To avoid shutting off the
+   * LCD, the screen is first faded to an area's defined fade color, then maps
+   * are loaded progressively over the course of a few frames.
+   */
+  MAP_STATE_LOAD
 } MapState;
 
 /**

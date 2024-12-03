@@ -7,6 +7,7 @@
 #include "hero.h"
 #include "joypad.h"
 #include "map.h"
+#include "palette.h"
 #include "util.h"
 
 Area *current_area;
@@ -51,11 +52,10 @@ Direction map_move_direction = NO_DIRECTION;
 uint8_t map_move_counter = 0;
 
 /**
- * Used to prevent directional input after an exit transition until the player
- * has released a d-pad direction. Basically if you don't do this then for some
- * exits the player will just hop between exits in a jarring way.
+ * Reference to the exit taken prior to a progressive load. Used to initialize
+ * player's sprite and such after the transition.
  */
-bool has_released_dpad = true;
+Exit *current_exit;
 
 /**
  * Lookup table that converts map_tile ids into graphic tile ids. The graphics
@@ -174,17 +174,26 @@ const Exit area0_exits[] = {
 };
 
 const uint16_t area0_palettes[] = {
-  // Palette 0 (default)
+  // Palette 0
   RGB8(190, 200, 190),
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
   RGB8(32, 0, 0),
-  // Palette 1-5
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB8(24, 0, 0),
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
-  RGB_WHITE, RGB8(120, 120, 120), RGB8(60, 60, 60), RGB_BLACK,
+  // Palette 1
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB8(24, 0, 0),
+  // Palette 2
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+  // Palette 3
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
 };
 
 Area area0 = {
@@ -194,7 +203,7 @@ Area area0 = {
   2,                    // Number of maps in the area
   1,                    // Tile bank
   tile_data_dungeon,    // Tile data
-  area0_palettes,       // Palettes
+  area0_palettes,       // Palettes (always 4 palettes / area)
   area0_exits,          // Exits
   4,                    // Number of exits in the area
   // TODO Handle callbacks
@@ -221,9 +230,47 @@ void load_area(Area *a) {
   VBK_REG = VBK_BANK_0;
   load_tile_page(a->tile_bank, a->bg_tile_data, VRAM_BG_TILES);
   load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
-  set_bkg_palette(0, 6, a->palettes);
+  update_bg_palettes(0, 4, a->palettes);
 }
 
+/**
+ * Loads an individual map data tile into VRAM and the map attributes table.
+ * Note: this is broken out into an inline to make the map loading routine
+ * easier to read.
+ * 
+ * @param map_data Pointer to the next map data to load.
+ * @param vram Pointer to the VRAM location into which the graphics should be
+ *  loaded.
+ * @param map_attr Pointer to the place in the map attributes table where
+ *  attribute data should be placed.
+ */
+inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
+  uint8_t data = *map_data;
+  uint8_t attr = *(map_data + 1);
+  uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
+
+  // Set tilemap attributes
+  VBK_REG = VBK_ATTRIBUTES;
+  *vram = attr;
+  *(vram + 1) = attr;
+  *(vram + 0x20) = attr;
+  *(vram + 0x20 + 1) = attr;
+
+  // Set tile from data
+  VBK_REG = VBK_TILES;
+  *vram = tile;
+  *(vram + 0x20) = tile + 16;
+  *(vram + 1) = tile + 1;
+  *(vram + 0x20 + 1) = tile + 16 + 1;
+
+  // Load the tile type into main memory
+  *map_attr = data >> 6;
+}
+
+/**
+ * Loads a map in the current area with the given map_id.
+ * @param map_id Id of the map to load.
+ */
 void load_map(uint8_t map_id) {
   current_map_id = map_id;
   Map *map = &current_area->maps[map_id];
@@ -232,47 +279,28 @@ void load_map(uint8_t map_id) {
   SWITCH_ROM(map->bank);
   
   uint8_t *map_data = map->data;
-  uint8_t *vram_top = VRAM_BACKGROUND;
-  uint8_t *vram_bottom = VRAM_BACKGROUND_XY(0, 1);
-  MapTileAttribute *map_attributes = map_tile_attributes;
+  uint8_t *vram = VRAM_BACKGROUND;
+  MapTileAttribute *map_attr = map_tile_attributes;
 
   for (uint8_t y = 0; y < 16; y++) {
     for (uint8_t x = 0; x < 16; x++) {
-      uint8_t data = *map_data++;
-      uint8_t attr = *map_data++;
-      uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
-      
-      // Set tilemap attributes
-      VBK_REG = VBK_ATTRIBUTES;
-      *vram_top = attr;
-      *(vram_top + 1) = attr;
-      *vram_bottom = attr;
-      *(vram_bottom + 1) = attr;
-
-      // Set tile from data
-      VBK_REG = VBK_TILES;
-      if (tile == 0) {
-        *vram_top++ = 0;
-        *vram_top++ = 0;
-        *vram_bottom++ = 0;
-        *vram_bottom++ = 0;
-      } else {
-        *vram_top++ = tile;
-        *vram_top++ = tile + 1;
-        *vram_bottom++ = tile + 16;
-        *vram_bottom++ = tile + 16 + 1;
-      }
-
-      // Load the tile type into main memory
-      *map_attributes++ = data >> 6;
+      load_map_tile(map_data, vram, map_attr);
+      map_data += 2;
+      vram += 2;
+      map_attr++;
     }
-    vram_top += 32;
-    vram_bottom += 32;
+    vram += 32;
   }
 
   SWITCH_ROM(_prev_bank);
 }
 
+/**
+ * Determines if a player can move form the current square in the given
+ * direction.
+ * @param d Direction to check.
+ * @return `true` If the player can move in the given direction.
+ */
 bool can_move(Direction d) {
   uint8_t col = map_col;
   uint8_t row = map_row;
@@ -301,11 +329,6 @@ bool can_move(Direction d) {
 }
 
 void check_move(void) {
-  if (!has_released_dpad) {
-    has_released_dpad = was_released(J_DOWN | J_UP | J_LEFT | J_RIGHT);
-    return;
-  }
-
   if (is_down(J_UP) && can_move(UP))
     start_map_move(UP);
   else if (is_down(J_DOWN) && can_move(DOWN))
@@ -322,6 +345,14 @@ inline MapTileAttribute get_map_tile_attribute(void) {
   return map_tile_attributes[map_col + map_row * 16];
 }
 
+/**
+ * Handle state updates when a player lands on an exit tile. Currently the area
+ * structure defines a list of exits for all maps, if this function doesn't find
+ * an exit at the given position in the current map then nothing happens and the
+ * tile is treated as if it were simply a "ground" tile. 
+ *
+ * @return `true` If an exit was found and a transition has been initiated.
+ */
 bool handle_exit(void) {
   MapTileAttribute a = get_map_tile_attribute();
   if (a != MAP_EXIT)
@@ -333,31 +364,28 @@ bool handle_exit(void) {
     if (x->col != map_col) continue;
     if (x->row != map_row) continue;
   
-    // TODO add animated transition
-  
-    if (x->to_area != current_area->id) {
-      // TODO Handle area spanning exits
-    }
-
-    lcd_off();
+    current_exit = x;
     stop_map_move();
-    load_map(x->to_map);
-    map_col = x->to_col;
-    map_row = x->to_row;
-    set_map_xy_from_col_row();
-    update_map_positions();
-    hero_direction = x->heading;
-    has_released_dpad = false;
+    LCDC_REG ^= LCDCF_OBJON;
+    map_state = MAP_STATE_FADE_OUT;
+    fade_out();
 
-    lcd_on();
-  
+    // TODO Add player "exiting" animation based on exit type
+    // TODO Handle exits in the same map
+    // TODO Handle area spanning exits
+    // TODO Gracefully handle map sprites
+
     return true;
   }
   
   return false;
 }
 
+/**
+ * Updates map state while the character is moving.
+ */
 void update_map_move(void) {
+  // Move the map one pixel in the move direction
   switch (map_move_direction) {
   case UP:
     map_y--;
@@ -373,14 +401,27 @@ void update_map_move(void) {
     break;
   }
 
+  // Update map positions
   update_map_positions();
+  update_hero();
+  move_bkg(map_scroll_x, map_scroll_y);
+  
+  // Check if the move animation is complete
+  if (--map_move_counter != 0)
+    return;
 
-  if (--map_move_counter == 0) {
-    map_col = map_x >> 4;
-    map_row = map_y >> 4;
-    if (!handle_exit()) {
-      check_move();
-    }
+  // Move is complete, update the row/column and execute handlers for the
+  // landing tile's type.
+  map_col = map_x >> 4;
+  map_row = map_y >> 4;
+
+  switch (get_map_tile_attribute()) {
+  case MAP_EXIT:
+    handle_exit();
+    break;
+  default:
+    // Immediately check for d-pad input to allow continuous movement.
+    check_move();
   }
 }
 
@@ -396,14 +437,42 @@ void update_world_map(void) {
   switch (map_state) {
   case MAP_STATE_WAITING:
     check_move();
+    update_hero();
+    move_bkg(map_scroll_x, map_scroll_y);
     break;
   case MAP_STATE_MOVING:
     update_map_move();
     break;
   }
-  update_hero();
-  move_bkg(map_scroll_x, map_scroll_y);
 }
 
 void draw_world_map(void) {
+  switch (map_state) {
+  case MAP_STATE_FADE_OUT:
+    if (fade_update()) {
+      map_state = MAP_STATE_LOAD;
+    }
+    break;
+  case MAP_STATE_LOAD:
+    lcd_off();
+    load_map(current_exit->to_map);
+    map_col = current_exit->to_col;
+    map_row = current_exit->to_row;
+    hero_direction = current_exit->heading;
+    set_map_xy_from_col_row();
+    update_map_positions();
+    update_hero();
+    move_bkg(map_scroll_x, map_scroll_y);
+    map_state = MAP_STATE_FADE_IN;
+    fade_in();
+    lcd_on();
+    break;
+  case MAP_STATE_FADE_IN:
+    if (fade_update()) {
+      // TODO Animate the character based on heading type
+      map_state = MAP_STATE_WAITING;
+      LCDC_REG ^= LCDCF_OBJON;
+    }
+    break;
+  }
 }

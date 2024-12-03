@@ -5,6 +5,8 @@
     "cgb.h": "c",
     "stdint.h": "c",
     "main_menu.h": "c",
-    "incbin.h": "c"
+    "incbin.h": "c",
+    "util.h": "c",
+    "fade_transition.h": "c"
   }
 }
