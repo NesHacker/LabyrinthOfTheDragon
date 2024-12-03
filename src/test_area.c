@@ -106,7 +106,7 @@ void area0_on_interact(void) {
     if (player_at(6, 5, UP)) {
       if (!check_flags(TEST_FLAGS, FLAG_SCONCE_LIT)) {
         if (!check_flags(TEST_FLAGS, FLAG_HAS_TORCH)) {
-          map_textbox("A sconce adorns\nthe wall\x60\x03Its flame long\nextinguished.");
+          map_textbox("A sconce adorns\nthe wall\x60\fIts flame long\nextinguished.");
         } else {
           set_flags(TEST_FLAGS, FLAG_SCONCE_LIT);
           vram = VRAM_BACKGROUND_XY(22, 4);
@@ -114,14 +114,14 @@ void area0_on_interact(void) {
           set_vram_byte(vram + 1, 0x4F);
           set_vram_byte(vram + 0x20, 0x5E);
           set_vram_byte(vram + 0x20 + 1, 0x5F);
-          map_textbox("Wait\x60\003What was that\nsound?");
+          map_textbox("Wait\x60\fWhat was that\nsound?");
         }
       }
     }
 
     // Boss Door
     if (player_at(11, 3, UP)) {
-      map_textbox("Locked tight.\x03Whatever's behind\nthis door feels\x60\nOminous.");
+      map_textbox("Locked tight.\fWhatever's behind\nthis door feels\x60\nOminous.");
     }
 
     // Torch chest
@@ -143,7 +143,7 @@ void area0_on_interact(void) {
     if (player_at(3, 10, DOWN)) {
       if (!check_flags(TEST_FLAGS, FLAG_EMPTY_CHEST)) {
         set_flags(TEST_FLAGS, FLAG_EMPTY_CHEST);
-        map_textbox("Nothing but dust.\003Best look\nelsewhere\x60");
+        map_textbox("Nothing but dust.\fBest look\nelsewhere\x60");
       } else {
         map_textbox("Yep.\nStill empty.");
       }

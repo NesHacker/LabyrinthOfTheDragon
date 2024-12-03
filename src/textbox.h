@@ -26,6 +26,10 @@ typedef enum TextboxState {
 #define TEXTBOX_ARROW_DELAY     40
 #define TEXTBOX_MAX_LINE_CHARS  17
 
+#define TEXTBOX_PAGE_BREAK  '\f'
+#define TEXTBOX_LINE_BREAK  '\n'
+#define TEXTBOX_END         0
+
 extern TextboxState textbox_state;
 extern palette_color_t textbox_palette[4];
 

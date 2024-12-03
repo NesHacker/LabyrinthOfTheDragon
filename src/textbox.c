@@ -48,7 +48,7 @@ void open_textbox(const char *text) {
   textbox_text = text;
   textbox_text_idx = 0;
   textbox_state = TEXTBOX_OPENING;
-  VBK_REG = VBK_TILES; // Caution: textbox logic should *only* update tiles
+  VBK_REG = VBK_TILES;
   clear_textbox();
 }
 
@@ -103,10 +103,11 @@ void update_textbox(void) {
       init_timer(textbox_timer, TEXTBOX_CHAR_DELAY);
       uint8_t c = textbox_text[textbox_text_idx];
       textbox_text_idx++;
-
-      if (c == 0x00) {
+      switch (c) {
+      case 0:
         textbox_state = TEXTBOX_FINISHED;
-      } else if (c == '\n') {
+        break;
+      case TEXTBOX_LINE_BREAK:
         textbox_line++;
         if (textbox_line == 1) {
           textbox_line++;
@@ -116,11 +117,14 @@ void update_textbox(void) {
           init_timer(textbox_timer, TEXTBOX_ARROW_DELAY);
           set_vram_byte(arrow_vram, 0xFF);
         }
-      } else if (c == 0x03) {
+        break;
+      case TEXTBOX_PAGE_BREAK:
         textbox_state = TEXTBOX_PAGE_WAIT;
         init_timer(textbox_timer, TEXTBOX_ARROW_DELAY);
         set_vram_byte(arrow_vram, 0xFF);
-      } else {
+        break;
+      default:
+        VBK_REG = VBK_TILES;
         set_vram_byte(textbox_vram++, c + 0x80);
       }
     }
