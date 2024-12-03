@@ -71,12 +71,8 @@ const uint16_t area0_palettes[] = {
 };
 
 void area0_on_init(void) {
-  // TODO: Make sprite sheet loading default on areas
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_objects, VRAM_SPRITE_TILES);
   update_sprite_palettes(7, 1, fire_palette);
   init_timer(flame_timer, 17);
-
   set_sprite_tile(FLAME_SPRITE, 0x04);
   set_sprite_prop(FLAME_SPRITE, 0b00001111);
   move_sprite(FLAME_SPRITE, 0, 0);
@@ -165,8 +161,9 @@ Chest area0_chests[] = {
 Area area0 = {
   0,                    // Id
   2, 14,                // Default column & row
-  1,                    // Background tileset bank & data
+  1,                    // Tilesets
   tile_data_dungeon,
+  tile_data_objects,
   area0_palettes,       // Palettes (always 4 palettes / area)
   2,                    // Maps
   area0_maps,

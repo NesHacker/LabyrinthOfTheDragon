@@ -122,10 +122,12 @@ void load_area(Area *a) {
   set_map_xy_from_col_row();
   update_map_positions();
 
-  // Load tileset and palettes
+  // Load tilesets and palettes
   VBK_REG = VBK_BANK_0;
   load_tile_page(a->tile_bank, a->bg_tile_data, VRAM_BG_TILES);
   load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
+  VBK_REG = VBK_BANK_1;
+  load_tile_page(1, tile_data_objects, a->sprite_tile_data);
   update_bg_palettes(0, 4, a->palettes);
 
   on_init();

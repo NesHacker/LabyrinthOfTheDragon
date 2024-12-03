@@ -207,6 +207,11 @@ typedef struct Area {
   uint8_t *bg_tile_data;
 
   /**
+   * Pointer to the sprite tile data for the map.
+   */
+  uint8_t *sprite_tile_data;
+
+  /**
    * Palettes to use for the dungeon.
    */
   palette_color_t *palettes;
