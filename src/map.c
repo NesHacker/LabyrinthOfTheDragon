@@ -4,10 +4,12 @@
 #include <stdbool.h>
 
 #include "data.h"
+#include "flags.h"
 #include "hero.h"
 #include "joypad.h"
 #include "map.h"
 #include "palette.h"
+#include "textbox.h"
 #include "util.h"
 
 Area *current_area;
@@ -174,15 +176,15 @@ const Exit area0_exits[] = {
 };
 
 const uint16_t area0_palettes[] = {
-  // Palette 0
+  // Palette 0 - Core background tiles
   RGB8(190, 200, 190),
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
-  RGB8(32, 0, 0),
-  // Palette 1
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
+  RGB8(24, 0, 0),
+  // Palette 1 - Treasure chests
+  RGB8(192, 138, 40),
+  RGB8(100, 100, 140),
+  RGB8(40, 60, 40),
   RGB8(24, 0, 0),
   // Palette 2
   RGB_WHITE,
@@ -196,6 +198,111 @@ const uint16_t area0_palettes[] = {
   RGB_BLACK,
 };
 
+
+palette_color_t fire_palette[4] = {
+  RGB_BLACK,
+  RGB8(213, 200, 89),
+  RGB8(132, 88, 32),
+  RGB8(72, 21, 13),
+};
+
+
+#define FLAG_HAS_TORCH            1 << 0
+#define FLAG_SCONCE_LIT           1 << 1
+#define FLAG_EMPTY_CHEST_CHECKED  1 << 2
+
+#define FLAME_SPRITE 32
+
+Timer flame_timer;
+uint8_t flame_state = 0;
+
+void area0_on_init(void) {
+  // TODO: Make sprite sheet loading default on areas
+  VBK_REG = VBK_BANK_1;
+  load_tile_page(1, tile_data_objects, VRAM_SPRITE_TILES);
+  update_sprite_palettes(7, 1, fire_palette);
+  init_timer(flame_timer, 17);
+
+  set_sprite_tile(FLAME_SPRITE, 0x04);
+  set_sprite_prop(FLAME_SPRITE, 0b00001111);
+  move_sprite(FLAME_SPRITE, 0, 0);
+}
+
+void area0_on_update(void) {
+  if (update_timer(flame_timer)) {
+    reset_timer(flame_timer);
+    flame_state ^= 1;
+    set_sprite_tile(FLAME_SPRITE, flame_state ? 0x14 : 0x04);
+  }
+
+  if (check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
+    const uint8_t c = 7;
+    const uint8_t r = 5;
+    const uint8_t x = c * 16 - 4;
+    const uint8_t y = r * 16 + 2;
+    move_sprite(FLAME_SPRITE, x - map_scroll_x, y - map_scroll_y);
+  }
+}
+
+void area0_on_interact(void) {
+  uint8_t *vram;
+
+  if (current_map_id == 0) {
+    // Sconce
+    if (map_col == 6 && map_row == 5 && hero_direction == UP) {
+      if (!check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
+        if (!check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)) {
+          map_textbox("A sconce adorns\nthe wall\x60\x03Its flame long\nextinguished."); 
+        } else {
+          set_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT);
+          vram = VRAM_BACKGROUND_XY(22, 4);
+          set_vram_byte(vram, 0x4E);
+          set_vram_byte(vram + 1, 0x4F);
+          set_vram_byte(vram + 0x20, 0x5E);
+          set_vram_byte(vram + 0x20 + 1, 0x5F);
+          map_textbox("Wait\x60\003What was that\nsound?");
+        }
+      }
+    }
+  
+    // Boss Door
+    if (map_col == 11 && map_row == 3 && hero_direction == UP) {
+      map_textbox("Locked tight.\x03Whatever's behind\nthis door feels\x60\nOminous.");
+    }
+  
+    // Torch chest
+    if (
+      map_col == 9 && map_row == 12 && hero_direction == DOWN &&
+      !check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)
+    ) {
+      vram = VRAM_BACKGROUND_XY(18, 26);
+      set_vram_byte(vram, 0x2C);
+      set_vram_byte(vram + 1, 0x2D);
+      set_vram_byte(vram + 0x20, 0x3C);
+      set_vram_byte(vram + 0x20 + 1, 0x3D);
+      set_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH);
+      map_textbox("Nice!\nYou found a torch.");
+    }
+  }
+
+  if (current_map_id == 1) {
+    // Empty chest
+    if (map_col == 3 && map_row == 10 && hero_direction == DOWN) {
+      if (!check_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED)) {
+        set_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED);
+        map_textbox("Nothing but dust.\003Best look\nelsewhere\x60");
+      } else {
+        map_textbox("Yep.\nStill empty.");
+      }
+    }
+  
+    // Wall Skull
+    if (map_col == 9 && map_row == 3) {
+      map_textbox("This skull seems\x60\nOut of place.");
+    }
+  }
+}
+
 Area area0 = {
   0,                    // Id
   2, 14,                // Default column & row
@@ -206,7 +313,10 @@ Area area0 = {
   area0_palettes,       // Palettes (always 4 palettes / area)
   area0_exits,          // Exits
   4,                    // Number of exits in the area
-  // TODO Handle callbacks
+  0,                    // Callback bank
+  area0_on_init,        // Callbacks
+  area0_on_update,
+  area0_on_interact,
 };
 
 // -----------------------------------------------------------------------------
@@ -231,6 +341,10 @@ void load_area(Area *a) {
   load_tile_page(a->tile_bank, a->bg_tile_data, VRAM_BG_TILES);
   load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
   update_bg_palettes(0, 4, a->palettes);
+
+  // Run the initializer callback if applicable
+  if (a->on_init)
+    a->on_init();
 }
 
 /**
@@ -425,18 +539,35 @@ void update_map_move(void) {
   }
 }
 
+bool check_action(void) {
+  if (was_pressed(J_A) && current_area->on_action) {
+    current_area->on_action();
+    return true;
+  }
+  return false;
+}
+
+inline void map_textbox(const char *text) {
+  map_state = MAP_STATE_TEXTBOX;
+  open_textbox(text); 
+}
+
 void init_world_map(void) {
   lcd_off();
   init_hero();
   load_area(&area0);
   load_map(0);
+  init_text_box();
+  update_sprite_palettes(1, 1, fire_palette);
   lcd_on();
 }
 
 void update_world_map(void) {
   switch (map_state) {
   case MAP_STATE_WAITING:
-    check_move();
+    if (!check_action()) {
+      check_move();
+    }
     update_hero();
     move_bkg(map_scroll_x, map_scroll_y);
     break;
@@ -444,10 +575,19 @@ void update_world_map(void) {
     update_map_move();
     break;
   }
+
+  if (current_area->on_update)
+    current_area->on_update();
 }
 
 void draw_world_map(void) {
   switch (map_state) {
+  case MAP_STATE_TEXTBOX:
+    update_textbox();
+    if (textbox_state == TEXTBOX_CLOSED) {
+      map_state = MAP_STATE_WAITING;
+    }
+    break;
   case MAP_STATE_FADE_OUT:
     if (fade_update()) {
       map_state = MAP_STATE_LOAD;

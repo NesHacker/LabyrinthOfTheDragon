@@ -4,8 +4,16 @@
 
 #include "data.h"
 #include "joypad.h"
+#include "palette.h"
 #include "textbox.h"
 #include "util.h"
+
+palette_color_t textbox_palette[4] = {
+  RGB8(24, 75, 105),
+  RGB8(24, 25, 105),
+  RGB8(100, 100, 100),
+  RGB8(200, 200, 200)
+};
 
 TextboxState textbox_state = TEXTBOX_CLOSED;
 Timer textbox_timer;
@@ -31,6 +39,9 @@ void init_text_box(void) {
   textbox_y = 144;
   textbox_state = TEXTBOX_CLOSED;
   move_win(7, textbox_y);
+  update_bg_palettes(7, 1, textbox_palette);
+  VBK_REG = VBK_BANK_1;
+  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
 }
 
 void open_textbox(const char *text) {

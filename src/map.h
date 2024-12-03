@@ -37,17 +37,20 @@ typedef enum MapState {
    */
   MAP_STATE_FADE_IN,
   /**
-   * Denotes that the current map is being loaded. To avoid shutting off the
-   * LCD, the screen is first faded to an area's defined fade color, then maps
-   * are loaded progressively over the course of a few frames.
+   * Denotes that the current map is being loaded.
    */
-  MAP_STATE_LOAD
+  MAP_STATE_LOAD,
+  /**
+   * Denotes that the textbox is currently displayed.
+   */
+  MAP_STATE_TEXTBOX
 } MapState;
 
 /**
  * Enumeration of all types of map exit tiles.
  */
 typedef enum ExitType {
+
   /**
    * Normal doorway exit.
    */
@@ -180,7 +183,7 @@ typedef struct Area {
    * Bank where the map's callback functions reside.
    */
   uint8_t callback_bank;
-  
+
   /**
    * Called when the map is initialized by the game engine.
    */
@@ -190,6 +193,15 @@ typedef struct Area {
    * Called on game loop update when the map is active.
    */
   void (*on_update)(void);
+  
+  /**
+   * Called when the player interacts by pressing the "A" button while in the
+   * area.
+   * @param map_id Id of the currently loaded map.
+   * @param col Current column for the player.
+   * @param row Current row for the player.
+   */
+  void (*on_action)(void);
   
   /**
    * Called on VBLANK draw when the map is active.
@@ -279,6 +291,12 @@ extern uint8_t map_col;
  * Row the player occupies in the active map.
  */
 extern uint8_t map_row;
+
+/**
+ * Opens a textbox while on the world map.
+ * @param text Text to display in the text box.
+ */
+inline void map_textbox(const char *text);
 
 /**
  * Initialize the world map controller.
