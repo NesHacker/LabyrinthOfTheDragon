@@ -2,6 +2,7 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "data.h"
 #include "flags.h"
@@ -240,7 +241,9 @@ void area0_on_update(void) {
     const uint8_t r = 5;
     const uint8_t x = c * 16 - 4;
     const uint8_t y = r * 16 + 2;
-    move_sprite(FLAME_SPRITE, x - map_scroll_x, y - map_scroll_y);
+    uint8_t sx = current_map_id == 0 ? x - map_scroll_x : 0;
+    uint8_t sy = current_map_id == 0 ? y - map_scroll_y : 0;
+    move_sprite(FLAME_SPRITE, sx, sy);
   }
 }
 
@@ -316,6 +319,7 @@ Area area0 = {
   0,                    // Callback bank
   area0_on_init,        // Callbacks
   area0_on_update,
+  NULL,
   area0_on_interact,
 };
 
@@ -615,4 +619,7 @@ void draw_world_map(void) {
     }
     break;
   }
+
+  if (current_area->on_draw)
+    current_area->on_draw();
 }

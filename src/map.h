@@ -195,6 +195,11 @@ typedef struct Area {
   void (*on_update)(void);
   
   /**
+   * Called on VBLANK draw when the map is active.
+   */
+  void (*on_draw)(void);
+
+  /**
    * Called when the player interacts by pressing the "A" button while in the
    * area.
    * @param map_id Id of the currently loaded map.
@@ -202,11 +207,6 @@ typedef struct Area {
    * @param row Current row for the player.
    */
   void (*on_action)(void);
-  
-  /**
-   * Called on VBLANK draw when the map is active.
-   */
-  void (*on_draw)(void);
   
   /**
    * Called when the player enters the map from another map.
