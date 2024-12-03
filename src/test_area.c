@@ -30,10 +30,13 @@ palette_color_t fire_palette[4] = {
 
 #define FLAME_SPRITE 32
 
+#define MAP_FLOOR1 0
+#define MAP_FLOOR2 1
+
 const Map area0_maps[] = {
   // id, bank, data
-  { 0, 2, map_example_0 },
-  { 1, 2, map_example_1 }
+  { MAP_FLOOR1, 2, map_example_0 },
+  { MAP_FLOOR2, 2, map_example_1 }
 };
 
 const Exit area0_exits[] = {
@@ -97,11 +100,11 @@ void area0_on_update(void) {
   }
 }
 
-void area0_on_interact(void) {
+void area0_on_action(void) {
   uint8_t *vram;
 
   switch(active_map->id) {
-  case 0:
+  case MAP_FLOOR1:
     // Sconce
     if (player_at(6, 5, UP)) {
       if (!check_flags(TEST_FLAGS, FLAG_SCONCE_LIT)) {
@@ -124,21 +127,8 @@ void area0_on_interact(void) {
       map_textbox("Locked tight.\fWhatever's behind\nthis door feels\x60\nOminous.");
     }
 
-    // Torch chest
-    if (
-      player_at(9, 12, DOWN) &&
-      !check_flags(TEST_FLAGS, FLAG_HAS_TORCH)
-    ) {
-      vram = VRAM_BACKGROUND_XY(18, 26);
-      set_vram_byte(vram, 0x2C);
-      set_vram_byte(vram + 1, 0x2D);
-      set_vram_byte(vram + 0x20, 0x3C);
-      set_vram_byte(vram + 0x20 + 1, 0x3D);
-      set_flags(TEST_FLAGS, FLAG_HAS_TORCH);
-      map_textbox("Nice!\nYou found a torch.");
-    }
     break;
-  case 1:
+  case MAP_FLOOR2:
     // Empty chest
     if (player_at(3, 10, DOWN)) {
       if (!check_flags(TEST_FLAGS, FLAG_EMPTY_CHEST)) {
@@ -157,19 +147,38 @@ void area0_on_interact(void) {
   }
 }
 
+#define CHEST_TORCH 0
+
+void area0_on_chest(Chest *chest) {
+  switch (chest->id) {
+  case CHEST_TORCH:
+    map_textbox("Nice!\nYou found a torch.");
+    break;
+  }
+}
+
+Chest area0_chests[] = {
+  // id, map_id, col, row, flag_page, open_flag
+  { CHEST_TORCH, MAP_FLOOR1, 9, 13, TEST_FLAGS, FLAG_HAS_TORCH }
+};
+
 Area area0 = {
   0,                    // Id
   2, 14,                // Default column & row
-  area0_maps,           // Maps
-  2,                    // Number of maps in the area
-  1,                    // Tile bank
-  tile_data_dungeon,    // Tile data
+  1,                    // Background tileset bank & data
+  tile_data_dungeon,
   area0_palettes,       // Palettes (always 4 palettes / area)
-  area0_exits,          // Exits
-  4,                    // Number of exits in the area
-  0,                    // Callback bank
-  area0_on_init,        // Callbacks
+  2,                    // Maps
+  area0_maps,
+  4,                    // Exits
+  area0_exits,
+  1,                    // Chests
+  area0_chests,
+  0,                    // Callback Bank & Callbacks
+  area0_on_init,
   area0_on_update,
-  NULL,
-  area0_on_interact,
+  NULL, // on_draw
+  area0_on_action,
+  NULL, // before_chest
+  area0_on_chest,
 };

@@ -14,7 +14,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "flags.h"
 #include "hero.h"
+#include "textbox.h"
 #include "util.h"
 
 /**
@@ -139,6 +141,38 @@ typedef struct Map {
 } Map;
 
 /**
+ * Data representation of a treasure chest in an area. Chests can be placed at
+ * any position in any map. Whether or not they have been opened is determined
+ * by a global flag (so the state can be saved to SRAM).
+ */
+typedef struct Chest {
+  /**
+   * Id for the chest. This should be the chest list array index.
+   */
+  uint8_t id;
+  /**
+   * Id for the map where the chest resides.
+   */
+  uint8_t map_id;
+  /**
+   * Column for the chest.
+   */
+  uint8_t col;
+  /**
+   * Row for the chest.
+   */
+  uint8_t row;
+  /**
+   * Flag page for the chest's "open state".
+   */
+  FlagPage flag_page;
+  /**
+   * Flag mask for the "opened" state.
+   */
+  uint8_t open_flag;
+} Chest;
+
+/**
  * Contains callbacks and data for a game area. Areas define tilesets, palettes,
  * maps, and callbacks used by the world map controller to produce adventure
  * gameplay for the game.
@@ -163,16 +197,6 @@ typedef struct Area {
   uint8_t default_start_row;
 
   /**
-   * List of all pages for the map.
-   */
-  Map *maps;
-
-  /**
-   * Number of pages in the map.
-   */
-  uint8_t num_maps;
-
-  /**
    * Bank for the map's tile data.
    */
   uint8_t tile_bank;
@@ -185,7 +209,22 @@ typedef struct Area {
   /**
    * Palettes to use for the dungeon.
    */
-  uint16_t *palettes;
+  palette_color_t *palettes;
+
+  /**
+   * Number of pages in the map.
+   */
+  uint8_t num_maps;
+
+  /**
+   * List of all pages for the map.
+   */
+  Map *maps;
+
+  /**
+   * Number of exit entries for the area.
+   */
+  uint8_t num_exits;
 
   /**
    * List of exits for all pages on the map.
@@ -193,9 +232,14 @@ typedef struct Area {
   Exit *exits;
 
   /**
-   * Number of exit entries for the area.
+   * Number of chests in the area.
    */
-  uint8_t num_exits;
+  uint8_t num_chests;
+
+  /**
+   * Array of treasure chests for the area.
+   */
+  Chest *chests;
 
   /**
    * Bank where the map's callback functions reside.
@@ -225,6 +269,18 @@ typedef struct Area {
    * @param row Current row for the player.
    */
   void (*on_action)(void);
+
+  /**
+   * Called before a chest is opened.
+   * @param chest_id Id of the chest being opened.
+   * @return `true` if the chest can be opened.
+   */
+  bool (*before_chest)(Chest *chest);
+
+  /**
+   * Called after a chest has been opened.
+   */
+  void (*on_chest)(Chest *chest);
 
   /**
    * Called when the player enters the map from another map.
@@ -284,6 +340,12 @@ typedef enum MapTileAttribute {
    */
   MAP_SPECIAL
 } MapTileAttribute;
+
+
+/**
+ * Pointer to the active area.
+ */
+extern Area *active_area;
 
 /**
  * Pointer to the area that is currently loaded.
@@ -353,12 +415,6 @@ extern uint8_t map_move_counter;
 extern Exit *current_exit;
 
 /**
- * Opens a textbox while on the world map.
- * @param text Text to display in the text box.
- */
-inline void map_textbox(const char *text);
-
-/**
  * Initialize the world map controller.
  */
 void init_world_map(void) NONBANKED;
@@ -372,6 +428,15 @@ void update_world_map(void) NONBANKED;
  * VBLANK draw routine for the world map controller.
  */
 void draw_world_map(void) NONBANKED;
+
+/**
+ * Opens a textbox while on the world map.
+ * @param text Text to display in the text box.
+ */
+inline void map_textbox(const char *text) {
+  map_state = MAP_STATE_TEXTBOX;
+  open_textbox(text);
+}
 
 /**
  * @return The map tile attribute at the player's current column and row.
@@ -425,6 +490,83 @@ inline bool is_map(uint8_t id) {
  */
 inline bool player_at(uint8_t col, uint8_t row, Direction d) {
   return map_col == col && map_row == row && hero_direction == d;
+}
+
+/**
+ * @param column Column of the target square.
+ * @param row Row of the target square.
+ * @return `true` If the player is facing the target square.
+ */
+inline bool player_facing(uint8_t col, uint8_t row) {
+  return (
+    player_at(col - 1, row, RIGHT) ||
+    player_at(col + 1, row, LEFT) ||
+    player_at(col, row - 1, DOWN) ||
+    player_at(col, row + 1, UP)
+  );
+}
+
+/**
+ * Set the "open" state graphics for the given chest.
+ * @param chest Chest that needs to be graphically depicted as "open".
+ */
+inline void set_chest_open_graphics(Chest *chest) {
+  // TODO Decide on a standard position for chest graphics in the general area
+  //      tileset layout, 0x2C will suffice for now.
+  uint8_t *vram = VRAM_BACKGROUND_XY(chest->col * 2, chest->row * 2);
+  set_vram_byte(vram, 0x2C);
+  set_vram_byte(vram + 1, 0x2D);
+  set_vram_byte(vram + 0x20, 0x3C);
+  set_vram_byte(vram + 0x20 + 1, 0x3D);
+}
+
+/**
+ * Executes the active area's `on_init` callback if one is set.
+ */
+inline void on_init(void) {
+  if (active_area->on_init)
+    active_area->on_init();
+}
+
+/**
+ * Executes the active area's `on_update` callback if one is set.
+ */
+inline void on_update(void) {
+  if (active_area->on_update)
+    active_area->on_update();
+}
+
+/**
+ * Executes the active area's `on_draw` callback if one is set.
+ */
+inline void on_draw(void) {
+  if (active_area->on_draw)
+    active_area->on_draw();
+}
+
+/**
+ * Executes the active area's `on_action` callback if one is set.
+ */
+inline void on_action(void) {
+  if (active_area->on_action)
+    active_area->on_action();
+}
+
+/**
+ * Executes the active area's `before_chest` callback if one is set.
+ */
+inline bool before_chest(Chest *chest) {
+  if (active_area->before_chest)
+    return active_area->before_chest(chest);
+  return true;
+}
+
+/**
+ * Executes the active area's `on_chest` callback if one is set.
+ */
+inline void on_chest(Chest *chest) {
+  if (active_area->on_chest)
+    active_area->on_chest(chest);
 }
 
 #endif

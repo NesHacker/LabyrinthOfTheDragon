@@ -7,7 +7,7 @@
 
 /**
  * @param b Bit for the flag mask.
- * @return mask for a flag at the given bit.
+ * @return Mask for a flag at the given bit.
  */
 #define FLAG(b) (1 << (b))
 

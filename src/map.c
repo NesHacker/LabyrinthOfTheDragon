@@ -128,16 +128,14 @@ void load_area(Area *a) {
   load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
   update_bg_palettes(0, 4, a->palettes);
 
-  // Run the initializer callback if applicable
-  if (a->on_init)
-    a->on_init();
+  on_init();
 }
 
 /**
  * Loads an individual map data tile into VRAM and the map attributes table.
  * Note: this is broken out into an inline to make the map loading routine
  * easier to read.
- * 
+ *
  * @param map_data Pointer to the next map data to load.
  * @param vram Pointer to the VRAM location into which the graphics should be
  *  loaded.
@@ -175,9 +173,9 @@ void load_map(uint8_t map_id) {
   Map *map = &active_area->maps[map_id];
   active_map = map;
 
-  uint8_t _prev_bank = _current_bank;  
+  uint8_t _prev_bank = _current_bank;
   SWITCH_ROM(map->bank);
-  
+
   uint8_t *map_data = map->data;
   uint8_t *vram = VRAM_BACKGROUND;
   MapTileAttribute *map_attr = map_tile_attributes;
@@ -193,6 +191,16 @@ void load_map(uint8_t map_id) {
   }
 
   SWITCH_ROM(_prev_bank);
+
+  // Set chest graphics based on their open flag state
+  Chest *chest = active_area->chests;
+  for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
+    if (chest->map_id != active_map->id)
+      continue;
+    if (check_flags(chest->flag_page, chest->open_flag)) {
+      set_chest_open_graphics(chest);
+    }
+  }
 }
 
 /**
@@ -250,7 +258,7 @@ void check_move(void) {
  * Handle state updates when a player lands on an exit tile. Currently the area
  * structure defines a list of exits for all maps, if this function doesn't find
  * an exit at the given position in the current map then nothing happens and the
- * tile is treated as if it were simply a "ground" tile. 
+ * tile is treated as if it were simply a "ground" tile.
  *
  * @return `true` If an exit was found and a transition has been initiated.
  */
@@ -264,7 +272,7 @@ bool handle_exit(void) {
     if (x->map_id != active_map->id) continue;
     if (x->col != map_col) continue;
     if (x->row != map_row) continue;
-  
+
     active_exit = x;
     stop_map_move();
     LCDC_REG ^= LCDCF_OBJON;
@@ -278,7 +286,7 @@ bool handle_exit(void) {
 
     return true;
   }
-  
+
   return false;
 }
 
@@ -306,7 +314,7 @@ void update_map_move(void) {
   update_map_positions();
   update_hero();
   move_bkg(map_scroll_x, map_scroll_y);
-  
+
   // Check if the move animation is complete
   if (--map_move_counter != 0)
     return;
@@ -326,17 +334,41 @@ void update_map_move(void) {
   }
 }
 
+
+/**
+ * Determines if a player is attempting to open a chest and handles the logic
+ * if they are.
+ */
+void check_chests(void) {
+  Chest *chest = active_area->chests;
+  for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
+    if (active_map->id != chest->map_id)
+      continue;
+    if (check_flags(chest->flag_page, chest->open_flag))
+      continue;
+    if (!player_facing(chest->col, chest->row))
+      continue;
+    if (before_chest(chest)) {
+      set_flags(chest->flag_page, chest->open_flag);
+      set_chest_open_graphics(chest);
+      on_chest(chest);
+    }
+    return;
+  }
+}
+
+/**
+ * Checks to see if the player is attempting to perform an action by pressing
+ * the A button.
+ * @return `true` if an action was attempted.
+ */
 bool check_action(void) {
-  if (was_pressed(J_A) && active_area->on_action) {
-    active_area->on_action();
+  if (was_pressed(J_A)) {
+    check_chests();
+    on_action();
     return true;
   }
   return false;
-}
-
-inline void map_textbox(const char *text) {
-  map_state = MAP_STATE_TEXTBOX;
-  open_textbox(text); 
 }
 
 void init_world_map(void) {
@@ -361,9 +393,7 @@ void update_world_map(void) {
     update_map_move();
     break;
   }
-
-  if (active_area->on_update)
-    active_area->on_update();
+  on_update();
 }
 
 void draw_world_map(void) {
@@ -401,7 +431,5 @@ void draw_world_map(void) {
     }
     break;
   }
-
-  if (active_area->on_draw)
-    active_area->on_draw();
+  on_draw();
 }
