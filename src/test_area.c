@@ -7,10 +7,6 @@
 #include "map.h"
 #include "palette.h"
 
-#define FLAG_HAS_TORCH            1 << 0
-#define FLAG_SCONCE_LIT           1 << 1
-#define FLAG_EMPTY_CHEST_CHECKED  1 << 2
-
 // -----------------------------------------------------------------------------
 // Potentially can be factored out
 // -----------------------------------------------------------------------------
@@ -28,50 +24,24 @@ palette_color_t fire_palette[4] = {
 // Map specific
 // -----------------------------------------------------------------------------
 
+#define FLAG_HAS_TORCH    FLAG(0)
+#define FLAG_SCONCE_LIT   FLAG(1)
+#define FLAG_EMPTY_CHEST  FLAG(2)
+
 #define FLAME_SPRITE 32
 
 const Map area0_maps[] = {
-  {
-    0,              // id
-    2,              // bank
-    map_example_0   // data
-  },
+  // id, bank, data
+  { 0, 2, map_example_0 },
   { 1, 2, map_example_1 }
 };
 
 const Exit area0_exits[] = {
-  {
-    0,      // map_id
-    2, 2,   // col, row
-    0,      // to_area
-    1,      // to_map
-    2, 3,   // to_col, to_row
-    DOWN,   // heading
-  },
-  {
-    0,      // map_id
-    9, 9,   // col, row
-    0,      // to_area
-    1,      // to_map
-    9, 10,    // to_col, to_row
-    DOWN
-  },
-  {
-    1,      // map_id
-    2, 2,   // col, row
-    0,      // to_area
-    0,      // to_map
-    2, 3,    // to_col, to_row
-    DOWN
-  },
-  {
-    1,      // map_id
-    9, 9,   // col, row
-    0,      // to_area
-    0,      // to_map
-    9, 10,    // to_col, to_row
-    DOWN
-  },
+  // map_id, col, row, to_area, to_map, to_col, to_row, heading, type
+  { 0, 2, 2, 0, 1, 2, 3, DOWN, EXIT_STAIRS },
+  { 0, 9, 9, 0, 1, 9, 10, DOWN, EXIT_STAIRS },
+  { 1, 2, 2, 0, 0, 2, 3, DOWN, EXIT_STAIRS },
+  { 1, 9, 9, 0, 0, 9, 10, DOWN, EXIT_STAIRS },
 };
 
 const uint16_t area0_palettes[] = {
@@ -110,34 +80,35 @@ void area0_on_init(void) {
 }
 
 void area0_on_update(void) {
+  // TODO Create a flame sprite abstraction
   if (update_timer(flame_timer)) {
     reset_timer(flame_timer);
     flame_state ^= 1;
     set_sprite_tile(FLAME_SPRITE, flame_state ? 0x14 : 0x04);
   }
-
-  if (check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
-    const uint8_t c = 7;
-    const uint8_t r = 5;
-    const uint8_t x = c * 16 - 4;
-    const uint8_t y = r * 16 + 2;
-    uint8_t sx = active_map->id == 0 ? x - map_scroll_x : 0;
-    uint8_t sy = active_map->id == 0 ? y - map_scroll_y : 0;
-    move_sprite(FLAME_SPRITE, sx, sy);
+  if (check_flags(TEST_FLAGS, FLAG_SCONCE_LIT)) {
+    if (is_map(0)) {
+      const uint8_t x = 7 * 16 - 4;
+      const uint8_t y = 5 * 16 + 2;
+      move_sprite(FLAME_SPRITE, x - map_scroll_x, y - map_scroll_y);
+    } else {
+      move_sprite(FLAME_SPRITE, 0, 0);
+    }
   }
 }
 
 void area0_on_interact(void) {
   uint8_t *vram;
 
-  if (active_map->id == 0) {
+  switch(active_map->id) {
+  case 0:
     // Sconce
-    if (map_col == 6 && map_row == 5 && hero_direction == UP) {
-      if (!check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
-        if (!check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)) {
-          map_textbox("A sconce adorns\nthe wall\x60\x03Its flame long\nextinguished."); 
+    if (player_at(6, 5, UP)) {
+      if (!check_flags(TEST_FLAGS, FLAG_SCONCE_LIT)) {
+        if (!check_flags(TEST_FLAGS, FLAG_HAS_TORCH)) {
+          map_textbox("A sconce adorns\nthe wall\x60\x03Its flame long\nextinguished.");
         } else {
-          set_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT);
+          set_flags(TEST_FLAGS, FLAG_SCONCE_LIT);
           vram = VRAM_BACKGROUND_XY(22, 4);
           set_vram_byte(vram, 0x4E);
           set_vram_byte(vram + 1, 0x4F);
@@ -147,42 +118,42 @@ void area0_on_interact(void) {
         }
       }
     }
-  
+
     // Boss Door
-    if (map_col == 11 && map_row == 3 && hero_direction == UP) {
+    if (player_at(11, 3, UP)) {
       map_textbox("Locked tight.\x03Whatever's behind\nthis door feels\x60\nOminous.");
     }
-  
+
     // Torch chest
     if (
-      map_col == 9 && map_row == 12 && hero_direction == DOWN &&
-      !check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)
+      player_at(9, 12, DOWN) &&
+      !check_flags(TEST_FLAGS, FLAG_HAS_TORCH)
     ) {
       vram = VRAM_BACKGROUND_XY(18, 26);
       set_vram_byte(vram, 0x2C);
       set_vram_byte(vram + 1, 0x2D);
       set_vram_byte(vram + 0x20, 0x3C);
       set_vram_byte(vram + 0x20 + 1, 0x3D);
-      set_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH);
+      set_flags(TEST_FLAGS, FLAG_HAS_TORCH);
       map_textbox("Nice!\nYou found a torch.");
     }
-  }
-
-  if (active_map->id == 1) {
+    break;
+  case 1:
     // Empty chest
-    if (map_col == 3 && map_row == 10 && hero_direction == DOWN) {
-      if (!check_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED)) {
-        set_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED);
+    if (player_at(3, 10, DOWN)) {
+      if (!check_flags(TEST_FLAGS, FLAG_EMPTY_CHEST)) {
+        set_flags(TEST_FLAGS, FLAG_EMPTY_CHEST);
         map_textbox("Nothing but dust.\003Best look\nelsewhere\x60");
       } else {
         map_textbox("Yep.\nStill empty.");
       }
     }
-  
+
     // Wall Skull
-    if (map_col == 9 && map_row == 3) {
+    if (player_at(9, 3, UP)) {
       map_textbox("This skull seems\nout of place.");
     }
+    break;
   }
 }
 

@@ -1,6 +1,6 @@
 /*
  * Map.h - general structures and functions for handling the world map state.
- * 
+ *
  * The game world is represented by a series of areas, with each area having
  * at least one 16x16 tile map that fills an entire background tilemap. Maps are
  * connected to one another (both within an area, and across areas) via exits
@@ -11,7 +11,10 @@
 #define _MAP_H
 
 #include <gb/gb.h>
+#include <stdbool.h>
 #include <stdint.h>
+
+#include "hero.h"
 #include "util.h"
 
 /**
@@ -50,7 +53,6 @@ typedef enum MapState {
  * Enumeration of all types of map exit tiles.
  */
 typedef enum ExitType {
-
   /**
    * Normal doorway exit.
    */
@@ -110,41 +112,30 @@ typedef struct Exit {
    * Direction the hero should face after taking an exit.
    */
   Direction heading;
+  /**
+   * Type of exit.
+   */
+  ExitType exit;
 } Exit;
 
 /**
  * Holds the bank and data pointer for a map page.
  */
 typedef struct Map {
+  /**
+   * Id for the map. This must be the map's index in it's area's maps table.
+   */
   uint8_t id;
+
+  /**
+   * Bank where the data for the map resides.
+   */
   uint8_t bank;
+
+  /**
+   * Pointer to the data for the map.
+   */
   uint8_t *data;
-
-  /**
-   * Called when the player interacts by pressing the "A" button.
-   */
-  void (*on_action)(void);
-  
-  /**
-   * Called when the player enters the map from another map.
-   * @param from_id Id of the map the player exited.
-   */
-  void (*on_enter)(uint8_t from_id);
-  
-  /**
-   * Called when the player moves into a special tile.
-   */
-  void (*on_special)(void);
-
-  /**
-   * Called when the player moves into an "exit" tile.
-   */
-  void (*on_exit)(void);
-
-  /**
-   * Called when the map is active and the player moves into a floor tile.
-   */
-  void (*on_move)(void);
 } Map;
 
 /**
@@ -164,7 +155,7 @@ typedef struct Area {
    * not via an exit from another map.
    */
   uint8_t default_start_column;
-  
+
   /**
    * Default starting row for the player if the map is loaded directly and not
    * via an exit from another map.
@@ -185,17 +176,17 @@ typedef struct Area {
    * Bank for the map's tile data.
    */
   uint8_t tile_bank;
-  
+
   /**
    * Pointer to the background tile data for the map.
    */
   uint8_t *bg_tile_data;
-  
+
   /**
    * Palettes to use for the dungeon.
    */
   uint16_t *palettes;
-  
+
   /**
    * List of exits for all pages on the map.
    */
@@ -215,12 +206,12 @@ typedef struct Area {
    * Called when the map is initialized by the game engine.
    */
   void (*on_init)(void);
-  
+
   /**
    * Called on game loop update when the map is active.
    */
   void (*on_update)(void);
-  
+
   /**
    * Called on VBLANK draw when the map is active.
    */
@@ -234,14 +225,14 @@ typedef struct Area {
    * @param row Current row for the player.
    */
   void (*on_action)(void);
-  
+
   /**
    * Called when the player enters the map from another map.
    * @param from_id Id of the map the player exited.
    * @param to_id Id of the map the player is entering.
    */
   void (*on_enter)(uint8_t from_id, uint8_t to_id);
-  
+
   /**
    * Called when the map is active and the player moves into a special tile.
    */
@@ -272,7 +263,7 @@ typedef struct Area {
 
 /**
  * Enumeration of map attribute values. Map attributes are used by the engine to
- * handle common / high level interactions for map movement in addition to 
+ * handle common / high level interactions for map movement in addition to
  * determining specific map callbacks to execute during game logic.
  */
 typedef enum MapTileAttribute {
@@ -415,6 +406,25 @@ inline MapTileAttribute get_tile_attribute_at(Direction d) {
   default:
     return get_tile_attribute_xy(map_col + 1, map_row);
   }
+}
+
+/**
+ * @param id Id of the map to check.
+ * @return `true` if the map with the given id is active.
+ */
+inline bool is_map(uint8_t id) {
+  return active_map->id == id;
+}
+
+/**
+ * @param col Column to check.
+ * @param row Row to check.
+ * @param d Direction to check.
+ * @return `true` If the player is at the given position in the map and is
+ *   facing the given direction.
+ */
+inline bool player_at(uint8_t col, uint8_t row, Direction d) {
+  return map_col == col && map_row == row && hero_direction == d;
 }
 
 #endif
