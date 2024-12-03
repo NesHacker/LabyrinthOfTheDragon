@@ -116,8 +116,35 @@ typedef struct Exit {
  * Holds the bank and data pointer for a map page.
  */
 typedef struct Map {
+  uint8_t id;
   uint8_t bank;
   uint8_t *data;
+
+  /**
+   * Called when the player interacts by pressing the "A" button.
+   */
+  void (*on_action)(void);
+  
+  /**
+   * Called when the player enters the map from another map.
+   * @param from_id Id of the map the player exited.
+   */
+  void (*on_enter)(uint8_t from_id);
+  
+  /**
+   * Called when the player moves into a special tile.
+   */
+  void (*on_special)(void);
+
+  /**
+   * Called when the player moves into an "exit" tile.
+   */
+  void (*on_exit)(void);
+
+  /**
+   * Called when the map is active and the player moves into a floor tile.
+   */
+  void (*on_move)(void);
 } Map;
 
 /**
@@ -210,26 +237,27 @@ typedef struct Area {
   
   /**
    * Called when the player enters the map from another map.
-   * @param n Number for the exit/entrace from which the player entered.
+   * @param from_id Id of the map the player exited.
+   * @param to_id Id of the map the player is entering.
    */
-  void (*on_enter)(uint8_t n);
+  void (*on_enter)(uint8_t from_id, uint8_t to_id);
   
+  /**
+   * Called when the map is active and the player moves into a special tile.
+   */
+  void (*on_special)(uint8_t col, uint8_t row);
+
   /**
    * Called when the map is active and the player moves into an "exit" tile.
    * @param col_row The packed column & row for the exit.
    */
-  void (*on_exit)(uint8_t col, uint8_t row);
-  
+  void (*on_exit)(void);
+
   /**
    * Called when the map is active and the player moves into a floor tile.
    * @param col_row The packed column & row for the tile.
    */
   void (*on_move)(uint8_t col, uint8_t row);
-
-  /**
-   * Called when the map is active and the player moves into a special tile.
-   */
-  void (*on_special)(uint8_t col, uint8_t row);
 } Area;
 
 /**
@@ -269,7 +297,7 @@ typedef enum MapTileAttribute {
 /**
  * Pointer to the area that is currently loaded.
  */
-extern Area *current_area;
+extern Map *active_map;
 
 /**
  * Id of the currently loaded map.
@@ -293,6 +321,47 @@ extern uint8_t map_col;
 extern uint8_t map_row;
 
 /**
+ * State of the world map controller.
+ */
+extern MapState map_state;
+
+/**
+ * Absolute x position of the hero on the map.
+ */
+extern uint8_t map_x;
+
+/**
+ * Absolute y position of the hero on the map.
+ */
+extern uint8_t map_y;
+
+/**
+ * Horizontal background scroll for the current map.
+ */
+extern uint8_t map_scroll_x;
+
+/**
+ * Vertical background scroll for the current map.
+ */
+extern uint8_t map_scroll_y;
+
+/**
+ * Direction the map is currently moving.
+ */
+extern Direction map_move_direction;
+
+/**
+ * Frame counter for the current map move.
+ */
+extern uint8_t map_move_counter;
+
+/**
+ * Reference to the exit taken prior to a progressive load. Used to initialize
+ * player's sprite and such after the transition.
+ */
+extern Exit *current_exit;
+
+/**
  * Opens a textbox while on the world map.
  * @param text Text to display in the text box.
  */
@@ -312,5 +381,40 @@ void update_world_map(void) NONBANKED;
  * VBLANK draw routine for the world map controller.
  */
 void draw_world_map(void) NONBANKED;
+
+/**
+ * @return The map tile attribute at the player's current column and row.
+ */
+inline MapTileAttribute get_tile_attribute_xy(uint8_t col, uint8_t row) {
+  return map_tile_attributes[col + row * 16];
+}
+
+/**
+ * @param col Column for the tile attribute.
+ * @param row Row for the tile attribute.
+ * @return The map tile attribute at the given column and row.
+ */
+inline MapTileAttribute get_tile_attribute(void) {
+  return map_tile_attributes[map_col + map_row * 16];
+}
+
+/**
+ * @param d Direction to check.
+ * @return The map tile attribute at the given direction.
+ */
+inline MapTileAttribute get_tile_attribute_at(Direction d) {
+  switch (d) {
+  case NO_DIRECTION:
+    return get_tile_attribute();
+  case UP:
+    return get_tile_attribute_xy(map_col, map_row - 1);
+  case DOWN:
+    return get_tile_attribute_xy(map_col, map_row + 1);
+  case LEFT:
+    return get_tile_attribute_xy(map_col - 1, map_row);
+  default:
+    return get_tile_attribute_xy(map_col + 1, map_row);
+  }
+}
 
 #endif

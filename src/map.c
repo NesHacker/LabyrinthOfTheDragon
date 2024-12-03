@@ -13,52 +13,29 @@
 #include "textbox.h"
 #include "util.h"
 
-Area *current_area;
-uint8_t current_map_id;
-uint8_t map_col = 0;
-uint8_t map_row = 0;
+Area *active_area;
+Map *active_map;
+Exit *active_exit;
+
 MapTileAttribute map_tile_attributes[256];
 
-/**
- * State of the world map controller.
- */
+uint8_t current_map_id;
+
 MapState map_state;
-
-/**
- * Absolute x position of the hero on the map.
- */
 uint8_t map_x = 0;
-
-/**
- * Absolute y position of the hero on the map.
- */
 uint8_t map_y = 0;
-
-/**
- * Horizontal background scroll for the current map.
- */
+uint8_t map_col = 0;
+uint8_t map_row = 0;
 uint8_t map_scroll_x = 0;
-
-/**
- * Vertical background scroll for the current map.
- */
 uint8_t map_scroll_y = 0;
 
-/**
- * Direction the map is currently moving.
- */
 Direction map_move_direction = NO_DIRECTION;
-
-/**
- * Frame counter for the current map move.
- */
 uint8_t map_move_counter = 0;
 
-/**
- * Reference to the exit taken prior to a progressive load. Used to initialize
- * player's sprite and such after the transition.
- */
-Exit *current_exit;
+// External area data references
+// Might want to just define the area list in this file, since I think they will
+// only be referenced here.
+extern Area area0;
 
 /**
  * Lookup table that converts map_tile ids into graphic tile ids. The graphics
@@ -132,208 +109,13 @@ void update_map_positions(void) {
   }
 }
 
-// -----------------------------------------------------------------------------
-// BEGIN TEST MAP DATA
-// -----------------------------------------------------------------------------
-
-const Map area0_maps[] = {
-  { 2, map_example_0 },
-  { 2, map_example_1 }
-};
-
-const Exit area0_exits[] = {
-  {
-    0,      // map_id
-    2, 2,   // col, row
-    0,      // to_area
-    1,      // to_map
-    2, 3,   // to_col, to_row
-    DOWN,   // heading
-  },
-  {
-    0,      // map_id
-    9, 9,   // col, row
-    0,      // to_area
-    1,      // to_map
-    9, 10,    // to_col, to_row
-    DOWN
-  },
-  {
-    1,      // map_id
-    2, 2,   // col, row
-    0,      // to_area
-    0,      // to_map
-    2, 3,    // to_col, to_row
-    DOWN
-  },
-  {
-    1,      // map_id
-    9, 9,   // col, row
-    0,      // to_area
-    0,      // to_map
-    9, 10,    // to_col, to_row
-    DOWN
-  },
-};
-
-const uint16_t area0_palettes[] = {
-  // Palette 0 - Core background tiles
-  RGB8(190, 200, 190),
-  RGB8(100, 100, 140),
-  RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
-  // Palette 1 - Treasure chests
-  RGB8(192, 138, 40),
-  RGB8(100, 100, 140),
-  RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
-  // Palette 2
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
-  // Palette 3
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
-};
-
-
-palette_color_t fire_palette[4] = {
-  RGB_BLACK,
-  RGB8(213, 200, 89),
-  RGB8(132, 88, 32),
-  RGB8(72, 21, 13),
-};
-
-
-#define FLAG_HAS_TORCH            1 << 0
-#define FLAG_SCONCE_LIT           1 << 1
-#define FLAG_EMPTY_CHEST_CHECKED  1 << 2
-
-#define FLAME_SPRITE 32
-
-Timer flame_timer;
-uint8_t flame_state = 0;
-
-void area0_on_init(void) {
-  // TODO: Make sprite sheet loading default on areas
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_objects, VRAM_SPRITE_TILES);
-  update_sprite_palettes(7, 1, fire_palette);
-  init_timer(flame_timer, 17);
-
-  set_sprite_tile(FLAME_SPRITE, 0x04);
-  set_sprite_prop(FLAME_SPRITE, 0b00001111);
-  move_sprite(FLAME_SPRITE, 0, 0);
-}
-
-void area0_on_update(void) {
-  if (update_timer(flame_timer)) {
-    reset_timer(flame_timer);
-    flame_state ^= 1;
-    set_sprite_tile(FLAME_SPRITE, flame_state ? 0x14 : 0x04);
-  }
-
-  if (check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
-    const uint8_t c = 7;
-    const uint8_t r = 5;
-    const uint8_t x = c * 16 - 4;
-    const uint8_t y = r * 16 + 2;
-    uint8_t sx = current_map_id == 0 ? x - map_scroll_x : 0;
-    uint8_t sy = current_map_id == 0 ? y - map_scroll_y : 0;
-    move_sprite(FLAME_SPRITE, sx, sy);
-  }
-}
-
-void area0_on_interact(void) {
-  uint8_t *vram;
-
-  if (current_map_id == 0) {
-    // Sconce
-    if (map_col == 6 && map_row == 5 && hero_direction == UP) {
-      if (!check_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT)) {
-        if (!check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)) {
-          map_textbox("A sconce adorns\nthe wall\x60\x03Its flame long\nextinguished."); 
-        } else {
-          set_flags(FLAG_PAGE_TEST, FLAG_SCONCE_LIT);
-          vram = VRAM_BACKGROUND_XY(22, 4);
-          set_vram_byte(vram, 0x4E);
-          set_vram_byte(vram + 1, 0x4F);
-          set_vram_byte(vram + 0x20, 0x5E);
-          set_vram_byte(vram + 0x20 + 1, 0x5F);
-          map_textbox("Wait\x60\003What was that\nsound?");
-        }
-      }
-    }
-  
-    // Boss Door
-    if (map_col == 11 && map_row == 3 && hero_direction == UP) {
-      map_textbox("Locked tight.\x03Whatever's behind\nthis door feels\x60\nOminous.");
-    }
-  
-    // Torch chest
-    if (
-      map_col == 9 && map_row == 12 && hero_direction == DOWN &&
-      !check_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH)
-    ) {
-      vram = VRAM_BACKGROUND_XY(18, 26);
-      set_vram_byte(vram, 0x2C);
-      set_vram_byte(vram + 1, 0x2D);
-      set_vram_byte(vram + 0x20, 0x3C);
-      set_vram_byte(vram + 0x20 + 1, 0x3D);
-      set_flags(FLAG_PAGE_TEST, FLAG_HAS_TORCH);
-      map_textbox("Nice!\nYou found a torch.");
-    }
-  }
-
-  if (current_map_id == 1) {
-    // Empty chest
-    if (map_col == 3 && map_row == 10 && hero_direction == DOWN) {
-      if (!check_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED)) {
-        set_flags(FLAG_PAGE_TEST, FLAG_EMPTY_CHEST_CHECKED);
-        map_textbox("Nothing but dust.\003Best look\nelsewhere\x60");
-      } else {
-        map_textbox("Yep.\nStill empty.");
-      }
-    }
-  
-    // Wall Skull
-    if (map_col == 9 && map_row == 3) {
-      map_textbox("This skull seems\x60\nOut of place.");
-    }
-  }
-}
-
-Area area0 = {
-  0,                    // Id
-  2, 14,                // Default column & row
-  area0_maps,           // Maps
-  2,                    // Number of maps in the area
-  1,                    // Tile bank
-  tile_data_dungeon,    // Tile data
-  area0_palettes,       // Palettes (always 4 palettes / area)
-  area0_exits,          // Exits
-  4,                    // Number of exits in the area
-  0,                    // Callback bank
-  area0_on_init,        // Callbacks
-  area0_on_update,
-  NULL,
-  area0_on_interact,
-};
-
-// -----------------------------------------------------------------------------
-// END TEST MAP DATA
-// -----------------------------------------------------------------------------
-
 /**
  * Loads an area state and assets and initializes the world map controller.
  * @param a Area to load.
  */
 void load_area(Area *a) {
   // Initialize area state
-  current_area = a;
+  active_area = a;
   map_col = a->default_start_column;
   map_row = a->default_start_row;
   map_state = MAP_STATE_WAITING;
@@ -390,8 +172,8 @@ inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
  * @param map_id Id of the map to load.
  */
 void load_map(uint8_t map_id) {
-  current_map_id = map_id;
-  Map *map = &current_area->maps[map_id];
+  Map *map = &active_area->maps[map_id];
+  active_map = map;
 
   uint8_t _prev_bank = _current_bank;  
   SWITCH_ROM(map->bank);
@@ -446,6 +228,11 @@ bool can_move(Direction d) {
   return t != MAP_WALL;
 }
 
+/**
+ * Checks to see if the player is attempting to, and can move in the desired
+ * direction. If so it initiates move by updating map state.
+ * @see can_move, start_map_move, stop_map_move
+ */
 void check_move(void) {
   if (is_down(J_UP) && can_move(UP))
     start_map_move(UP);
@@ -459,10 +246,6 @@ void check_move(void) {
     stop_map_move();
 }
 
-inline MapTileAttribute get_map_tile_attribute(void) {
-  return map_tile_attributes[map_col + map_row * 16];
-}
-
 /**
  * Handle state updates when a player lands on an exit tile. Currently the area
  * structure defines a list of exits for all maps, if this function doesn't find
@@ -472,17 +255,17 @@ inline MapTileAttribute get_map_tile_attribute(void) {
  * @return `true` If an exit was found and a transition has been initiated.
  */
 bool handle_exit(void) {
-  MapTileAttribute a = get_map_tile_attribute();
+  MapTileAttribute a = get_tile_attribute();
   if (a != MAP_EXIT)
     return false;
 
-  for (uint8_t k = 0; k < current_area->num_exits; k++) {
-    Exit *x = &current_area->exits[k];
-    if (x->map_id != current_map_id) continue;
+  for (uint8_t k = 0; k < active_area->num_exits; k++) {
+    Exit *x = &active_area->exits[k];
+    if (x->map_id != active_map->id) continue;
     if (x->col != map_col) continue;
     if (x->row != map_row) continue;
   
-    current_exit = x;
+    active_exit = x;
     stop_map_move();
     LCDC_REG ^= LCDCF_OBJON;
     map_state = MAP_STATE_FADE_OUT;
@@ -533,7 +316,7 @@ void update_map_move(void) {
   map_col = map_x >> 4;
   map_row = map_y >> 4;
 
-  switch (get_map_tile_attribute()) {
+  switch (get_tile_attribute()) {
   case MAP_EXIT:
     handle_exit();
     break;
@@ -544,8 +327,8 @@ void update_map_move(void) {
 }
 
 bool check_action(void) {
-  if (was_pressed(J_A) && current_area->on_action) {
-    current_area->on_action();
+  if (was_pressed(J_A) && active_area->on_action) {
+    active_area->on_action();
     return true;
   }
   return false;
@@ -562,7 +345,6 @@ void init_world_map(void) {
   load_area(&area0);
   load_map(0);
   init_text_box();
-  update_sprite_palettes(1, 1, fire_palette);
   lcd_on();
 }
 
@@ -580,8 +362,8 @@ void update_world_map(void) {
     break;
   }
 
-  if (current_area->on_update)
-    current_area->on_update();
+  if (active_area->on_update)
+    active_area->on_update();
 }
 
 void draw_world_map(void) {
@@ -599,10 +381,10 @@ void draw_world_map(void) {
     break;
   case MAP_STATE_LOAD:
     lcd_off();
-    load_map(current_exit->to_map);
-    map_col = current_exit->to_col;
-    map_row = current_exit->to_row;
-    hero_direction = current_exit->heading;
+    load_map(active_exit->to_map);
+    map_col = active_exit->to_col;
+    map_row = active_exit->to_row;
+    hero_direction = active_exit->heading;
     set_map_xy_from_col_row();
     update_map_positions();
     update_hero();
@@ -620,6 +402,6 @@ void draw_world_map(void) {
     break;
   }
 
-  if (current_area->on_draw)
-    current_area->on_draw();
+  if (active_area->on_draw)
+    active_area->on_draw();
 }
