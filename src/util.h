@@ -70,8 +70,18 @@ typedef struct Timer {
   extern const void __size_ ## VARNAME; \
   extern const void __bank_ ## VARNAME;
 
-// Function prototypes
+/**
+ * Clears the 32x32 tile background and fills tiles and attribute bytes with 0s.
+ */
 void clear_background(void);
+
+/**
+ * Draws text to the given VRAM location. Assumes that the text is null
+ * null terminated.
+ * @param vram Pointer to VRAM where the text tiles should be written.
+ * @param text The text to write.
+ * @param pal Id of the palette to use for the text tiles.
+ */
 void draw_text(uint8_t *vram, char *text, uint8_t attr);
 
 #endif

@@ -48,7 +48,7 @@ typedef enum MapState {
   /**
    * Denotes that the textbox is currently displayed.
    */
-  MAP_STATE_TEXTBOX
+  MAP_STATE_TEXTBOX,
 } MapState;
 
 /**
