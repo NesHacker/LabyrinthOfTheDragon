@@ -76,12 +76,10 @@ typedef struct Timer {
 void clear_background(void);
 
 /**
- * Draws text to the given VRAM location. Assumes that the text is null
- * null terminated.
+ * Draws text to the given VRAM location. Assumes the text is null terminated.
  * @param vram Pointer to VRAM where the text tiles should be written.
  * @param text The text to write.
- * @param pal Id of the palette to use for the text tiles.
  */
-void draw_text(uint8_t *vram, char *text, uint8_t attr);
+void draw_text(uint8_t *vram, char *text);
 
 #endif

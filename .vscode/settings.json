@@ -7,6 +7,7 @@
     "main_menu.h": "c",
     "incbin.h": "c",
     "util.h": "c",
-    "fade_transition.h": "c"
+    "fade_transition.h": "c",
+    "bcd.h": "c"
   }
 }
