@@ -13,6 +13,7 @@
 BattleState battle_state;
 BattleCursor battle_cursor;
 
+// TODO Load this from the player model
 PlayerSkill battle_player_skills[4] = {
   { 1, "SECONDWIND", "SKILL", 25, 30 },
   { 2, "ACTIONSURGE", "SKILL", 1, 2 },
@@ -20,6 +21,7 @@ PlayerSkill battle_player_skills[4] = {
   { 0, "-" },
 };
 
+// TODO Load this from the current party monster
 MonsterMove battle_monster_moves[4] = {
   { 1, "TACKLE", "NORMAL", 19, 30 },
   { 2, "LEER", "NORMAL", 9, 10 },
@@ -28,27 +30,45 @@ MonsterMove battle_monster_moves[4] = {
 };
 
 /**
- * Default palette colors for the battle screen.
- * TODO Remove me once we have finished palette code, once specific monster and
- * effect colors are loaded as needed by the battle logic.
+ * Default palettes for the battle system.
  */
-palette_color_t default_palette[] = {
+palette_color_t battle_bg_palettes[] = {
+  // 0 - Text / HP Normal
+  RGB_WHITE,
+  RGB8(100, 200, 100),
+  RGB8(50, 120, 50),
+  RGB_BLACK,
+  // 1 - Text / HP Critical
+  RGB_WHITE,
+  RGB8(200, 100,  100),
+  RGB8(120, 50, 50),
+  RGB_BLACK,
+  // 2 - Skull Border
+  RGB_WHITE,
+  RGB8(168, 172, 119),
+  RGB8(120, 103, 193),
+  RGB8(25, 58, 58),
+  // 3 - Party Monster Palette
   RGB_WHITE,
   RGB8(200, 200, 200),
   RGB8(120, 120, 120),
   RGB_BLACK,
-};
-
-/**
- * Menu / textbox colors for the battle system.
- */
-palette_color_t battle_text_box_palettes[] = {
-  // Empty pane text box palette
+  // 4 - Enemy Monster Palette
   RGB_WHITE,
-  RGB8(166, 146, 124),
-  RGB8(175, 125, 78),
+  RGB8(200, 200, 200),
+  RGB8(120, 120, 120),
   RGB_BLACK,
-  // Active pane text box palette
+  // 5 - Status Effect Positive
+  RGB_WHITE,
+  RGB8(200, 200, 200),
+  RGB8(120, 120, 120),
+  RGB_BLACK,
+  // 6 - Status Effect Negative
+  RGB_WHITE,
+  RGB8(200, 200, 200),
+  RGB8(120, 120, 120),
+  RGB_BLACK,
+  // 7 - Text box panel
   RGB_WHITE,
   RGB8(227, 209, 189),
   RGB8(175, 125, 78),
@@ -143,16 +163,29 @@ void draw_battle_menu(BattleMenu m, uint8_t *vram) {
   }
 }
 
+void draw_battle_screen(void) {
+  uint8_t *vram = VRAM_BACKGROUND;
+  const uint8_t *src = tilemap_battle_screen;
+  for (uint8_t y = 0; y < 28; y++, vram += 12) {
+    for (uint8_t x = 0; x < 20; x++, vram++) {
+      VBK_REG = VBK_TILES;
+      *vram = *src++;
+      VBK_REG = VBK_ATTRIBUTES;
+      *vram = *src++;
+    }
+  }
+}
+
 void init_battle(void) {
   lcd_off();
 
   // Load battle assets (tiles, palettes, etc.)
-  update_bg_palettes(0, 1, default_palette);
-  update_bg_palettes(6, 2, battle_text_box_palettes);
-  update_sprite_palettes(7, 1, battle_text_box_palettes + 4);
+  update_bg_palettes(0, 8, battle_bg_palettes);
+  update_sprite_palettes(7, 1, battle_bg_palettes + 4 * 6);
 
   VBK_REG = VBK_BANK_1;
   load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
+  load_tiles(1, tile_battle, (void *)(0x9500), 3 * 16);
 
   clear_background();
   move_win(0, 144);
@@ -160,8 +193,11 @@ void init_battle(void) {
   // TODO Draw the monster backgrounds & stat blocks
 
   // Draw the battle menus.
-  draw_battle_menu(BATTLE_MENU_MAIN, VRAM_BACKGROUND_XY(0, 12));
-  draw_battle_menu(BATTLE_MENU_FIGHT, VRAM_BACKGROUND_XY(0, 18));
+  // draw_battle_menu(BATTLE_MENU_MAIN, VRAM_BACKGROUND_XY(0, 12));
+  // draw_battle_menu(BATTLE_MENU_FIGHT, VRAM_BACKGROUND_XY(0, 18));
+
+  // Draw the screen layout
+  draw_battle_screen();
   draw_battle_menu(BATTLE_MENU_TEXT, VRAM_WINDOW_XY(0, 0));
 
   // Setup cursor sprite

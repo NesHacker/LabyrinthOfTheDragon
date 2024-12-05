@@ -20,10 +20,10 @@ void init_save_select(void) {
   lcd_off();
 
   // TODO Need to load data from Save RAM and update graphics appropriately
-  
+
   // Load the save select screen tilemap
   load_screen(0, tilemap_save_select);
-  
+
   // Reset the cursor sprite and state
   cursor = SAVE_SELECT_CURSOR_SAVE1;
   set_bkg_palette(4, 3, save_1_selected_palettes);
@@ -176,7 +176,7 @@ void update_save_select_sprites(void) {
 
 void init_main_menu(void) {
   lcd_off();
-  
+
   // Load tiles
   VBK_REG = VBK_BANK_0;
   load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);
@@ -187,7 +187,7 @@ void init_main_menu(void) {
   scroll_bkg(0, 0);
   load_screen(0, tilemap_title_screen);
   set_bkg_palette(0, 8, main_menu_palettes);
-  
+
   // Initialize menu state
   cursor = 0;
 
@@ -205,7 +205,7 @@ void update_main_menu(void) {
   case SAVE_SELECT:
     move_save_select_cursor();
     update_save_select_sprites();
-    
+
     break;
   }
 }
