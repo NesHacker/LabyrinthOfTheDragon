@@ -2,6 +2,7 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
+#include "battle.h"
 #include "data.h"
 #include "joypad.h"
 #include "main.h"
@@ -35,38 +36,28 @@ void set_game_state(GameState s) NONBANKED {
  * Initializes the game.
  */
 inline void initialize(void) {
-  init_text_box();
+  // init_text_box();
   // init_main_menu();
-  init_world_map();
-  game_state = WORLD_MAP;
+  // init_world_map();
+  init_battle();
 }
 
 /**
  * Executes core gameloop logic.
  */
 inline void game_loop(void) {
-  switch (game_state) {
-  case MAIN_MENU:
-    update_main_menu();
-    break;
-  case WORLD_MAP:
-    update_world_map();
-    break;
-  }
+  // update_main_menu();
+  // update_world_map();
+  update_battle();
 }
 
 /**
  * Executes rendering logic that must occur during a VBLANK.
  */
 inline void render(void) {
-  switch (game_state) {
-  case MAIN_MENU:
-    draw_main_menu();
-    break;
-  case WORLD_MAP:
-    draw_world_map();
-    break;
-  }
+  // draw_main_menu();
+  // draw_world_map();
+  draw_battle();
 }
 
 /**

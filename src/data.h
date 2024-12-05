@@ -119,11 +119,13 @@ INCBIN_EXTERN(tile_data_hero)
 INCBIN_EXTERN(tile_data_objects)
 INCBIN_EXTERN(tile_data_world_map)
 
-INCBIN_EXTERN(tilemap_textbox) 
+INCBIN_EXTERN(tilemap_textbox)
 INCBIN_EXTERN(tilemap_title_screen)
 INCBIN_EXTERN(tilemap_name_entry)
 INCBIN_EXTERN(tilemap_save_select)
 
 INCBIN_EXTERN(map_example_0)
 INCBIN_EXTERN(map_example_1)
+
+INCBIN_EXTERN(tilemap_battle_menus)
 #endif

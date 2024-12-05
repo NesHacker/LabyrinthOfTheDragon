@@ -13,7 +13,7 @@ void clear_background(void) NONBANKED {
 }
 
 void draw_text(uint8_t *vram, char *text, uint8_t pal) NONBANKED {
-  const uint8_t attr = (pal & 0x03) | 0b00001000;
+  const uint8_t attr = (pal & 0x07) | 0b00001000;
   while (*text != 0) {
     char c = *text++;
     VBK_REG = VBK_TILES;
