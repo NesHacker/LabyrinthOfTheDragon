@@ -14,7 +14,7 @@ void load_tile_page(uint8_t bank, uint8_t *src, uint8_t *dst) NONBANKED {
   uint8_t _prev_bank = _current_bank;
   SWITCH_ROM(bank);
   for (uint8_t t = 0; t < 0x80; t++)
-    for (uint8_t c = 0; c < 16; c++)  
+    for (uint8_t c = 0; c < 16; c++)
       *dst++ = *src++;
   SWITCH_ROM(_prev_bank);
 }
@@ -27,11 +27,11 @@ void load_tile_full(uint8_t bank, uint8_t *src, uint8_t *dst) NONBANKED {
 
   VBK_REG = VBK_BANK_0;
   for (uint8_t t = 0; t < 0x80; t++)
-    for (uint8_t c = 0; c < 16; c++)  
+    for (uint8_t c = 0; c < 16; c++)
       *dst++ = *src++;
   VBK_REG = VBK_BANK_1;
   for (uint8_t t = 0; t < 0x80; t++)
-    for (uint8_t c = 0; c < 16; c++)  
+    for (uint8_t c = 0; c < 16; c++)
       *dst_page2++ = *src++;
 
   SWITCH_ROM(_prev_bank);
