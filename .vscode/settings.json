@@ -8,6 +8,7 @@
     "incbin.h": "c",
     "util.h": "c",
     "fade_transition.h": "c",
-    "bcd.h": "c"
+    "bcd.h": "c",
+    "battle.h": "c"
   }
 }

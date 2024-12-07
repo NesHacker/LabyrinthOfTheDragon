@@ -4,134 +4,141 @@
 #include <stdbool.h>
 
 #include "battle.h"
+#include "bcd.h"
 #include "data.h"
 #include "joypad.h"
 #include "monster.h"
 #include "palette.h"
 #include "util.h"
 
-// TODO factor this out after complete
-typedef union bcd_t {
-  struct {
-    uint8_t ones;
-    uint8_t tens;
-  };
-  uint16_t data;
-} bcd_t;
+// -----------------------------------------------------------------------------
+// TODO: Abstract me out of here / finish up when done
+// -----------------------------------------------------------------------------
 
-void to_bcd(uint8_t value, bcd_t *result) {
-  result->data = 0;
-  for (uint8_t k = 0; k < 8; k++) {
-    if (result->ones >= 5)
-      result->ones += 123;
-    if (result->tens >= 5)
-      result->tens += 123;
-    uint16_t bit = value & 0x80 ? 1 : 0;
-    value <<= 1;
-    result->data = (result->data << 1) | bit;
-  }
-}
+typedef enum AbilityType {
+  ABILITY_TYPE_FIGHT,
+  ABILITY_TYPE_MAGIC,
+  ABILITY_TYPE_TECH,
+} AbilityType;
+
+typedef struct Ability {
+  uint8_t id;
+  char name[12];
+} Ability;
+
+typedef struct Summon {
+  uint8_t id;
+  char name[12];
+} Summon;
+
+/**
+ * Null or empty monster.
+ */
+const Monster MONSTER_NULL = { 0 };
+
+/**
+ * Palette colors for the beholder monster.
+ */
+const palette_color_t MONSTER_BEHOLDER_PALETTE[4] = {
+  RGB_WHITE,
+  RGB8(209, 206, 107),
+  RGB8(126, 73, 73),
+  RGB8(0, 40, 51),
+};
+
+/**
+ * Monster stats and data for the "Beholder".
+ */
+const Monster MONSTER_BEHOLDER = {
+  // id, name
+  1, "BEHOLDER",
+  // tile_bank, tile_data, palette
+  3, tile_beholder, MONSTER_BEHOLDER_PALETTE,
+  // Max HP & MP
+  115, 50,
+  // Attack, AC, Magic Attack, Saving Throw, Initiative
+  0, 0, 0, 0, 0
+};
+
+/**
+ * Palette Colors for the Kobold.
+ */
+const palette_color_t MONSTER_KOBOLD_PALETTE[4] = {
+  RGB_WHITE,
+  RGB8(177, 113, 51),
+  RGB8(77, 22, 11),
+  RGB8(37, 3, 40),
+};
+
+/**
+ * Monster stats and data for the "Beholder".
+ */
+const Monster MONSTER_KOBOLD = {
+  // id, name
+  1, "KOBOLD",
+  // tile_bank, tile_data, palette
+  3, tile_kobold, MONSTER_KOBOLD_PALETTE,
+  // Max HP & MP
+  15, 10,
+  // Attack, AC, Magic Attack, Saving Throw, Initiative
+  0, 0, 0, 0, 0
+};
+
+// -----------------------------------------------------------------------------
+
 
 BattleState battle_state;
+BattleMenu battle_menu;
 BattleCursor battle_cursor;
 
-// TODO Load this from the player model
-PlayerSkill battle_player_skills[4] = {
-  { 1, "SECONDWIND", "SKILL", 25, 30 },
-  { 2, "ACTIONSURGE", "SKILL", 1, 2 },
-  { 0, "-" },
-  { 0, "-" },
-};
-
-// TODO Load this from the current party monster
-MonsterMove battle_monster_moves[4] = {
-  { 1, "TACKLE", "NORMAL", 19, 30 },
-  { 2, "LEER", "NORMAL", 7, 10 },
-  { 3, "BEERGUZZLE", "SPECIAL", 2, 3 },
-  { 0, "-" }
-};
-
-
-
+uint8_t battle_num_monsters;
+MonsterInstance battle_monsters[] = { {0}, {0}, {0} };
 
 /**
  * Default palettes for the battle system.
  */
 palette_color_t battle_bg_palettes[] = {
-  // 0 - Text / HP Normal
+  // Palette 0 - Background / Textbox
   RGB_WHITE,
-  RGB8(100, 200, 100),
-  RGB8(50, 120, 50),
-  RGB_BLACK,
-  // 1 - Text / HP Critical
-  RGB_WHITE,
-  RGB8(200, 100,  100),
-  RGB8(120, 50, 50),
-  RGB_BLACK,
-  // 2 - Skull Border
-  RGB_WHITE,
-  RGB8(168, 172, 119),
-  RGB8(120, 103, 193),
-  RGB8(25, 58, 58),
-  // 3 - Party Monster Palette
+  RGB8(111, 127, 243),
+  RGB8(54, 112, 54),
+  RGB8(28, 28, 0),
+  // Palette 1 - Monster 1
   RGB_WHITE,
   RGB8(209, 206, 107),
   RGB8(126, 73, 73),
   RGB8(0, 40, 51),
-  // 4 - Enemy Monster Palette
+  // Palette 2 - Monster 2
   RGB_WHITE,
   RGB8(209, 206, 107),
   RGB8(126, 73, 73),
   RGB8(0, 40, 51),
-  // 5 - Status Effect Positive
+  // Palette 3 - Monster 3
   RGB_WHITE,
-  RGB8(200, 200, 200),
+  RGB8(209, 206, 107),
+  RGB8(126, 73, 73),
+  RGB8(0, 40, 51),
+  // Palette 4 - HP Normal
+  RGB_WHITE,
+  RGB8(150, 200, 150),
+  RGB8(80, 120, 80),
+  RGB8(0, 32, 0),
+  // Palette 5 - HP Critical
+  RGB_WHITE,
+  RGB8(200, 150, 150),
+  RGB8(120, 80, 80),
+  RGB8(32, 0, 0),
+  // Palette 6 - Buff
+  RGB_WHITE,
+  RGB8(40, 150, 40),
   RGB8(120, 120, 120),
   RGB_BLACK,
-  // 6 - Status Effect Negative
+  // Palette 7 - Debuff
   RGB_WHITE,
-  RGB8(200, 200, 200),
+  RGB8(150, 40, 40),
   RGB8(120, 120, 120),
-  RGB_BLACK,
-  // 7 - Text box panel
-  RGB_WHITE,
-  RGB8(227, 209, 189),
-  RGB8(175, 125, 78),
   RGB_BLACK,
 };
-
-/**
- * Moves the battle cursor to the given cursor position.
- */
-void move_cursor(BattleCursor c) {
-  switch (c) {
-  case BATTLE_CURSOR_FIGHT:
-    move_cursor_sprite(9, 14);
-    break;
-  case BATTLE_CURSOR_MONSTER_MANUAL:
-    move_cursor_sprite(15, 14);
-    break;
-  case BATTLE_CURSOR_SKILL:
-    move_cursor_sprite(9, 16);
-    break;
-  case BATTLE_CURSOR_RUN:
-    move_cursor_sprite(15, 16);
-    break;
-  case BATTLE_CURSOR_MOVE1:
-    move_cursor_sprite(5, 13);
-    break;
-  case BATTLE_CURSOR_MOVE2:
-    move_cursor_sprite(5, 14);
-    break;
-  case BATTLE_CURSOR_MOVE3:
-    move_cursor_sprite(5, 15);
-    break;
-  case BATTLE_CURSOR_MOVE4:
-    move_cursor_sprite(5, 16);
-    break;
-  }
-  battle_cursor = c;
-}
 
 /**
  * LCY interrupt handler for the fight and skill menus. This handler changes the
@@ -140,58 +147,22 @@ void move_cursor(BattleCursor c) {
  */
 void fight_menu_isr(void) {
   SCY_REG = 0;
-  if (battle_state == BATTLE_STATE_SKILL) {
-    SCY_REG = 80;
-    return;
-  }
-  if (battle_state == BATTLE_STATE_FIGHT) {
+  if (battle_state == BATTLE_STATE_MENU && battle_menu != BATTLE_MENU_MAIN) {
+    // TODO: Fix me
     SCY_REG = 80;
     return;
   }
 }
 
 /**
- * Draws one of the three major battle menus to the given address in VRAM.
- * The battle maps are drawn using a single tilemap that contains all three.
- * @param m The battle menu to draw.
- * @param vram Pointer in VRAM to write the menu tiles.
+ * Draws the tiles for the given monster layout.
+ * @param layout Monster layout to draw to the background.
  */
-void draw_battle_menu(BattleMenu m, uint8_t *vram) {
-  const uint8_t w = 20;
-  uint8_t h = 6;
-  const uint8_t *src = tilemap_battle_menus;
-
-  switch (m) {
-  case BATTLE_MENU_MAIN:
-    break;
-  case BATTLE_MENU_TEXT:
-    src = tilemap_battle_menus + w * 6 * 2;
-    break;
-  case BATTLE_MENU_FIGHT:
-    src = tilemap_battle_menus + w * 12 * 2;
-    h = 10;
-    break;
-  }
-
-  for (uint8_t y = 0; y < h; y++, vram += 0x20 - w) {
-    for (uint8_t x = 0; x < w; x++, vram++) {
-      // Skip "transparent" tiles (tile 0x81 is reserved for this)
-      if (*src == 0x81) {
-        src += 2;
-        continue;
-      }
-      VBK_REG = VBK_TILES;
-      *vram = *src++;
-      VBK_REG = VBK_ATTRIBUTES;
-      *vram = *src++;
-    }
-  }
-}
-
-void draw_battle_screen(void) {
+void draw_monster_layout(MonsterLayout layout) {
+  const uint16_t offset = 20 * 11 * 2 * (uint16_t)layout;
+  const uint8_t *src = tilemap_battle_monster_layouts + offset;
   uint8_t *vram = VRAM_BACKGROUND;
-  const uint8_t *src = tilemap_battle_screen;
-  for (uint8_t y = 0; y < 28; y++, vram += 12) {
+  for (uint8_t y = 0; y < 11; y++, vram += (32 - 20)) {
     for (uint8_t x = 0; x < 20; x++, vram++) {
       VBK_REG = VBK_TILES;
       *vram = *src++;
@@ -201,42 +172,144 @@ void draw_battle_screen(void) {
   }
 }
 
+/**
+ * Loads an new instance of the given monster into the given position.
+ * @param p Position of the monsters on the battle screen.
+ * @param monster Pointer to the monster to load.
+ */
+void load_monster(MonsterPosition p, Monster *monster) {
+  battle_monsters[p] = monster_instance((uint8_t)p, monster);
+
+  const uint8_t total_tiles = 2 * 7 * 7;
+  const uint8_t *src = monster->tile_data;
+  uint16_t page_offset = total_tiles * 16;
+
+  switch (p) {
+  case MONSTER_POSITION1:
+    VBK_REG = VBK_BANK_0;
+    load_tiles(
+      monster->tile_bank,
+      monster->tile_data,
+      (void *)0x9000,
+      total_tiles
+    );
+    update_bg_palettes(1, 1, monster->palette);
+    break;
+  case MONSTER_POSITION2:
+    VBK_REG = VBK_BANK_0;
+    // 30 -> VRAM_BG_TILES + page_offset
+    load_tiles(
+      monster->tile_bank,
+      monster->tile_data,
+      (void *)0x9620,
+      30
+    );
+    // 68 -> VRAM_SHARED_TILES
+    load_tiles(
+      monster->tile_bank,
+      monster->tile_data + 30 * 16,
+      (void *)0x8800,
+      68
+    );
+    update_bg_palettes(2, 1, monster->palette);
+    break;
+  case MONSTER_POSITION3:
+    // 60 -> VRAM_SHARED_TILES + 68 * 16
+    VBK_REG = VBK_BANK_0;
+    load_tiles(
+      monster->tile_bank,
+      monster->tile_data,
+      (void *)0x8C40,
+      60
+    );
+    // 38 -> VRAM_BG_TILES BANK[2]
+    VBK_REG = VBK_BANK_1;
+    load_tiles(
+      monster->tile_bank,
+      monster->tile_data + 60 * 16,
+      (void *)0x9000,
+      38
+    );
+    update_bg_palettes(3, 1, monster->palette);
+    break;
+  }
+}
+
+/**
+ * Draws one of the three major battle menus to the given address in VRAM.
+ * The battle maps are drawn using a single tilemap that contains all three.
+ * @param layout The battle menu layout to draw.
+ * @param vram Pointer in VRAM to write the menu tiles.
+ */
+void draw_battle_menu(BattleMenuLayout layout, uint8_t *vram) {
+  const uint8_t w = 20;
+  const uint8_t h = 7;
+  const uint8_t *src = tilemap_battle_menus;
+
+  switch (layout) {
+  case BATTLE_MENU_LAYOUT_MAIN:
+    break;
+  case BATTLE_MENU_LAYOUT_SUBMENU:
+    src = tilemap_battle_menus + w * 7 * 2;
+    break;
+  case BATTLE_MENU_LAYOUT_TEXT:
+    src = tilemap_battle_menus + w * 14 * 2;
+    break;
+  }
+
+  for (uint8_t y = 0; y < h; y++, vram += 0x20 - w) {
+    for (uint8_t x = 0; x < w; x++, vram++) {
+      VBK_REG = VBK_TILES;
+      *vram = *src++;
+      VBK_REG = VBK_ATTRIBUTES;
+      *vram = *src++;
+    }
+  }
+}
+
+/**
+ * Moves the battle cursor to the given cursor position.
+ */
+void move_cursor(BattleCursor c) {
+  battle_cursor = c;
+}
+
 void init_battle(void) {
   lcd_off();
 
-
-  // Load monster sprite asset
-  // TODO Load these based on monsters for the battle
-  VBK_REG = VBK_BANK_0;
-  load_tiles(1, tile_beholder, VRAM_BG_TILES, 7 * 7 * 2);
-  load_tiles(1, tile_beholder + 7*7*2*16, VRAM_SHARED_TILES, 7 * 7);
-
-  // Load battle assets (tiles, palettes, etc.)
-  update_bg_palettes(0, 8, battle_bg_palettes);
-  update_sprite_palettes(7, 1, battle_bg_palettes + 4 * 6);
-
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
-  load_tiles(1, tile_battle, (void *)(0x9500), 3 * 16);
-
-  clear_background();
+  // Reset the background and window position
+  fill_background(0x30, 0x10);
   move_win(0, 144);
 
-  // TODO Draw the monster backgrounds & stat blocks
+  // Load Palettes for the battle system
+  update_bg_palettes(0, 8, battle_bg_palettes);
+  // TODO Flesh out sprite palettes for effects, damage numbers, etc.
+  update_sprite_palettes(0, 1, battle_bg_palettes);
 
-  // Draw the screen layout
-  draw_battle_screen();
-  draw_battle_menu(BATTLE_MENU_TEXT, VRAM_WINDOW_XY(0, 0));
+  // Draw the monster layout and instantiate the monsters for the fight
+  // TODO Load this data based on the fight type
+  draw_monster_layout(MONSTER_LAYOUT_2);
+  load_monster(MONSTER_POSITION1, &MONSTER_BEHOLDER);
+  load_monster(MONSTER_POSITION2, &MONSTER_KOBOLD);
+
+  // Load the font and battle specific tilesets
+  VBK_REG = VBK_BANK_1;
+  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
+  load_tiles(1, tile_battle, (void *)(0x9300), 5 * 16);
+
+  // Draw the battle menus
+  draw_battle_menu(BATTLE_MENU_LAYOUT_MAIN, VRAM_BACKGROUND_XY(0, 11));
+  draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, 18));
+  draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
 
   // Setup cursor sprite
   set_sprite_tile(0, 0xFE);
   set_sprite_prop(SPRITE_CURSOR, 0x0F);
-  move_cursor(BATTLE_CURSOR_FIGHT);
+  move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
 
-  // TODO Load player skills and monster moves
-  // TODO Abstract monster move loading to reload on change monster
+  // TODO Load player & skills, and monsters
 
-  // Setup the LCD STAT interrupt for graphics effects
+  // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
     LYC_REG = 63;
     STAT_REG = STATF_LYC;
@@ -257,178 +330,7 @@ void cleanup_battle(void) {
   // set_interrupts(IE_REG & ~LCD_IFLAG);
 }
 
-void draw_move_text(uint8_t move_num, char *text) {
-  uint8_t c = 0;
-  uint8_t *vram = VRAM_BACKGROUND_XY(6, 23 + move_num);
-  VBK_REG = VBK_TILES;
-  while (*text != 0 && c < 13) {
-    set_vram_byte(vram++, (*text++) + 0x80);
-    c++;
-  }
-  while (c < 13) {
-    set_vram_byte(vram++, 0xA0);
-    c++;
-  }
-}
-
-void load_move_names(void) {
-  MonsterMove *move = battle_monster_moves;
-  for (uint8_t k = 0; k < 4; k++, move++) {
-    draw_move_text(k, move->name);
-  }
-}
-
-void load_skill_names(void) {
-  PlayerSkill *skill = battle_player_skills;
-  for (uint8_t k = 0; k < 4; k++, skill++) {
-    draw_move_text(k, skill->name);
-  }
-}
-
-
-inline void draw_bcd_fraction(
-  uint8_t x,
-  uint8_t y,
-  uint8_t left,
-  uint8_t right,
-  uint8_t tile_offset
-) {
-  const uint8_t blank = 0xA0;
-  bcd_t bcd;
-  to_bcd(left, &bcd);
-
-  set_bkg_tile_xy(x, y, bcd.tens ? bcd.tens + tile_offset : blank);
-  set_bkg_tile_xy(x + 1, y, bcd.ones + tile_offset);
-
-  to_bcd(right, &bcd);
-
-  if (bcd.tens == 0) {
-    set_bkg_tile_xy(x + 3, y, bcd.ones + tile_offset);
-    set_bkg_tile_xy(x + 4, y, blank);
-  } else {
-    set_bkg_tile_xy(x + 3, y, bcd.tens + tile_offset);
-    set_bkg_tile_xy(x + 4, y, bcd.ones + tile_offset);
-  }
-}
-
-void update_skill_data(char *type, uint8_t current, uint8_t max) {
-  uint8_t *vram = VRAM_BACKGROUND_XY(2, 20);
-  uint8_t c = 0;
-  while (*type != 0) {
-    set_vram_byte(vram++, (*type++) + 0x8888888880);
-    c++;
-  }
-  while (c < 8) {
-    set_vram_byte(vram++, 0xA0);
-    c++;
-  }
-  draw_bcd_fraction(5, 21, current, max, 0xB0);
-}
-
-void update_skill(void) {
-  const uint8_t index = battle_cursor - BATTLE_CURSOR_MOVE1;
-  switch (battle_state) {
-  case BATTLE_STATE_FIGHT:
-    MonsterMove *m = battle_monster_moves + index;
-    update_skill_data(m->type, m->action_points, m->max_action_points);
-    break;
-  case BATTLE_STATE_SKILL:
-    PlayerSkill *s = battle_player_skills + index;
-    update_skill_data(s->type, s->action_points, s->max_action_points);
-    break;
-  }
-}
-
-void handle_main_menu(void) {
-  switch (battle_cursor) {
-  case BATTLE_CURSOR_FIGHT:
-    if (was_pressed(J_RIGHT))
-      move_cursor(BATTLE_CURSOR_MONSTER_MANUAL);
-    else if (was_pressed(J_DOWN))
-      move_cursor(BATTLE_CURSOR_SKILL);
-    else if (was_pressed(J_A)) {
-      load_move_names();
-      battle_state = BATTLE_STATE_FIGHT;
-      move_cursor(BATTLE_CURSOR_MOVE1);
-      update_skill();
-    }
-    break;
-  case BATTLE_CURSOR_SKILL:
-    if (was_pressed(J_RIGHT))
-      move_cursor(BATTLE_CURSOR_RUN);
-    else if (was_pressed(J_UP))
-      move_cursor(BATTLE_CURSOR_FIGHT);
-    else if (was_pressed(J_A)) {
-      load_skill_names();
-      battle_state = BATTLE_STATE_SKILL;
-      move_cursor(BATTLE_CURSOR_MOVE1);
-      update_skill();
-    }
-    break;
-  case BATTLE_CURSOR_MONSTER_MANUAL:
-    if (was_pressed(J_LEFT))
-      move_cursor(BATTLE_CURSOR_FIGHT);
-    else if (was_pressed(J_DOWN))
-      move_cursor(BATTLE_CURSOR_RUN);
-    break;
-  case BATTLE_CURSOR_RUN:
-    if (was_pressed(J_LEFT))
-      move_cursor(BATTLE_CURSOR_SKILL);
-    else if (was_pressed(J_UP))
-      move_cursor(BATTLE_CURSOR_MONSTER_MANUAL);
-    break;
-  }
-}
-
-
 void update_battle(void) {
-  const uint8_t move_idx = battle_cursor - BATTLE_CURSOR_MOVE1;
-
-  switch (battle_state) {
-  case BATTLE_STATE_MAIN_MENU:
-    handle_main_menu();
-    break;
-  case BATTLE_STATE_FIGHT:
-    MonsterMove *next_move = battle_monster_moves + move_idx + 1;
-
-    if (was_pressed(J_UP) && battle_cursor > BATTLE_CURSOR_MOVE1) {
-      move_cursor(battle_cursor - 1);
-      update_skill();
-    } else if (
-      was_pressed(J_DOWN) &&
-      battle_cursor < BATTLE_CURSOR_MOVE4 &&
-      next_move->id != 0
-    ) {
-      move_cursor(battle_cursor + 1);
-      update_skill();
-    } else if (was_pressed(J_B)) {
-      battle_state = BATTLE_STATE_MAIN_MENU;
-      move_cursor(BATTLE_CURSOR_FIGHT);
-    }
-    break;
-  case BATTLE_STATE_SKILL:
-    PlayerSkill *next_skill = battle_player_skills + move_idx + 1;
-
-    if (was_pressed(J_UP) && battle_cursor > BATTLE_CURSOR_MOVE1) {
-      move_cursor(battle_cursor - 1);
-      update_skill();
-    }
-    else if (
-      was_pressed(J_DOWN) &&
-      battle_cursor < BATTLE_CURSOR_MOVE4 &&
-      next_skill->id != 0
-    ) {
-      move_cursor(battle_cursor + 1);
-      update_skill();
-    }
-    else if (was_pressed(J_B)) {
-      battle_state = BATTLE_STATE_MAIN_MENU;
-      move_cursor(BATTLE_CURSOR_FIGHT);
-    }
-    break;
-  // case BATTLE_STATE_TEXT:
-  //   break;
-  }
 }
 
 void draw_battle(void) {

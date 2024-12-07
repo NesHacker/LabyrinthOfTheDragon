@@ -76,6 +76,13 @@ typedef struct Timer {
 void clear_background(void);
 
 /**
+ * Fill the background with the given tile and attribute.
+ * @param tile Tile to fill.
+ * @param attr Attribute to fill.
+ */
+void fill_background(uint8_t tile, uint8_t attr);
+
+/**
  * Draws text to the given VRAM location. Assumes the text is null terminated.
  * @param vram Pointer to VRAM where the text tiles should be written.
  * @param text The text to write.

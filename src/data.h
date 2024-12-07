@@ -113,24 +113,28 @@ void load_screen(uint8_t b, uint8_t *src);
 void load_full_tilemap(uint8_t b, uint8_t *src, uint8_t *dst) NONBANKED;
 
 // Banked data externs
+
+// Bank 00 - Misc Tilemaps (likely to be moved)
+INCBIN_EXTERN(tilemap_textbox)
+INCBIN_EXTERN(tilemap_title_screen)
+INCBIN_EXTERN(tilemap_name_entry)
+INCBIN_EXTERN(tilemap_save_select)
+INCBIN_EXTERN(tilemap_battle_menus)
+INCBIN_EXTERN(tilemap_battle_monster_layouts)
+
+// Bank 01 - Main Tilesets
 INCBIN_EXTERN(tile_data_dungeon)
 INCBIN_EXTERN(tile_data_font)
 INCBIN_EXTERN(tile_battle)
 INCBIN_EXTERN(tile_data_hero)
 INCBIN_EXTERN(tile_data_objects)
-INCBIN_EXTERN(tile_beholder)
 
-INCBIN_EXTERN(tilemap_textbox)
-INCBIN_EXTERN(tilemap_title_screen)
-INCBIN_EXTERN(tilemap_name_entry)
-INCBIN_EXTERN(tilemap_save_select)
-
+// Bank 02 - Level Data
 INCBIN_EXTERN(map_example_0)
 INCBIN_EXTERN(map_example_1)
 
-INCBIN_EXTERN(tilemap_battle_menus)
-INCBIN_EXTERN(tilemap_enemy_stat_block)
-INCBIN_EXTERN(tilemap_monster_stat_block)
-INCBIN_EXTERN(tilemap_battle_screen)
+// Bank 03 - Monsters
+INCBIN_EXTERN(tile_beholder)
+INCBIN_EXTERN(tile_kobold)
 
 #endif

@@ -18,7 +18,4 @@ INCBIN(tile_data_objects, "res/tiles/objects.bin")
 // 4K Dungeon tiles
 INCBIN(tile_data_dungeon, "res/tiles/dungeon.bin")
 
-// Beholder Tiles (2352 bytes [7 * 21 * 16])
-INCBIN(tile_beholder, "res/tiles/beholder.bin")
-
 // 6KB of 16KB remaining
