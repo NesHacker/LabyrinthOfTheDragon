@@ -86,13 +86,17 @@ const Monster MONSTER_KOBOLD = {
 
 // -----------------------------------------------------------------------------
 
-
 BattleState battle_state;
 BattleMenu battle_menu;
 BattleCursor battle_cursor;
+MonsterLayout battle_monster_layout;
 
 uint8_t battle_num_monsters;
 MonsterInstance battle_monsters[] = { {0}, {0}, {0} };
+
+Timer status_effect_timer;
+uint8_t status_effect_frame = 0;
+
 
 /**
  * Default palettes for the battle system.
@@ -141,24 +145,11 @@ palette_color_t battle_bg_palettes[] = {
 };
 
 /**
- * LCY interrupt handler for the fight and skill menus. This handler changes the
- * scroll-y position at a specific scanline to display a different part of the
- * background that contains the graphics for these menus.
- */
-void fight_menu_isr(void) {
-  SCY_REG = 0;
-  if (battle_state == BATTLE_STATE_MENU && battle_menu != BATTLE_MENU_MAIN) {
-    // TODO: Fix me
-    SCY_REG = 80;
-    return;
-  }
-}
-
-/**
- * Draws the tiles for the given monster layout.
+ * Sets and draws the monster layout.
  * @param layout Monster layout to draw to the background.
  */
-void draw_monster_layout(MonsterLayout layout) {
+void set_monster_layout(MonsterLayout layout) {
+  battle_monster_layout = layout;
   const uint16_t offset = 20 * 11 * 2 * (uint16_t)layout;
   const uint8_t *src = tilemap_battle_monster_layouts + offset;
   uint8_t *vram = VRAM_BACKGROUND;
@@ -268,17 +259,150 @@ void draw_battle_menu(BattleMenuLayout layout, uint8_t *vram) {
 }
 
 /**
+ * Removes a monster HP bar from the screen.
+ */
+void remove_hp_bar(MonsterPosition pos) {
+  const uint8_t x = get_hp_bar_x(pos);
+  const uint8_t y = 9;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  for (uint8_t k = 0; k < 7; k++, vram++) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, BATTLE_CLEAR_TILE);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
+  }
+}
+
+/**
+ * Draws an HP bar for the monster at a given position.
+ * @param pos Position of the monster on the battle screen.
+ * @param hp Curent HP for the monster.
+ * @param max Max HP for the monster.
+ */
+void draw_hp_bar(MonsterPosition pos, uint8_t hp, uint8_t max) {
+  // Determine the x, y position for the bar
+  const uint8_t x = get_hp_bar_x(pos);
+  const uint8_t y = 9;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+
+  // Calculate the number of pips based on the ratio of HP to Max HP
+  uint16_t k = (40 * hp) / max;
+  uint8_t p = (uint8_t)k;
+
+  // If p <= 13, then HP <= (1/3) * max, so set critical palette
+  uint8_t attr = (p <= 13) ? 0b00001101 : 0b00001100;
+  uint8_t col = 0;
+
+  // Draw the "left cap"
+  VBK_REG = VBK_TILES;
+  set_vram_byte(vram, 0x50);
+  VBK_REG = VBK_ATTRIBUTES;
+  set_vram_byte(vram++, attr);
+
+  // Fill full bar sprites until the pips value falls below 8
+  while (p >= 8) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, 0x51);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram++, attr);
+    p -= 8;
+    col++;
+  }
+
+  // If we've not filled all the pip sprites, then draw the next based on the
+  // remaining pips
+  if (col < 5) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, 0x52 + p);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram++, attr);
+    col++;
+  }
+
+  // Draw any remaining pip sprites as "empty"
+  while (col < 5) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, 0x52);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram++, attr);
+    col++;
+  }
+
+  // Finally draw the "right cap"
+  VBK_REG = VBK_TILES;
+  set_vram_byte(vram, 0x5A);
+  VBK_REG = VBK_ATTRIBUTES;
+  set_vram_byte(vram++, attr);
+}
+
+/**
+ * Removes status effect graphics for a monster on the screen.
+ * @param pos Position of the monster.
+ */
+void remove_status_effects(MonsterPosition pos) {
+  const uint8_t x = get_status_effect_x(pos);
+  const uint8_t y = 8;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  for (uint8_t k = 0; k < 5; k++, vram++) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, BATTLE_CLEAR_TILE);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
+  }
+}
+
+/**
+ * Draws the icon for a status effect at the given position for a monster on the
+ * screen.
+ * @param e Status effect to draw.
+ * @param m Position of the monster with the effect.
+ * @param p Position index.
+ */
+void draw_status_effect_icon(StatusEffect e, MonsterPosition m, uint8_t p) {
+  uint8_t tile = ((uint8_t)e * 2) + 0x60 + status_effect_frame;
+  uint8_t attr = e < 8 ? DEBUFF_ATTRIBUTE : BUFF_ATTRIBUTE;
+  const uint8_t x = get_status_effect_x(m);
+  const uint8_t y = 8;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x + p, y);
+  VBK_REG = VBK_TILES;
+  set_vram_byte(vram, tile);
+  VBK_REG = VBK_ATTRIBUTES;
+  set_vram_byte(vram, attr);
+}
+
+/**
+ * Draws status effects for all monsters and the player.
+ */
+void draw_status_effects(void) {
+  // TODO Implement me
+}
+
+/**
  * Moves the battle cursor to the given cursor position.
  */
 void move_cursor(BattleCursor c) {
   battle_cursor = c;
 }
 
+/**
+ * LCY interrupt handler for the fight and skill menus. This handler changes the
+ * scroll-y position at a specific scanline to display a different part of the
+ * background that contains the graphics for these menus.
+ */
+void fight_menu_isr(void) {
+  SCY_REG = 0;
+  if (battle_state == BATTLE_STATE_MENU && battle_menu != BATTLE_MENU_MAIN) {
+    // TODO: Fix me
+    SCY_REG = 80;
+    return;
+  }
+}
+
 void init_battle(void) {
   lcd_off();
 
   // Reset the background and window position
-  fill_background(0x30, 0x10);
+  fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
   move_win(0, 144);
 
   // Load Palettes for the battle system
@@ -288,7 +412,7 @@ void init_battle(void) {
 
   // Draw the monster layout and instantiate the monsters for the fight
   // TODO Load this data based on the fight type
-  draw_monster_layout(MONSTER_LAYOUT_2);
+  set_monster_layout(MONSTER_LAYOUT_2);
   load_monster(MONSTER_POSITION1, &MONSTER_BEHOLDER);
   load_monster(MONSTER_POSITION2, &MONSTER_KOBOLD);
 
@@ -318,6 +442,9 @@ void init_battle(void) {
   }
   set_interrupts(IE_REG | LCD_IFLAG);
 
+  // Animation & timers
+  init_timer(status_effect_timer, 40);
+
   lcd_on();
 }
 
@@ -331,6 +458,11 @@ void cleanup_battle(void) {
 }
 
 void update_battle(void) {
+  if (update_timer(status_effect_timer)) {
+    status_effect_frame ^= 1;
+    reset_timer(status_effect_timer);
+  }
+  draw_status_effects();
 }
 
 void draw_battle(void) {

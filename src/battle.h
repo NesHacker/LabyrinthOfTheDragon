@@ -5,6 +5,8 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
+#include "data.h"
+
 // -----------------------------------------------------------------------------
 // Constants & Macros
 // -----------------------------------------------------------------------------
@@ -14,9 +16,53 @@
  */
 #define SPRITE_CURSOR 0
 
+/**
+ * Clear tile to use when the battle controller is running.
+ */
+#define BATTLE_CLEAR_TILE 0x30
+
+/**
+ * Clear attribute to use when the battle controller is running.
+ */
+#define BATTLE_CLEAR_ATTR 0x08
+
+/**
+ * Attribute to use for buff icon tiles.
+ */
+#define BUFF_ATTRIBUTE 0x0E
+
+/**
+ * Attribute to use for debuff icon tiles.
+ */
+#define DEBUFF_ATTRIBUTE 0x0F
+
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
+
+/**
+ * Enumeration of all status effects (buffs & debuffs) in the game.
+ */
+typedef enum StatusEffect {
+  // Debuffs (Effects 0-7)
+  DEBUFF_BLIND,
+  DEBUFF_SCARED,
+  DEBUFF_PARALZYED,
+  DEBUFF_POISONED,
+  DEBUFF_CONFUSED,
+  DEBUFF_ASLEEP,
+  DEBUFF_ATTACK_DOWN,
+  DEBUFF_AC_DOWN,
+  // Buffs (Effects 8-15)
+  BUFF_UNUSED_0,
+  BUFF_UNUSED_1,
+  BUFF_UNUSED_2,
+  BUFF_UNUSED_3,
+  BUFF_UNUSED_4,
+  BUFF_UNUSED_5,
+  BUFF_ATTACK_UP,
+  BUFF_AC_UP,
+} StatusEffect;
 
 /**
  * Main state enumeration for the battle system.
@@ -192,6 +238,16 @@ extern BattleMenu battle_menu;
 extern BattleCursor battle_cursor;
 
 /**
+ * The monster layout for the current battle.
+ */
+extern MonsterLayout battle_monster_layout;
+
+/**
+ * The instanced monsters for the current battle.
+ */
+extern MonsterInstance battle_monsters[];
+
+/**
  * Initializes the battle system.
  */
 void init_battle(void);
@@ -224,6 +280,63 @@ inline void move_cursor_sprite(uint8_t col, uint8_t row) {
   const uint8_t x = (col + 1) * 8;
   const uint8_t y = (row + 2) * 8 - 1;
   move_sprite(SPRITE_CURSOR, x, y);
+}
+
+/**
+ * Determines the x position for the HP bar based on the given monster position
+ * and the current monster layout.
+ * @param pos Position of the monster on the screen.
+ * @return The x position for the HP bar.
+ */
+inline uint8_t get_hp_bar_x(MonsterPosition pos) {
+  switch (battle_monster_layout) {
+  case MONSTER_LAYOUT_1:
+    // 1 Monster  - (6, 9)
+    return 6;
+  case MONSTER_LAYOUT_2:
+    // 2 Monsters - (2, 9), (11, 9)
+    return (pos == MONSTER_POSITION1) ? 2 : 11;
+  case MONSTER_LAYOUT_3S:
+    // 3 Monsters - (0, 9), (6, 9), (12, 9)
+    switch (pos) {
+    case MONSTER_POSITION1: return 0;
+    case MONSTER_POSITION2: return 6;
+    case MONSTER_POSITION3: return 12;
+    }
+  case MONSTER_LAYOUT_1M_2S:
+    // 1 md + 2 sm - (0) (7) (13)
+    switch (pos) {
+    case MONSTER_POSITION1: return 0;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
+    }
+  }
+  return 6;
+}
+
+/**
+ * Determines the starting x position for a monster's status effect tiles.
+ * @param pos Monster position.
+ * @return The starting x position for the status effects.
+ */
+inline uint8_t get_status_effect_x(MonsterPosition pos) {
+  switch (battle_monster_layout) {
+  case MONSTER_LAYOUT_1: return 7;
+  case MONSTER_LAYOUT_2: return (pos == MONSTER_POSITION1) ? 3 : 12;
+  case MONSTER_LAYOUT_3S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
+    }
+  case MONSTER_LAYOUT_1M_2S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 8;
+    case MONSTER_POSITION3: return 14;
+    }
+  }
+  return 7;
 }
 
 #endif
