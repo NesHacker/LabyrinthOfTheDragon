@@ -15,21 +15,6 @@
 // TODO: Abstract me out of here / finish up when done
 // -----------------------------------------------------------------------------
 
-typedef enum AbilityType {
-  ABILITY_TYPE_FIGHT,
-  ABILITY_TYPE_MAGIC,
-  ABILITY_TYPE_TECH,
-} AbilityType;
-
-typedef struct Ability {
-  uint8_t id;
-  char name[12];
-} Ability;
-
-typedef struct Summon {
-  uint8_t id;
-  char name[12];
-} Summon;
 
 /**
  * Null or empty monster.
@@ -90,6 +75,7 @@ BattleState battle_state;
 BattleMenu battle_menu;
 BattleCursor battle_cursor;
 MonsterLayout battle_monster_layout;
+// Player battle_player;
 
 uint8_t battle_num_monsters;
 MonsterInstance battle_monsters[] = { {0}, {0}, {0} };
@@ -105,7 +91,7 @@ palette_color_t battle_bg_palettes[] = {
   // Palette 0 - Background / Textbox
   RGB_WHITE,
   RGB8(111, 127, 243),
-  RGB8(54, 112, 54),
+  RGB8(60, 60, 60),
   RGB8(28, 28, 0),
   // Palette 1 - Monster 1
   RGB_WHITE,
@@ -133,13 +119,13 @@ palette_color_t battle_bg_palettes[] = {
   RGB8(120, 80, 80),
   RGB8(32, 0, 0),
   // Palette 6 - Buff
-  RGB_WHITE,
   RGB8(40, 150, 40),
+  RGB_WHITE,
   RGB8(120, 120, 120),
   RGB_BLACK,
   // Palette 7 - Debuff
-  RGB_WHITE,
   RGB8(150, 40, 40),
+  RGB_WHITE,
   RGB8(120, 120, 120),
   RGB_BLACK,
 };
@@ -358,7 +344,11 @@ void remove_status_effects(MonsterPosition pos) {
  * @param m Position of the monster with the effect.
  * @param p Position index.
  */
-void draw_status_effect_icon(StatusEffect e, MonsterPosition m, uint8_t p) {
+void draw_monster_status_effect_icon(
+  StatusEffect e,
+  MonsterPosition m,
+  uint8_t p
+) {
   uint8_t tile = ((uint8_t)e * 2) + 0x60 + status_effect_frame;
   uint8_t attr = e < 8 ? DEBUFF_ATTRIBUTE : BUFF_ATTRIBUTE;
   const uint8_t x = get_status_effect_x(m);
@@ -371,9 +361,41 @@ void draw_status_effect_icon(StatusEffect e, MonsterPosition m, uint8_t p) {
 }
 
 /**
+ * Draws the icon for a player status effect at the given position.
+ */
+void draw_player_status_effect_icon(StatusEffect e, uint8_t p) {
+  uint8_t tile = ((uint8_t)e * 2) + 0x60 + status_effect_frame;
+  const uint8_t x = 10 + p;
+  const uint8_t y = 13;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  VBK_REG = VBK_TILES;
+  set_vram_byte(vram, tile);
+}
+
+/**
+ * Redraws all status effects for the player.
+ */
+void redraw_player_status_effects(void) {
+  // TODO Implement me
+  draw_player_status_effect_icon(BUFF_ATTACK_UP, 0);
+  draw_player_status_effect_icon(DEBUFF_PARALZYED, 1);
+}
+
+/**
  * Draws status effects for all monsters and the player.
  */
-void draw_status_effects(void) {
+void redraw_monster_status_effects(void) {
+  // TODO Implement me
+  draw_monster_status_effect_icon(BUFF_AC_UP, MONSTER_POSITION1, 0);
+  draw_monster_status_effect_icon(BUFF_ATTACK_UP, MONSTER_POSITION3, 0);
+  draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
+}
+
+/**
+ * Sets the battle system to use the magic or tech menu based on the player
+ * character's chosen class.
+ */
+void set_magic_or_tech_menu(void) {
   // TODO Implement me
 }
 
@@ -462,7 +484,8 @@ void update_battle(void) {
     status_effect_frame ^= 1;
     reset_timer(status_effect_timer);
   }
-  draw_status_effects();
+  redraw_player_status_effects();
+  redraw_monster_status_effects();
 }
 
 void draw_battle(void) {

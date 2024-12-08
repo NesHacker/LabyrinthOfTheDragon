@@ -19,7 +19,7 @@
 /**
  * Clear tile to use when the battle controller is running.
  */
-#define BATTLE_CLEAR_TILE 0x30
+#define BATTLE_CLEAR_TILE 0xFF
 
 /**
  * Clear attribute to use when the battle controller is running.
@@ -78,8 +78,8 @@ typedef enum BattleState {
 typedef enum BattleMenu {
   BATTLE_MENU_MAIN,
   BATTLE_MENU_FIGHT,
-  BATTLE_MENU_MAGIC,
-  BATTLE_MENU_TECH,
+  BATTLE_MENU_MAGIC_TECH,
+  BATTLE_MENU_ITEM,
   BATTLE_MENU_SUMMON,
 } BattleMenu;
 
@@ -88,8 +88,8 @@ typedef enum BattleMenu {
  */
 typedef enum BattleCursor {
   BATTLE_CURSOR_MAIN_FIGHT,
-  BATTLE_CURSOR_MAIN_MAGIC,
-  BATTLE_CURSOR_MAIN_TECH,
+  BATTLE_CURSOR_MAIN_MAGIC_TECH,
+  BATTLE_CURSOR_MAIN_ITEM,
   BATTLE_CURSOR_MAIN_MAIN_SUMMON,
   BATTLE_CURSOR_ITEM_1,
   BATTLE_CURSOR_ITEM_2,
@@ -147,28 +147,6 @@ typedef enum MonsterPosition {
   MONSTER_POSITION2,
   MONSTER_POSITION3,
 } MonsterPosition;
-
-/**
- * Data representation of the player.
- */
-typedef struct Player {
-  uint8_t id;
-  char name[6];
-
-  uint8_t summon_id;
-
-  uint8_t hp;
-  uint8_t max_hp;
-  uint8_t mp;
-  uint8_t max_mp;
-
-  uint8_t attack;
-  uint8_t armor_class;
-  uint8_t magic_attack;
-  uint8_t saving_throw;
-  uint8_t initiative;
-
-} Player;
 
 /**
  * Data representation of a monster.
