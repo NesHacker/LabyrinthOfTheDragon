@@ -6,6 +6,16 @@
 #include "stats.h"
 #include "tables.h"
 
+/*
+  TODO Implement player saves
+
+  Should be pretty easy,
+
+  uint8_t *cart_ram = (void *)(0xA000 + save_offset);
+  // calculate checksum over all player data
+  // store checksum at beginning then memcopy the entire player model
+*/
+
 /**
  * Enumeration of all classes in the game. This is primarily used to determine
  * the overworld graphics and the summon abilities available to a player.
@@ -253,5 +263,20 @@ extern Ability kobold_summon_ants;
  * "Dirty Fang" kobold druid ability.
  */
 extern Ability kobold_dirty_fang;
+
+/**
+ * @return `true` if the player has a magic combat class.
+ */
+inline bool is_magic_class(void) {
+  return player.player_class == CLASS_DRUID ||
+    player.player_class == CLASS_SORCERER;
+}
+
+/**
+ * @return `true` if the player has a martial combat class.
+ */
+inline bool is_martial_class(void) {
+  return !is_magic_class();
+}
 
 #endif
