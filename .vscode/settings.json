@@ -9,6 +9,8 @@
     "util.h": "c",
     "fade_transition.h": "c",
     "bcd.h": "c",
-    "battle.h": "c"
+    "battle.h": "c",
+    "monster.h": "c",
+    "flags.h": "c"
   }
 }

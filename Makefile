@@ -17,6 +17,7 @@ LCC = $(GBDK_HOME)bin/lcc
 LCCFLAGS = -Wm-yC -Wm-yt0x1B -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS)
 PNG2BIN := ./tools/png2bin
 COLOR2BIN := ./tools/color2bin
+TABLES2C := ./tools/tables2c
 
 # GBDK_DEBUG = ON
 ifdef GBDK_DEBUG
@@ -41,7 +42,10 @@ COLORTBL_BIN := $(subst assets/,res/,$(patsubst %.png,%.bin,$(COLORTBL_PNG)))
 
 all: assets $(BINS)
 
-assets: $(TILEBIN) $(COLORTBL_BIN)
+assets: tables $(TILEBIN) $(COLORTBL_BIN)
+
+tables: assets/tables.csv
+	$(TABLES2C)
 
 res/tiles/%.bin: assets/tiles/%.png
 	$(PNG2BIN) $< $@

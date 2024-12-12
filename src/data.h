@@ -134,7 +134,7 @@ INCBIN_EXTERN(map_example_0)
 INCBIN_EXTERN(map_example_1)
 
 // Bank 03 - Monsters
-INCBIN_EXTERN(tile_beholder)
 INCBIN_EXTERN(tile_kobold)
+INCBIN_EXTERN(tile_beholder)
 
 #endif

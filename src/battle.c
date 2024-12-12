@@ -11,66 +11,6 @@
 #include "palette.h"
 #include "util.h"
 
-// -----------------------------------------------------------------------------
-// TODO: Abstract me out of here / finish up when done
-// -----------------------------------------------------------------------------
-
-
-/**
- * Null or empty monster.
- */
-const Monster MONSTER_NULL = { 0 };
-
-/**
- * Palette colors for the beholder monster.
- */
-const palette_color_t MONSTER_BEHOLDER_PALETTE[4] = {
-  RGB_WHITE,
-  RGB8(209, 206, 107),
-  RGB8(126, 73, 73),
-  RGB8(0, 40, 51),
-};
-
-/**
- * Monster stats and data for the "Beholder".
- */
-const Monster MONSTER_BEHOLDER = {
-  // id, name
-  1, "BEHOLDER",
-  // tile_bank, tile_data, palette
-  3, tile_beholder, MONSTER_BEHOLDER_PALETTE,
-  // Max HP & MP
-  115, 50,
-  // Attack, AC, Magic Attack, Saving Throw, Initiative
-  0, 0, 0, 0, 0
-};
-
-/**
- * Palette Colors for the Kobold.
- */
-const palette_color_t MONSTER_KOBOLD_PALETTE[4] = {
-  RGB_WHITE,
-  RGB8(177, 113, 51),
-  RGB8(77, 22, 11),
-  RGB8(37, 3, 40),
-};
-
-/**
- * Monster stats and data for the "Beholder".
- */
-const Monster MONSTER_KOBOLD = {
-  // id, name
-  1, "KOBOLD",
-  // tile_bank, tile_data, palette
-  3, tile_kobold, MONSTER_KOBOLD_PALETTE,
-  // Max HP & MP
-  15, 10,
-  // Attack, AC, Magic Attack, Saving Throw, Initiative
-  0, 0, 0, 0, 0
-};
-
-// -----------------------------------------------------------------------------
-
 BattleState battle_state;
 BattleMenu battle_menu;
 BattleCursor battle_cursor;
@@ -78,11 +18,10 @@ MonsterLayout battle_monster_layout;
 // Player battle_player;
 
 uint8_t battle_num_monsters;
-MonsterInstance battle_monsters[] = { {0}, {0}, {0} };
+MonsterInstance battle_monsters[] = {{0}, {0}, {0}};
 
 Timer status_effect_timer;
 uint8_t status_effect_frame = 0;
-
 
 /**
  * Default palettes for the battle system.
@@ -91,7 +30,7 @@ palette_color_t battle_bg_palettes[] = {
   // Palette 0 - Background / Textbox
   RGB_WHITE,
   RGB8(111, 127, 243),
-  RGB8(60, 60, 60),
+  RGB8(60, 80, 60),
   RGB8(28, 28, 0),
   // Palette 1 - Monster 1
   RGB_WHITE,
@@ -155,7 +94,12 @@ void set_monster_layout(MonsterLayout layout) {
  * @param monster Pointer to the monster to load.
  */
 void load_monster(MonsterPosition p, Monster *monster) {
-  battle_monsters[p] = monster_instance((uint8_t)p, monster);
+
+  // TODO: Instancing of the monsters should be handled by the encounter
+  //       system. This method should simply load an instance into a slot and
+  //       copy the monster's tiles to VRAM.
+  MonsterInstance *instance = get_monster_at(p);
+  monster->new_instance(p, 1, C_TIER);
 
   const uint8_t total_tiles = 2 * 7 * 7;
   const uint8_t *src = monster->tile_data;
@@ -170,7 +114,7 @@ void load_monster(MonsterPosition p, Monster *monster) {
       (void *)0x9000,
       total_tiles
     );
-    update_bg_palettes(1, 1, monster->palette);
+    update_bg_palettes(1, 1, instance->palette);
     break;
   case MONSTER_POSITION2:
     VBK_REG = VBK_BANK_0;
@@ -188,7 +132,7 @@ void load_monster(MonsterPosition p, Monster *monster) {
       (void *)0x8800,
       68
     );
-    update_bg_palettes(2, 1, monster->palette);
+    update_bg_palettes(2, 1, instance->palette);
     break;
   case MONSTER_POSITION3:
     // 60 -> VRAM_SHARED_TILES + 68 * 16
@@ -207,7 +151,7 @@ void load_monster(MonsterPosition p, Monster *monster) {
       (void *)0x9000,
       38
     );
-    update_bg_palettes(3, 1, monster->palette);
+    update_bg_palettes(3, 1, instance->palette);
     break;
   }
 }
@@ -377,7 +321,7 @@ void draw_player_status_effect_icon(StatusEffect e, uint8_t p) {
  */
 void redraw_player_status_effects(void) {
   // TODO Implement me
-  draw_player_status_effect_icon(BUFF_ATTACK_UP, 0);
+  draw_player_status_effect_icon(BUFF_ATK_UP, 0);
   draw_player_status_effect_icon(DEBUFF_PARALZYED, 1);
 }
 
@@ -386,8 +330,8 @@ void redraw_player_status_effects(void) {
  */
 void redraw_monster_status_effects(void) {
   // TODO Implement me
-  draw_monster_status_effect_icon(BUFF_AC_UP, MONSTER_POSITION1, 0);
-  draw_monster_status_effect_icon(BUFF_ATTACK_UP, MONSTER_POSITION3, 0);
+  draw_monster_status_effect_icon(BUFF_DEF_UP, MONSTER_POSITION1, 0);
+  draw_monster_status_effect_icon(BUFF_ATK_UP, MONSTER_POSITION3, 0);
   draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
 }
 
@@ -422,6 +366,8 @@ void fight_menu_isr(void) {
 
 void init_battle(void) {
   lcd_off();
+
+  load_battle_bank();
 
   // Reset the background and window position
   fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);

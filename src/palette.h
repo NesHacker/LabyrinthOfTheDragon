@@ -51,7 +51,7 @@ extern palette_color_t sprite_palettes[8 * 4];
  * @param n Number of palettes to update.
  * @param data Palette color data to use for the update.
  */
-void update_bg_palettes(uint8_t i, uint8_t n, palette_color_t *data);
+void update_bg_palettes(uint8_t i, uint8_t n, const palette_color_t *data);
 
 /**
  * Updates one or more sprite palettes.
@@ -59,6 +59,6 @@ void update_bg_palettes(uint8_t i, uint8_t n, palette_color_t *data);
  * @param n Number of palettes to update.
  * @param data Palette color data to use for the update.
  */
-void update_sprite_palettes(uint8_t i, uint8_t n, palette_color_t *data);
+void update_sprite_palettes(uint8_t i, uint8_t n, const palette_color_t *data);
 
 #endif

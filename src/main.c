@@ -1,5 +1,6 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
+#include <rand.h>
 #include <stdint.h>
 
 #include "battle.h"
@@ -36,6 +37,7 @@ void set_game_state(GameState s) NONBANKED {
  * Initializes the game.
  */
 inline void initialize(void) {
+  initrand(2);
   // init_text_box();
   // init_main_menu();
   // init_world_map();

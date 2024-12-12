@@ -6,6 +6,10 @@
 #include <stdint.h>
 
 #include "data.h"
+#include "flags.h"
+#include "monster.h"
+#include "player.h"
+#include "tables.h"
 
 // -----------------------------------------------------------------------------
 // Constants & Macros
@@ -36,33 +40,16 @@
  */
 #define DEBUFF_ATTRIBUTE 0x0F
 
+/**
+ * ROM bank in which most data and routines related to battle are stored. This
+ * bank must be loaded in order for the battle system to properly function.
+ * @see load_battle_bank()
+ */
+#define BATTLE_ROM_BANK 3
+
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
-
-/**
- * Enumeration of all status effects (buffs & debuffs) in the game.
- */
-typedef enum StatusEffect {
-  // Debuffs (Effects 0-7)
-  DEBUFF_BLIND,
-  DEBUFF_SCARED,
-  DEBUFF_PARALZYED,
-  DEBUFF_POISONED,
-  DEBUFF_CONFUSED,
-  DEBUFF_ASLEEP,
-  DEBUFF_ATTACK_DOWN,
-  DEBUFF_AC_DOWN,
-  // Buffs (Effects 8-15)
-  BUFF_UNUSED_0,
-  BUFF_UNUSED_1,
-  BUFF_UNUSED_2,
-  BUFF_UNUSED_3,
-  BUFF_UNUSED_4,
-  BUFF_UNUSED_5,
-  BUFF_ATTACK_UP,
-  BUFF_AC_UP,
-} StatusEffect;
 
 /**
  * Main state enumeration for the battle system.
@@ -148,54 +135,6 @@ typedef enum MonsterPosition {
   MONSTER_POSITION3,
 } MonsterPosition;
 
-/**
- * Data representation of a monster.
- */
-typedef struct Monster {
-  uint8_t id;
-  char name[9];
-  uint8_t tile_bank;
-  uint8_t *tile_data;
-  palette_color_t *palette;
-
-  uint8_t max_hp;
-  uint8_t max_mp;
-  uint8_t attack;
-  uint8_t ac;
-  uint8_t magic_attack;
-  uint8_t saving_throw;
-  uint8_t initiative;
-
-  // TODO AI Callbacks?
-  // void (*attack)(...);
-} Monster;
-
-/**
- * Instanced monster that's used for battle.
- */
-typedef struct MonsterInstance {
-  uint8_t id;
-  uint8_t hp;
-  uint8_t mp;
-  Monster *monster;
-} MonsterInstance;
-
-/**
- * Creates a new instance of the given monster.
- * @param id Id for the instance.
- * @param monster Pointer to the monster this is an instance of.
- * @return A new MonsterInstance for the monster.
- */
-inline MonsterInstance monster_instance(uint8_t id, Monster *m) {
-  MonsterInstance i = {
-    id,
-    m->max_hp,
-    m->max_mp,
-    m
-  };
-  return i;
-}
-
 // -----------------------------------------------------------------------------
 // Externs & Prototypes
 // -----------------------------------------------------------------------------
@@ -248,6 +187,14 @@ void draw_battle(void);
 // -----------------------------------------------------------------------------
 // Inline functions
 // -----------------------------------------------------------------------------
+
+/**
+ * Switches to the battle ROM bank containing tables and routines related to
+ * battle, abilities, etc.
+ */
+inline void load_battle_bank(void) {
+  SWITCH_ROM(BATTLE_ROM_BANK);
+}
 
 /**
  * Moves the cursor sprite to the given column and row on the screen.
@@ -315,6 +262,15 @@ inline uint8_t get_status_effect_x(MonsterPosition pos) {
     }
   }
   return 7;
+}
+
+/**
+ * @return A pointer to monster instance at the given monster position in the
+ *   current battle.
+ * @param pos Position for the monster.
+ */
+inline MonsterInstance *get_monster_at(MonsterPosition pos) {
+  return battle_monsters + sizeof(MonsterInstance) * pos;
 }
 
 #endif

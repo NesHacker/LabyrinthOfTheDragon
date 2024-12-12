@@ -36,19 +36,19 @@ palette_color_t fade_palettes[32] = {
   RGB_WHITE, RGB_WHITE, RGB_WHITE, RGB_WHITE,
 };
 
-void update_bg_palettes(uint8_t i, uint8_t n, palette_color_t *data) {
+void update_bg_palettes(uint8_t i, uint8_t n, const palette_color_t *data) {
   set_bkg_palette(i, n, data);
   palette_color_t *dst = bg_palettes + i * 4;
   for (uint8_t k = 0; k < 4 * n; k++) {
-    *dst++ = *data++; 
+    *dst++ = *data++;
   }
 }
 
-void update_sprite_palettes(uint8_t i, uint8_t n, palette_color_t *data) {
+void update_sprite_palettes(uint8_t i, uint8_t n, const palette_color_t *data) {
   set_sprite_palette(i, n, data);
   palette_color_t *dst = sprite_palettes + (i << 2);
   for (uint8_t k = 0; k < 4 * n; k++) {
-    *dst++ = *data++; 
+    *dst++ = *data++;
   }
 }
 
@@ -70,7 +70,7 @@ inline void update_fade_out(uint8_t k) {
   palette_color_t target = RGB_WHITE;
   palette_color_t color = fade_palettes[k];
   if (color == target) return;
-  
+
   uint16_t r = color & 0x1F;
   uint16_t g = (color >> 5) & 0x1F;
   uint16_t b = color >> 10;
@@ -101,7 +101,7 @@ inline void update_fade_in(uint8_t k) {
   palette_color_t target = bg_palettes[k];
   palette_color_t color = fade_palettes[k];
   if (color == target) return;
-  
+
   uint16_t r = color & 0x1F;
   uint16_t g = (color >> 5) & 0x1F;
   uint16_t b = color >> 10;
@@ -115,7 +115,7 @@ inline void update_fade_in(uint8_t k) {
       r = 0;
     } else {
       r -= 2;
-      if (r < tr) r = tr; 
+      if (r < tr) r = tr;
     }
   }
 
@@ -124,7 +124,7 @@ inline void update_fade_in(uint8_t k) {
       g = 0;
     } else {
       g -= 2;
-      if (g < tg) g = tg; 
+      if (g < tg) g = tg;
     }
   }
 
@@ -133,7 +133,7 @@ inline void update_fade_in(uint8_t k) {
       b = 0;
     } else {
       b -= 2;
-      if (b < tb) b = tb; 
+      if (b < tb) b = tb;
     }
   }
 
