@@ -11,6 +11,11 @@
 #include "tables.h"
 
 /**
+ * Empty bitfield constant for use with aspect and effect immunities, etc.
+ */
+#define EMPTY_BITFIELD 0
+
+/**
  * Core damage types for the game. Aspects color damage allowing for the player
  * and monsters to express vulnerabilities, resistances, and immunities.
  */

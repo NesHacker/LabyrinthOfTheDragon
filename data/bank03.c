@@ -6,6 +6,7 @@
 #pragma bank 3
 
 #include <stdint.h>
+#include <gbdk/incbin.h>
 
 const uint8_t attack_roll_target[65] = {
   50, 54, 58, 63, 67, 72, 76, 81,
@@ -28,3 +29,6 @@ const uint8_t xp_mod[16] = {
   0, 2, 5, 9, 12, 14, 15, 16,
   16, 17, 18, 20, 23, 27, 30, 32,
 };
+
+INCBIN(tilemap_battle_menus, "res/tilemaps/battle_menus.tilemap")
+INCBIN(tilemap_battle_monster_layouts, "res/tilemaps/battle_monster_layouts.tilemap")

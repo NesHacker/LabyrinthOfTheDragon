@@ -22,9 +22,14 @@ void fill_background(uint8_t tile_id, uint8_t attr) NONBANKED {
   }
 }
 
-void draw_text(uint8_t *vram, char *text) NONBANKED {
+void draw_text(uint8_t *vram, char *text, uint8_t max) NONBANKED {
   VBK_REG = VBK_TILES;
-  while (*text != 0) {
+  while (*text != 0 && max) {
     set_vram_byte(vram++, (*text++) + 0x80);
+    max--;
+  }
+  while (max) {
+    set_vram_byte(vram++, 0x20 + 0x80);
+    max--;
   }
 }

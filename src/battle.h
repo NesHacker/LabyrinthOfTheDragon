@@ -47,6 +47,14 @@
  */
 #define BATTLE_ROM_BANK 3
 
+// TODO Document me
+
+#define MENU_Y 11
+#define SUBMENU_Y 18
+#define TEXT_MENU_Y 0
+
+#define VRAM_SUMMON_NAME VRAM_BACKGROUND_XY(10, MENU_Y + 1)
+
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------

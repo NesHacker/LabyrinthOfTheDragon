@@ -60,7 +60,7 @@ typedef struct MonsterInstance {
    */
   char id;
   /**
-   * Level of the monster instance.
+   * Monster level.
    */
   uint8_t level;
   /**
@@ -68,53 +68,70 @@ typedef struct MonsterInstance {
    */
   PowerTier exp_tier;
   /**
-   * Current HP for the monster.
+   * Current HP (health points).
    */
   uint8_t hp;
   /**
-   * Maximum HP for the monster.
+   * Maximum HP (health points).
    */
   uint8_t max_hp;
   /**
-   * Base physical attack score for the monster.
+   * Base physical attack score.
+   */
+  uint8_t atk_base;
+  /**
+   * Current physical attack. Calculated via status effects, etc.
    */
   uint8_t atk;
   /**
-   * Base physical defense score for the monster.
+   * Base physical defense score.
+   */
+  uint8_t def_base;
+  /**
+   * Current physical defense. Calculated via status effects, etc.
    */
   uint8_t def;
   /**
-   * Base magical attack score for the monster.
+   * Base magical attack score.
+   */
+  uint8_t matk_base;
+  /**
+   * Current magical attack. Calculed via status effects, etc.
    */
   uint8_t matk;
   /**
-   * Base magical defense score for the monster.
+   * Base magical defense score.
+   */
+  uint8_t mdef_base;
+  /**
+   * Current magical defense. Calculated via status effects, etc.
    */
   uint8_t mdef;
   /**
-   * Base agility score for the monster.
+   * Base agility score.
+   */
+  uint8_t agl_base;
+  /**
+   * Current agility. Calculated via status effects, etc.
    */
   uint8_t agl;
   /**
-   * Aspected damage immunity bitfield. Each bit corresponds to a different
-   * immunity.
+   * Aspected damage immunity bitfield.
    * @see `DamageAspect`
    */
   uint8_t aspect_immune;
   /**
-   * Aspected damage resistances bitfield. Eeach bit corresponds to a different
-   * resistance.
+   * Aspected damage resistances bitfield.
    * @see `DamageAspect`
    */
   uint8_t aspect_resist;
   /**
-   * Aspected damage vulnerability bitfield. Each bit represents a different
-   * vulnerability.
+   * Aspected damage vulnerability bitfield.
    * @see `DamageAspect`
    */
   uint8_t aspect_vuln;
   /**
-   * Debuff immunity. Each bit corresponds to a different immunity.
+   * Debuff immunity.
    * @see `StatusEffectImmunity`
    */
   uint8_t debuff_immune;

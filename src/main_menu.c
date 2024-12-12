@@ -177,6 +177,7 @@ void update_save_select_sprites(void) {
 void init_main_menu(void) {
   lcd_off();
 
+
   // Load tiles
   VBK_REG = VBK_BANK_0;
   load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);
@@ -185,6 +186,7 @@ void init_main_menu(void) {
 
   // Load tilesets and palettes
   scroll_bkg(0, 0);
+  SWITCH_ROM(1);
   load_screen(0, tilemap_title_screen);
   set_bkg_palette(0, 8, main_menu_palettes);
 

@@ -321,8 +321,8 @@ void draw_player_status_effect_icon(StatusEffect e, uint8_t p) {
  */
 void redraw_player_status_effects(void) {
   // TODO Implement me
-  draw_player_status_effect_icon(BUFF_ATK_UP, 0);
-  draw_player_status_effect_icon(DEBUFF_PARALZYED, 1);
+  // draw_player_status_effect_icon(BUFF_ATK_UP, 0);
+  // draw_player_status_effect_icon(DEBUFF_PARALZYED, 1);
 }
 
 /**
@@ -330,9 +330,52 @@ void redraw_player_status_effects(void) {
  */
 void redraw_monster_status_effects(void) {
   // TODO Implement me
-  draw_monster_status_effect_icon(BUFF_DEF_UP, MONSTER_POSITION1, 0);
-  draw_monster_status_effect_icon(BUFF_ATK_UP, MONSTER_POSITION3, 0);
-  draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
+  // draw_monster_status_effect_icon(BUFF_DEF_UP, MONSTER_POSITION1, 0);
+  // draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
+}
+
+// TODO Find a place for these
+#define FONT_SPACE 0xA0
+#define FONT_DIGIT_OFFSET 0xB0
+#define FONT_SLASH 0xAF
+
+// TODO document me
+void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
+  bcd_t left, right;
+  to_bcd16(n, &left);
+  to_bcd16(d, &right);
+
+  VBK_REG = VBK_TILES;
+
+  if (left.d2) {
+    set_vram_byte(vram++, left.d2 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  } else if (!left.d2 && left.d1) {
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  } else {
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  }
+
+  set_vram_byte(vram++, FONT_SLASH);
+
+  if (right.d2) {
+    set_vram_byte(vram++, right.d2 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+  } else if (!right.d2 && right.d1) {
+    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, FONT_SPACE);
+  } else {
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, FONT_SPACE);
+  }
 }
 
 /**
@@ -340,7 +383,28 @@ void redraw_monster_status_effects(void) {
  * character's chosen class.
  */
 void set_magic_or_tech_menu(void) {
-  // TODO Implement me
+  VBK_REG = VBK_TILES;
+  uint8_t *vram = VRAM_BACKGROUND_XY(2, MENU_Y + 2);
+  switch (player.player_class) {
+  case CLASS_DRUID:
+  case CLASS_SORCERER:
+    for (uint8_t tile = 0x9A; tile <= 0x9D; tile++) {
+      set_vram_byte(vram++, tile);
+    }
+    vram = VRAM_BACKGROUND_XY(9, MENU_Y + 4);
+    set_vram_byte(vram++, 0x8E);
+    set_vram_byte(vram, 0x8F);
+    break;
+  case CLASS_FIGHTER:
+  case CLASS_MONK:
+    for (uint8_t tile = 0xFB; tile <= 0xFE; tile++) {
+      set_vram_byte(vram++, tile);
+    }
+    vram = VRAM_BACKGROUND_XY(9, MENU_Y + 4);
+    set_vram_byte(vram++, 0x9E);
+    set_vram_byte(vram, 0x9F);
+    break;
+  }
 }
 
 /**
@@ -369,6 +433,10 @@ void init_battle(void) {
 
   load_battle_bank();
 
+  // TODO Load player & skills, and monsters
+  init_player(); // TODO: remove me after testing
+  player.summon->activate();
+
   // Reset the background and window position
   fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
   move_win(0, 144);
@@ -381,7 +449,7 @@ void init_battle(void) {
   // Draw the monster layout and instantiate the monsters for the fight
   // TODO Load this data based on the fight type
   set_monster_layout(MONSTER_LAYOUT_2);
-  load_monster(MONSTER_POSITION1, &MONSTER_BEHOLDER);
+  load_monster(MONSTER_POSITION1, &MONSTER_KOBOLD);
   load_monster(MONSTER_POSITION2, &MONSTER_KOBOLD);
 
   // Load the font and battle specific tilesets
@@ -390,16 +458,20 @@ void init_battle(void) {
   load_tiles(1, tile_battle, (void *)(0x9300), 5 * 16);
 
   // Draw the battle menus
-  draw_battle_menu(BATTLE_MENU_LAYOUT_MAIN, VRAM_BACKGROUND_XY(0, 11));
-  draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, 18));
+  draw_battle_menu(BATTLE_MENU_LAYOUT_MAIN, VRAM_BACKGROUND_XY(0, MENU_Y));
+  draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
   draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
+
+  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  set_magic_or_tech_menu();
+
+  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
+  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
 
   // Setup cursor sprite
   set_sprite_tile(0, 0xFE);
   set_sprite_prop(SPRITE_CURSOR, 0x0F);
   move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
-
-  // TODO Load player & skills, and monsters
 
   // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
@@ -432,6 +504,9 @@ void update_battle(void) {
   }
   redraw_player_status_effects();
   redraw_monster_status_effects();
+
+
+
 }
 
 void draw_battle(void) {

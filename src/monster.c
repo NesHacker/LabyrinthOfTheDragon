@@ -12,10 +12,15 @@ void reset_monster_instance(MonsterInstance *m) {
   m->exp_tier = C_TIER;
   m->hp = 0;
   m->max_hp = 0;
+  m->atk_base = 0;
   m->atk = 0;
+  m->def_base = 0;
   m->def = 0;
+  m->matk_base = 0;
   m->matk = 0;
+  m->mdef_base = 0;
   m->mdef = 0;
+  m->agl_base = 0;
   m->agl = 0;
   m->aspect_immune = 0;
   m->aspect_resist = 0;
