@@ -7,6 +7,26 @@
 #include <stdint.h>
 
 /**
+ * Tile offset where the font tiles begin.
+ */
+#define FONT_OFFSET 0x80
+
+/**
+ * Tile id for the '0' character with backing when the font tileset is loaded.
+ */
+#define FONT_DIGIT_OFFSET 0xB0
+
+/**
+ * Tile id for a space when the font tileset is loaded.
+ */
+#define FONT_SPACE 0xA0
+
+/**
+ * Tile id for a '/' character when the font tileset is loaded.
+ */
+#define FONT_SLASH 0xAF
+
+/**
  * Universal direction type.
  */
 typedef enum Direction {
