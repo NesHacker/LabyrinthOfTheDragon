@@ -16,9 +16,19 @@
 // -----------------------------------------------------------------------------
 
 /**
- * Sprite id for the cursor icon.
+ * First sprite id for the cursor icon.
  */
-#define SPRITE_CURSOR 0
+#define CURSOR_SPRITE 0
+
+/**
+ * Tile for the first cursor sprite.
+ */
+#define CURSOR_TILE 0x8A
+
+/**
+ * Sprite attribute for the cursor.
+ */
+#define CURSOR_ATTR 0x0F
 
 /**
  * Clear tile to use when the battle controller is running.
@@ -39,6 +49,56 @@
  * Attribute to use for debuff icon tiles.
  */
 #define DEBUFF_ATTRIBUTE 0x0F
+
+/**
+ * Tile id for the fight icon in the font tileset.
+ */
+#define FIGHT_ICON 0x96
+
+/**
+ * Tile id for the magic icon in the font tileset.
+ */
+#define MAGIC_ICON 0x9A
+
+/**
+ * Tile id for the tech icon in the font tileset.
+ */
+#define TECH_ICON 0xFB
+
+/**
+ * Tile id for the item icon in the font tileset.
+ */
+#define ITEM_ICON 0xA8
+
+/**
+ * Tile id for the summon icon in the font tileset.
+ */
+#define SUMMON_ICON 0xDB
+
+/**
+ * Tile id for the flee icon in the font tileset.
+ */
+#define FLEE_ICON 0xBB
+
+/**
+ * Tile id for the left tile of the "MP" label.
+ */
+#define MP_ICON_LEFT 0x8E
+
+/**
+ * Tile id for the right tile of the "MP" label.
+ */
+#define MP_ICON_RIGHT 0x8F
+
+/**
+ * Tile id for the left tile of the "SP" label.
+ */
+#define SP_ICON_LEFT 0x9E
+
+/**
+ * Tile id for the right tile of the "SP" label.
+ */
+#define SP_ICON_RIGHT 0x9F
 
 /**
  * ROM bank in which most data and routines related to battle are stored. This
@@ -73,7 +133,7 @@ typedef enum BattleState {
 typedef enum BattleMenu {
   BATTLE_MENU_MAIN,
   BATTLE_MENU_FIGHT,
-  BATTLE_MENU_MAGIC_TECH,
+  BATTLE_MENU_ABILITY,
   BATTLE_MENU_ITEM,
   BATTLE_MENU_SUMMON,
 } BattleMenu;
@@ -83,14 +143,19 @@ typedef enum BattleMenu {
  */
 typedef enum BattleCursor {
   BATTLE_CURSOR_MAIN_FIGHT,
-  BATTLE_CURSOR_MAIN_MAGIC_TECH,
+  BATTLE_CURSOR_MAIN_ABILITY,
   BATTLE_CURSOR_MAIN_ITEM,
   BATTLE_CURSOR_MAIN_MAIN_SUMMON,
+  BATTLE_CURSOR_MAIN_FLEE,
   BATTLE_CURSOR_ITEM_1,
   BATTLE_CURSOR_ITEM_2,
   BATTLE_CURSOR_ITEM_3,
   BATTLE_CURSOR_ITEM_4,
   BATTLE_CURSOR_ITEM_5,
+  BATTLE_CURSOR_NO_ITEMS,
+  BATTLE_CURSOR_MONSTER_1,
+  BATTLE_CURSOR_MONSTER_2,
+  BATTLE_CURSOR_MONSTER_3,
 } BattleCursor;
 
 /**
@@ -148,6 +213,17 @@ typedef enum MonsterPosition {
 // -----------------------------------------------------------------------------
 
 /**
+ * Default palettes for the battle system.
+ */
+extern const palette_color_t battle_bg_palettes[];
+
+/**
+ * Default sprite palettes for the battle system.
+ */
+extern const palette_color_t battle_sprite_palettes[];
+
+
+/**
  * Main state variable for the battle system.
  */
 extern BattleState battle_state;
@@ -173,6 +249,12 @@ extern MonsterLayout battle_monster_layout;
 extern MonsterInstance battle_monsters[];
 
 /**
+ * Number of selectable submenu items. General limit value for the abilities,
+ * items, and summons submenus.
+ */
+extern uint8_t battle_num_submenu_items;
+
+/**
  * Initializes the battle system.
  */
 void init_battle(void);
@@ -195,25 +277,6 @@ void draw_battle(void);
 // -----------------------------------------------------------------------------
 // Inline functions
 // -----------------------------------------------------------------------------
-
-/**
- * Switches to the battle ROM bank containing tables and routines related to
- * battle, abilities, etc.
- */
-inline void load_battle_bank(void) {
-  SWITCH_ROM(BATTLE_ROM_BANK);
-}
-
-/**
- * Moves the cursor sprite to the given column and row on the screen.
- * @param col Column for the cursor.
- * @param row Row for the cursor.
- */
-inline void move_cursor_sprite(uint8_t col, uint8_t row) {
-  const uint8_t x = (col + 1) * 8;
-  const uint8_t y = (row + 2) * 8 - 1;
-  move_sprite(SPRITE_CURSOR, x, y);
-}
 
 /**
  * Determines the x position for the HP bar based on the given monster position
