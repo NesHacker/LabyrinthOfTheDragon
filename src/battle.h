@@ -107,13 +107,35 @@
  */
 #define BATTLE_ROM_BANK 3
 
-// TODO Document me
-
+/**
+ * Denotes the starting row in the background where the menu graphics begin.
+ */
 #define MENU_Y 11
-#define SUBMENU_Y 18
-#define TEXT_MENU_Y 0
 
+/**
+ * Denotes the starting row in the background where the submenu graphics begin.
+ */
+#define SUBMENU_Y 18
+
+/**
+ * Row where submenu body text begins.
+ */
+#define SUBMENU_TEXT_Y 19
+
+/**
+ * Column where submenu body text begins.
+ */
+#define SUBMENU_TEXT_X 5
+
+/**
+ * VRAM address for the main menu summon text in the background.
+ */
 #define VRAM_SUMMON_NAME VRAM_BACKGROUND_XY(10, MENU_Y + 1)
+
+/**
+ * VRAM address for the starting tile of submenu text in the background.
+ */
+#define VRAM_SUBMENU_TEXT VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y)
 
 // -----------------------------------------------------------------------------
 // Types
@@ -342,6 +364,13 @@ inline uint8_t get_status_effect_x(MonsterPosition pos) {
  */
 inline MonsterInstance *get_monster_at(MonsterPosition pos) {
   return battle_monsters + sizeof(MonsterInstance) * pos;
+}
+
+/**
+ * @return `true` If the submenu contains a number of selectable items.
+ */
+inline bool has_submenu_items(void) {
+  return battle_num_submenu_items > 0;
 }
 
 #endif
