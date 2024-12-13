@@ -17,6 +17,12 @@
 #define FONT_DIGIT_OFFSET 0xB0
 
 /**
+ * @return The tile id for the given digit.
+ * @param d Digit to convert.
+ */
+#define FONT_DIGIT(d) ((d) + FONT_DIGIT_OFFSET)
+
+/**
  * Tile id for a space when the font tileset is loaded.
  */
 #define FONT_SPACE 0xA0
