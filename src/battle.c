@@ -677,8 +677,26 @@ void reset_battle_submenu(void) {
  * Draws a list of selectable abilities into the battle submenu.
  */
 void load_abilities_menu(void) {
-  // TODO Load ability names and state
-  draw_menu_empty_text();
+  Ability *ability = player.summon->ability;
+  if (!ability) {
+    draw_menu_empty_text();
+    return;
+  }
+
+  battle_num_submenu_items = 0;
+  uint8_t *vram = VRAM_SUBMENU_TEXT;
+  while (ability && player.level >= ability->level) {
+    draw_text(vram, ability->name, 10);
+    uint8_t *cost_tile = ability->sp_cost_tiles;
+    set_vram_byte(vram + 11, *cost_tile++);
+    set_vram_byte(vram + 12, *cost_tile++);
+    set_vram_byte(vram + 13, *cost_tile++);
+    vram += 32;
+    ability = ability->next;
+    battle_num_submenu_items++;
+  }
+
+  move_cursor(BATTLE_CURSOR_ITEM_1);
 }
 
 /**
@@ -727,6 +745,21 @@ void open_battle_menu(BattleMenu m) {
 }
 
 /**
+ * Moves the battle cursor for submenu item selection according to the current
+ * number items available.
+ */
+void move_submenu_item_by_dpad(void) {
+  if (!has_submenu_items())
+    return;
+  const uint8_t min = BATTLE_CURSOR_ITEM_1;
+  const uint8_t max = BATTLE_CURSOR_ITEM_1 + battle_num_submenu_items - 1;
+  if (was_pressed(J_UP) && battle_cursor > min)
+    move_cursor(battle_cursor - 1);
+  else if (was_pressed(J_DOWN) && battle_cursor < max)
+    move_cursor(battle_cursor + 1);
+}
+
+/**
  * Performs game logic for the battle menu.
  * @see `update_battle`
  */
@@ -757,6 +790,10 @@ inline void update_battle_menu(void) {
     // Select an available tech
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
+    else if (was_pressed(J_A) && has_submenu_items())
+      confirm_ability();
+    else
+      move_submenu_item_by_dpad();
     break;
   case BATTLE_MENU_ITEM:
     // Select an item from the inventory
@@ -766,6 +803,7 @@ inline void update_battle_menu(void) {
     break;
   case BATTLE_MENU_SUMMON:
     // Select an available summon
+    // TODO Create more than one summon to build this out
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
     break;
