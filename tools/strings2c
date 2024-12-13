@@ -1,0 +1,347 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path')
+
+const namespaces = require('../assets/strings');
+
+/**
+ * List of direct substitutions to perform on input strings. Makes it easy to
+ * reference special font tiles, etc.
+ */
+const DirectSubstitutions = {
+  '...': '\\xE0',
+  ':blind:': '\\x60',
+  ':fear:': '\\x62',
+  ':paralyze:': '\\x64',
+  ':poison:': '\\x66',
+  ':confuse:': '\\x68',
+  ':agldown:': '\\x6B',
+  ':atkdown:': '\\x6D',
+  ':defdown:': '\\x6F',
+  ':haste:': '\\x76',
+  ':regen:': '\\x78',
+  ':aglup:': '\\x7B',
+  ':atkup:': '\\x7D',
+  ':defup:': '\\x7F',
+  ':lvl:': '\\x5C\\x5D',
+  ':gil:': '\\xA4',
+  ':soulcoin:': '\\xA5',
+  ':arrow:': '\\A6',
+  ':lquo:': '\\xA2',
+  ':rquo:': '\\xA3',
+  ':a-tier:': '\\x40',
+  ':b-tier:': '\\x41',
+  ':c-tier:': '\\x42',
+  ':s-tier:': '\\x43',
+  ':fight:': '\\x96',
+  ':magic:': '\\x9A',
+  ':tech:': '\\xFB',
+  ':item:': '\\xA8',
+  ':summon:': '\\xDB',
+  ':flee:': '\\xBB',
+  '\f': '\\f',
+};
+
+const params = {
+  '%damage': {
+    code: '%d',
+    max: 4,
+  },
+  '%aspect': {
+    code: '%s',
+    max: 5,
+  },
+  '%monster': {
+    code: '%s',
+    max: 9,
+  },
+  '%c': {
+    code: '%c',
+    max: 1
+  }
+};
+
+function encodeString(namespace, key, str, debugOn=false) {
+  function debug(...args) {
+    if (!debugOn) return;
+    args.unshift('debug>')
+    console.log.apply(console, args);
+  }
+
+  debug('Parsing:', str);
+
+  // Perform special character substitutions string wide
+  let withSubs = str;
+  Object.keys(DirectSubstitutions).forEach(key => {
+    withSubs = withSubs.replace(key, DirectSubstitutions[key])
+  })
+
+  debug('Substitutions made:', withSubs)
+
+  const maxLineLength = 18;
+  const maxTokenLength = 18;
+  const maxStringLength = maxLineLength * 3;
+  const tokens = []
+
+  function addToken(token) {
+    // If the token has a trailing comma, split that off into its own token
+    if (token.length > 1 && token.match(/,$/)) {
+      addToken(',');
+      token = token.substring(0, token.length - 1);
+    }
+
+    // Params tokens can be handled as is
+    if (params[token]) {
+      return tokens.push(token);
+    }
+
+    // If the token exceeds the max token length cut it apart with a hyphen
+    // and turn it into a bunch of other tokens
+    while (token.length > maxTokenLength) {
+      tokens.push(token.substring(0, maxTokenLength-1) + '-');
+      token = token.substring(maxTokenLength-1);
+    }
+
+    // Whatever remaining, if non-empty, is added as a final token
+    if (token) {
+      tokens.push(token);
+    }
+  }
+
+  // Break the string down into a series of tokens
+  withSubs.split(' ').forEach(addToken);
+
+  const imr = [];
+
+  function addIMR(k) {
+    debug('Token IMR generated:', k)
+    imr.push(k);
+  }
+
+  // Generate a list of intermediate representations for the tokens
+  tokens.forEach((token, idx) => {
+    const isLast = idx == tokens.length - 1;
+    const addSpace = !isLast
+
+    if (token.match(new RegExp('^\\\\'))) {
+      addIMR({ type: 'control_code', value: token, length: 1, addSpace });
+    } else if (params[token]) {
+      const { code, max } = params[token];
+      addIMR({ type: 'param', value: code, length: max, addSpace });
+    } else {
+      addIMR({ type: 'text', value: token, length: token.length, addSpace });
+    }
+  });
+
+  let result = '';
+  let currentLineLen = 0;
+  let totalLen = 0;
+
+  function addTotalLength(len) {
+    totalLen += len;
+    currentLineLen += len;
+    if (currentLineLen > maxLineLength) {
+      debug("Maximum line length exceeded, adding \\n")
+      currentLineLen = 0;
+      result += '\\n';
+      totalLen++;
+    }
+    debug('Total length updated:', totalLen);
+    if (totalLen > maxStringLength) {
+      debug('Maximum string length exceeded, throwing');
+      throw new Error(`String ${namespace}.${key} '${str.substring(0, 8)}...' exceeds ${maxStringLength} character limit`);
+    }
+  }
+
+  // Convert from IR form to the final assembled result
+  imr.forEach((rep, idx) => {
+    debug('Encoding IR value', idx, rep);
+
+    const { type, addSpace } = rep;
+    debug(`Encoding ${type} node`)
+
+    let { value, length } = rep;
+
+    if (type == 'text') {
+      debug('Converting plain-text to game encoded hex.');
+      value = value.split('').map(c => {
+        let hex = c.charCodeAt(0).toString(16);
+        if (hex.length > 2) {
+          const msg = 'Encountered non standard ASCII character with code ${hex}';
+          debug(`${msg}, throwing`);
+          throw new Error(`String ${namespace}.${key} '${str.substring(0, 8)}...' ${msg}`);
+        }
+        const value = parseInt(hex, 16) + 0x80;
+        debug(`Converting hex ${hex} (${c}) to ${value.toString(16)}`);
+        hex = value.toString(16);
+        return `\\x${hex.toUpperCase()}`;
+      }).join('')
+    }
+
+    if (addSpace) {
+      debug('Not last, appending space.');
+      value = value + '\\xA0';
+      length++;
+    }
+
+    addTotalLength(length);
+
+    debug(`Appending value '${value}'`)
+    result += value;
+  })
+
+  return result;
+}
+
+function varName(ns, key) {
+  return `str_${ns}_${key}`;
+}
+
+function generatedAt() {
+  const now = new Date();
+  return [
+    ' * This file was automatically generated using the tools/strings script',
+    ` * Generated at: ${now.toDateString()} @ ${now.toTimeString()}`,
+  ].join('\n');
+}
+
+class Header {
+  constructor () {
+    this.variables = [];
+  }
+
+  get filename() {
+    return 'strings.h'
+  }
+
+  get path() {
+    return path.resolve('src/', this.filename)
+  }
+
+  add(ns, key, value) {
+    this.variables.push({ varName: varName(ns, key), value })
+  }
+
+  extern(variable) {
+    const { varName, value } = variable;
+    return [
+      '',
+      '/**',
+      ` * "${value}"`,
+      ' */',
+      `extern const char ${varName}[];`,
+    ].join('\n');
+  }
+
+  get headerConst() {
+    return '_GAME_STRINGS_H';
+  }
+
+  get contents() {
+    const now = new Date();
+    return [
+      '/*',
+      ` * ${this.filename}`,
+      ` * Extern references for encoded string values across all namespaces.`,
+      ` *`,
+      generatedAt(),
+      ' */',
+      `#ifndef ${this.headerConst}`,
+      `#define ${this.headerConst}`,
+      this.variables.map(v => this.extern(v)).join('\n'),
+      '',
+      '#endif',
+      ''
+    ].join('\n');
+  }
+}
+
+class SourceFile {
+  constructor(name, bank) {
+    this.name = name;
+    this.bank = bank;
+    this.entries = [];
+  }
+
+  get filename() {
+    const bank = this.bank < 10 ? `0${this.bank}` : this.bank;
+    return `strings_${this.name}.bank${bank}.c`;
+  }
+
+  get path() {
+    return path.resolve('data/', this.filename);
+  }
+
+  add(key, value) {
+    const parsed = encodeString(this.name, key, value);
+    this.entries.push({ key, value, parsed });
+  }
+
+  var(key) {
+    return varName(this.name, key);
+  }
+
+  def(entry) {
+    const { key, value, parsed } = entry;
+    return [
+      `const char ${this.var(key)}[] = "${parsed}";`,
+    ].join('\n')
+  }
+
+  get contents() {
+    const now = new Date();
+    return [
+      '/*',
+      ` * ${this.filename}`,
+      ` * Encoded string values for the "${this.name}" namespace.`,
+      ' *',
+      generatedAt(),
+      ' */',
+      '',
+      `#pragma bank ${this.bank}`,
+      '',
+      this.entries.map(entry => this.def(entry)).join('\n'),
+      ''
+    ].join('\n')
+  }
+}
+
+function writeFile(path, contents, type) {
+  console.log(`Writing strings ${type} file: ${path}`)
+  fs.writeFileSync(path, contents);
+}
+
+function main() {
+  const header = new Header();
+  Object.keys(namespaces).forEach(name => {
+    const { strings, bank } = namespaces[name];
+    const source = new SourceFile(name, bank)
+    Object.keys(strings).forEach(key => {
+      header.add(name, key, strings[key]);
+      source.add(key, strings[key]);
+    })
+    writeFile(source.path, source.contents, 'source');
+  });
+  writeFile(header.path, header.contents, 'header');
+}
+
+function testParse(str) {
+  const parsed = encodeString('test', 'key', str, true)
+  console.log('+--+--+--+--+--+--');
+  console.log(str);
+  console.log('+--+--+--+--+--+--');
+  console.log(parsed.replace('\\n', '\n'));
+  console.log('+--+--+--+--+--+--');
+
+  const revert = parsed.split('\\xA0').map(word => {
+    const letters = word.split('\\x');
+    return letters.filter(k => k.match(/[0-9A-F]{2}/))
+  }).flat(1).map(frag => {
+    return String.fromCharCode(parseInt(frag, 16) - 0x80)
+  }).join('');
+
+  console.log(revert);
+}
+
+main();

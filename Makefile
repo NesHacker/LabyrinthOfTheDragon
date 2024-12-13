@@ -18,6 +18,7 @@ LCCFLAGS = -Wm-yC -Wm-yt0x1B -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS)
 PNG2BIN := ./tools/png2bin
 COLOR2BIN := ./tools/color2bin
 TABLES2C := ./tools/tables2c
+STRINGS2C := ./tools/strings2c
 
 # GBDK_DEBUG = ON
 ifdef GBDK_DEBUG
@@ -42,10 +43,13 @@ COLORTBL_BIN := $(subst assets/,res/,$(patsubst %.png,%.bin,$(COLORTBL_PNG)))
 
 all: assets $(BINS)
 
-assets: tables $(TILEBIN) $(COLORTBL_BIN)
+assets: tables strings $(TILEBIN) $(COLORTBL_BIN)
 
 tables: assets/tables.csv
 	$(TABLES2C)
+
+strings: assets/strings.js
+	$(STRINGS2C)
 
 res/tiles/%.bin: assets/tiles/%.png
 	$(PNG2BIN) $< $@
