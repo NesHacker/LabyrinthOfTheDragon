@@ -52,7 +52,7 @@ typedef struct Ability {
   /**
    * Ability's in game name.
    */
-  char name[12];
+  const char name[12];
   /**
    * Player class to which the ability belongs.
    */
@@ -73,6 +73,10 @@ typedef struct Ability {
    * SP cost required to activate and consumed by the ability.
    */
   uint8_t sp_cost;
+  /**
+   * SP cost display tiles.
+   */
+  const uint8_t sp_cost_tiles[3];
   /**
    * Callback to execute the ability in battle mode.
    */

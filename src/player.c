@@ -7,6 +7,7 @@
 #include "player.h"
 #include "monster.h"
 #include "tables.h"
+#include "util.h"
 
 Player player = {
   CLASS_DRUID,
@@ -79,6 +80,7 @@ Ability kobold_vine_whip = {
   3,
   TARGET_SINGLE,
   2,
+  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(2) },
   execute_kobold_vine_whip,
   &kobold_mend // next
 };
@@ -92,7 +94,8 @@ Ability kobold_mend = {
   C_TIER,
   5,
   TARGET_SELF,
-  4,
+  5,
+  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(5) },
   execute_kobold_mend,
   &kobold_summon_ants,
 };
@@ -106,7 +109,8 @@ Ability kobold_summon_ants = {
   B_TIER,
   9,
   TARGET_SINGLE,
-  8,
+  9,
+  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(9) },
   execute_kobold_summon_ants,
   &kobold_dirty_fang,
 };
@@ -120,8 +124,8 @@ Ability kobold_dirty_fang = {
   B_TIER,
   14,
   TARGET_SINGLE,
-  // TODO SP
   12,
+  { FONT_SPACE, FONT_DIGIT(1), FONT_DIGIT(2) },
   execute_kobold_dirty_fang,
   NULL
 };
