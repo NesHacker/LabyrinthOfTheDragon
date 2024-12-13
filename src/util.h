@@ -33,6 +33,11 @@
 #define FONT_SLASH 0xAF
 
 /**
+ * Tile id for a horizontal menu border (top normal, flip-y for bottom).
+ */
+#define FONT_BORDER_TOP 0x91
+
+/**
  * Universal direction type.
  */
 typedef enum Direction {
