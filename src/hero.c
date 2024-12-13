@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "data.h"
-#include "global.h"
+#include "player.h"
 #include "hero.h"
 #include "util.h"
 
@@ -15,12 +15,12 @@ uint8_t hero_y = 0 + 16;
 void init_hero(void) {
   // const uint8_t x = 8 + 16 * 4;
   // const uint8_t y = 16 + 16 * 4;
-  
+
   const uint8_t offset = 0x00;
   const uint8_t frame = (walk_frame << 1) + offset;
 
   VBK_REG = VBK_BANK_0;
-  load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);  
+  load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);
 
   const uint16_t hpal[4] = {
     RGB(0, 0, 0),

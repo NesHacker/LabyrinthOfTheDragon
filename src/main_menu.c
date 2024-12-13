@@ -3,15 +3,16 @@
 #include <stdint.h>
 
 #include "data.h"
-#include "global.h"
 #include "joypad.h"
 #include "main_menu.h"
+#include "player.h"
 #include "util.h"
 
 /**
  * Top level state for the main menu.
  */
 MainMenuState main_menu_state = TITLE;
+uint8_t cursor = 0;
 
 /**
  * Initializes the save select screen.

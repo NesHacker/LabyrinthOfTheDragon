@@ -76,4 +76,6 @@ extern const uint16_t save_3_selected_palettes[];
 extern const uint16_t save_none_selected_palettes[];
 extern const uint16_t hero_palettes[];
 
+extern uint8_t cursor;
+
 #endif

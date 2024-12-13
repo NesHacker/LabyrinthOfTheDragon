@@ -239,6 +239,16 @@ typedef struct Player {
  */
 extern Player player;
 
+/**
+ * Global walk timer. Used for various character walking animations.
+ */
+extern Timer walk_timer;
+
+/**
+ * Walk frame. Used for various walking animations.
+ */
+extern uint8_t walk_frame;
+
 // TODO Temporary, remove when adding save system, etc.
 void init_player(void);
 

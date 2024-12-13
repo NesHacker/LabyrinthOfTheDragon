@@ -13,6 +13,9 @@ Player player = {
   CLASS_DRUID,
 };
 
+Timer walk_timer;
+uint8_t walk_frame;
+
 void init_player(void) {
   player.level = 10;
   player.exp = get_exp(10) + 23;
