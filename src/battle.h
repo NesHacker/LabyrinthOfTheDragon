@@ -125,7 +125,7 @@
 /**
  * Column where submenu body text begins.
  */
-#define SUBMENU_TEXT_X 5
+#define SUBMENU_TEXT_X 2
 
 /**
  * VRAM address for the main menu summon text in the background.

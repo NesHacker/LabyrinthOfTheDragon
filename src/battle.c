@@ -397,19 +397,19 @@ void move_cursor(BattleCursor c) {
     move_cursor_sprites(0, 16);
     break;
   case BATTLE_CURSOR_ITEM_1:
-    move_cursor_sprites(3, 12);
+    move_cursor_sprites(0, 12);
     break;
   case BATTLE_CURSOR_ITEM_2:
-    move_cursor_sprites(3, 13);
+    move_cursor_sprites(0, 13);
     break;
   case BATTLE_CURSOR_ITEM_3:
-    move_cursor_sprites(3, 14);
+    move_cursor_sprites(0, 14);
     break;
   case BATTLE_CURSOR_ITEM_4:
-    move_cursor_sprites(3, 15);
+    move_cursor_sprites(0, 15);
     break;
   case BATTLE_CURSOR_ITEM_5:
-    move_cursor_sprites(3, 16);
+    move_cursor_sprites(0, 16);
     break;
   case BATTLE_CURSOR_NO_ITEMS:
     hide_cursor_sprites();
@@ -640,37 +640,56 @@ void select_next_enemy(void) {
  * Draws the "EMPTY..." message in the middle of an empty submenu.
  */
 inline void draw_menu_empty_text(void) {
-  draw_text(VRAM_BACKGROUND_XY(8, 21), "EMPTY\x60", 6);
+  draw_text(VRAM_BACKGROUND_XY(7, 21), "EMPTY\x60", 6);
 }
 
 /**
- * Clears the and resets the battle submenu.
+ * Draws the submenu heading based on which battle menu is currently set.
  */
-void reset_battle_submenu(void) {
-  // Clear menu state & hide the cursor
-  battle_num_submenu_items = 0;
-  hide_cursor_sprites();
-
-  // Set the submenu icon
+inline void draw_submenu_heading(void) {
+  uint8_t start_tile;
+  uint8_t len;
   switch (battle_menu) {
   case BATTLE_MENU_ABILITY:
-    set_tile_xy(1, 19, is_magic_class() ? MAGIC_ICON : TECH_ICON);
+    start_tile = is_magic_class() ? MAGIC_ICON : TECH_ICON;
+    len = 4;
     break;
   case BATTLE_MENU_ITEM:
-    set_tile_xy(1, 19, ITEM_ICON);
+    start_tile = ITEM_ICON;
+    len = 4;
     break;
-  case BATTLE_MENU_SUMMON:
-    set_tile_xy(1, 19, SUMMON_ICON);
-    break;
+  default:
+    start_tile = SUMMON_ICON;
+    len = 5;
   }
+  uint8_t *vram = VRAM_BACKGROUND_XY(1, 18);
+  uint8_t k;
+  for (k = 0; k < len; k++, start_tile++, vram++)
+    set_vram_byte(vram, start_tile);
+  while (k++ < 5)
+    set_vram_byte(vram++, FONT_BORDER_TOP);
+}
 
-  // Clear the body of the menu
-  uint8_t *vram = VRAM_BACKGROUND_XY(3, 19);
-  for (uint8_t y = 19; y < 24; y++) {
-    for (uint8_t x = 3; x < 19; x++)
+/**
+ * Clears the body of the submenu.
+ */
+inline void clear_submenu_body(void) {
+  uint8_t *vram = VRAM_BACKGROUND_XY(SUBMENU_TEXT_X - 1, SUBMENU_TEXT_Y);
+  for (uint8_t y = 0; y < 5; y++) {
+    for (uint8_t x = 0; x < 18; x++)
       set_vram_byte(vram++, FONT_SPACE);
-    vram += 16;
+    vram += 14;
   }
+}
+
+/**
+ * Resets the battle submenu graphics and state.
+ */
+void reset_battle_submenu(void) {
+  battle_num_submenu_items = 0;
+  hide_cursor_sprites();
+  draw_submenu_heading();
+  clear_submenu_body();
 }
 
 /**
