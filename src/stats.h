@@ -237,10 +237,59 @@ inline bool roll_attack(uint8_t atk, uint8_t def) {
 }
 
 /**
+ * @return A random d2 roll.
+ */
+inline uint8_t d2(void) {
+  return rand() & 0x01;
+}
+
+/**
+ * @return A random d4 roll.
+ */
+inline uint8_t d4(void) {
+  return rand() & 0x03;
+}
+
+/**
+ * @return A random d8 roll.
+ */
+inline uint8_t d8(void) {
+  return rand() & 0x07;
+}
+
+/**
  * @return A random d16 roll.
  */
 inline uint8_t d16(void) {
   return rand() & 0x0F;
+}
+
+/**
+ * @return A random d16 roll.
+ */
+inline uint8_t d32(void) {
+  return rand() & 0x1F;
+}
+
+/**
+ * @return A random d64 roll.
+ */
+inline uint8_t d64(void) {
+  return rand() & 0x3F;
+}
+
+/**
+ * @return A random d128 roll.
+ */
+inline uint8_t d128(void) {
+  return rand() & 0x7F;
+}
+
+/**
+ * @return A random d256 roll.
+ */
+inline uint8_t d256(void) {
+  return rand();
 }
 
 /**

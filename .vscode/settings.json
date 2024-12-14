@@ -11,6 +11,8 @@
     "bcd.h": "c",
     "battle.h": "c",
     "monster.h": "c",
-    "flags.h": "c"
+    "flags.h": "c",
+    "stdbool.h": "c",
+    "string.h": "c"
   }
 }

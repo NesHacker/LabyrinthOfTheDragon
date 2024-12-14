@@ -6,6 +6,7 @@
 #include "joypad.h"
 #include "main_menu.h"
 #include "player.h"
+#include "hero.h"
 #include "util.h"
 
 /**

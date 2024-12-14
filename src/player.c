@@ -7,14 +7,12 @@
 #include "player.h"
 #include "monster.h"
 #include "tables.h"
+#include "strings.h"
 #include "util.h"
 
 Player player = {
   CLASS_DRUID,
 };
-
-Timer walk_timer;
-uint8_t walk_frame;
 
 void init_player(void) {
   player.level = 10;
@@ -62,8 +60,8 @@ void kobold_base_attack(void) {
 
 Summon summon_kobold = {
   1,
-  "Kobold",
-  "Wilbur",
+  str_summon_name_kobold,
+  str_summon_name_wilbur,
   B_TIER,
   EMPTY_BITFIELD,
   DAMAGE_EARTH,
@@ -77,7 +75,7 @@ void execute_kobold_vine_whip(void) {
 }
 
 Ability kobold_vine_whip = {
-  "Vine Whip",
+  str_ability_vine_whip,
   CLASS_DRUID,
   C_TIER,
   3,
@@ -92,7 +90,7 @@ void execute_kobold_mend(void) {
 }
 
 Ability kobold_mend = {
-  "Mend",
+  str_ability_mend,
   CLASS_DRUID,
   C_TIER,
   5,
@@ -107,7 +105,7 @@ void execute_kobold_summon_ants(void) {
 }
 
 Ability kobold_summon_ants = {
-  "Summon Ants",
+  str_ability_summon_ants,
   CLASS_DRUID,
   B_TIER,
   9,
@@ -122,7 +120,7 @@ void execute_kobold_dirty_fang(void) {
 }
 
 Ability kobold_dirty_fang = {
-  "Dirty Fang",
+  str_ability_dirty_fang,
   CLASS_DRUID,
   B_TIER,
   14,

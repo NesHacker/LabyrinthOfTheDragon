@@ -1,7 +1,9 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
+#include <rand.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "battle.h"
 #include "bcd.h"
@@ -9,6 +11,7 @@
 #include "joypad.h"
 #include "monster.h"
 #include "palette.h"
+#include "strings.h"
 #include "util.h"
 
 BattleState battle_state;
@@ -22,6 +25,72 @@ MonsterInstance battle_monsters[] = {{0}, {0}, {0}};
 
 Timer status_effect_timer;
 uint8_t status_effect_frame = 0;
+
+Turn battle_turn_order[5] = {
+  TURN_END,
+  TURN_END,
+  TURN_END,
+  TURN_END,
+  TURN_END,
+};
+uint8_t turn_idx = 0;
+
+
+// Magical energy crackles around Kobold A
+// char battle_action_preamble[64] = "Kobold A attacks with a stone axe\x60";
+// char battle_action_result[64] = "But they miss!";
+
+
+
+/**
+ * Rolls initiative for all active entities in the fight and sets the turn
+ * order for actions.
+ */
+void roll_initiative(void) {
+  uint8_t rolls[4] = { 0, 0, 0, 0 };
+
+  // Reset the turn order
+  turn_idx = 0;
+  battle_turn_order[0] = TURN_END;
+  battle_turn_order[1] = TURN_END;
+  battle_turn_order[2] = TURN_END;
+  battle_turn_order[3] = TURN_END;
+  battle_turn_order[4] = TURN_END;
+
+  // Roll for the player
+  uint8_t player_agl = get_agl(player.level, player.summon->agl_tier);
+  rolls[0] = d32() + player_agl + 1;
+  battle_turn_order[0] = TURN_PLAYER;
+
+  // Roll for the monsters
+  switch (battle_num_monsters) {
+  case 3:
+    rolls[3] = d32() + (battle_monsters + 2)->agl;
+    battle_turn_order[3] = TURN_MONSTER3;
+  case 2:
+    rolls[2] = d32() + (battle_monsters + 1)->agl;
+    battle_turn_order[2] = TURN_MONSTER3;
+  default:
+    rolls[1] = d32() + battle_monsters->agl;
+    battle_turn_order[1] = TURN_MONSTER3;
+    break;
+  }
+
+  // When's the last time you wrote a bespoke bubble sort? ;)
+  for (uint8_t k = 0; k < battle_num_monsters; k++) {
+    for (uint8_t j = k + 1; j < battle_num_monsters + 1; k++) {
+      if (rolls[k] > rolls[j]) {
+        uint8_t tmp_roll = rolls[k];
+        rolls[k] = rolls[j];
+        rolls[j] = tmp_roll;
+        Turn tmp_turn = battle_turn_order[k];
+        battle_turn_order[k] = battle_turn_order[j];
+        battle_turn_order[j] = tmp_roll;
+      }
+    }
+  }
+}
+
 
 /**
  * Sets and draws the monster layout.
@@ -49,7 +118,7 @@ void set_monster_layout(MonsterLayout layout) {
  */
 void load_monster(MonsterPosition p, Monster *monster) {
 
-  // TODO: Instancing of the monsters should be handled by the encounter
+  // TODO Instancing of the monsters should be handled by the encounter
   //       system. This method should simply load an instance into a slot and
   //       copy the monster's tiles to VRAM.
   MonsterInstance *instance = get_monster_at(p);
@@ -524,7 +593,7 @@ void init_battle(void) {
   draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
   draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
 
-  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  draw_string(VRAM_SUMMON_NAME, player.summon->name, 9);
   set_magic_or_tech_menu();
 
   print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
@@ -561,6 +630,7 @@ void cleanup_battle(void) {
  * next round of combat.
  */
 void confirm_fight(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -568,6 +638,7 @@ void confirm_fight(void) {
  * round of combat.
  */
 void confirm_ability(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -575,12 +646,14 @@ void confirm_ability(void) {
  * of combat.
  */
 void confirm_item(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
  * Confirms the player has chosen a summon and begins the next round of combat.
  */
 void confirm_summon(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -640,7 +713,7 @@ void select_next_enemy(void) {
  * Draws the "EMPTY..." message in the middle of an empty submenu.
  */
 inline void draw_menu_empty_text(void) {
-  draw_text(VRAM_BACKGROUND_XY(7, 21), "EMPTY\x60", 6);
+  draw_string(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
 }
 
 /**
@@ -705,11 +778,11 @@ void load_abilities_menu(void) {
   battle_num_submenu_items = 0;
   uint8_t *vram = VRAM_SUBMENU_TEXT;
   while (ability && player.level >= ability->level) {
-    draw_text(vram, ability->name, 10);
+    draw_string(vram, ability->name, 14);
     uint8_t *cost_tile = ability->sp_cost_tiles;
-    set_vram_byte(vram + 11, *cost_tile++);
-    set_vram_byte(vram + 12, *cost_tile++);
     set_vram_byte(vram + 13, *cost_tile++);
+    set_vram_byte(vram + 14, *cost_tile++);
+    set_vram_byte(vram + 15, *cost_tile++);
     vram += 32;
     ability = ability->next;
     battle_num_submenu_items++;
@@ -840,6 +913,12 @@ void update_battle(void) {
   switch (battle_state) {
   case BATTLE_STATE_MENU:
     update_battle_menu();
+    break;
+  case BATTLE_ROLL_INITIATIVE:
+    roll_initiative();
+    battle_state = BATTLE_BEGIN_TURN;
+    break;
+  case BATTLE_BEGIN_TURN:
     break;
   }
 }

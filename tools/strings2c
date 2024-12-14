@@ -71,66 +71,79 @@ function encodeString(namespace, key, str, debugOn=false) {
 
   debug('Parsing:', str);
 
-  // Perform special character substitutions string wide
-  let withSubs = str;
-  Object.keys(DirectSubstitutions).forEach(key => {
-    withSubs = withSubs.replace(key, DirectSubstitutions[key])
-  })
-
-  debug('Substitutions made:', withSubs)
-
   const maxLineLength = 18;
   const maxTokenLength = 18;
   const maxStringLength = maxLineLength * 3;
-  const tokens = []
-
-  function addToken(token) {
-    // If the token has a trailing comma, split that off into its own token
-    if (token.length > 1 && token.match(/,$/)) {
-      addToken(',');
-      token = token.substring(0, token.length - 1);
-    }
-
-    // Params tokens can be handled as is
-    if (params[token]) {
-      return tokens.push(token);
-    }
-
-    // If the token exceeds the max token length cut it apart with a hyphen
-    // and turn it into a bunch of other tokens
-    while (token.length > maxTokenLength) {
-      tokens.push(token.substring(0, maxTokenLength-1) + '-');
-      token = token.substring(maxTokenLength-1);
-    }
-
-    // Whatever remaining, if non-empty, is added as a final token
-    if (token) {
-      tokens.push(token);
-    }
-  }
 
   // Break the string down into a series of tokens
-  withSubs.split(' ').forEach(addToken);
-
+  const tokens = str.match(/([ ]+)|([\n\f])|(:[a-z-]+:)|([^\s]+)/g);
   const imr = [];
 
   function addIMR(k) {
-    debug('Token IMR generated:', k)
+    debug('IMR generated:', k)
     imr.push(k);
   }
 
-  // Generate a list of intermediate representations for the tokens
-  tokens.forEach((token, idx) => {
-    const isLast = idx == tokens.length - 1;
-    const addSpace = !isLast
+  function encode(s) {
+    return s.split('').map(c => {
+      let hex = c.charCodeAt(0).toString(16);
+      if (hex.length > 2) {
+        const msg = `Encountered non standard ASCII character with code ${hex}`;
+        debug(`${msg}, throwing`);
+        throw new Error(`${namespace}.${key} ${msg}`);
+      }
+      const value = parseInt(hex, 16) + 0x80;
+      debug(`Converting hex ${hex} (${c}) to ${value.toString(16)}`);
+      hex = value.toString(16);
+      return `\\x${hex.toUpperCase()}`;
+    }).join('')
+  }
 
-    if (token.match(new RegExp('^\\\\'))) {
-      addIMR({ type: 'control_code', value: token, length: 1, addSpace });
-    } else if (params[token]) {
-      const { code, max } = params[token];
-      addIMR({ type: 'param', value: code, length: max, addSpace });
-    } else {
-      addIMR({ type: 'text', value: token, length: token.length, addSpace });
+  // Generate a list of intermediate representations for the tokens
+  tokens.forEach(token => {
+    if (token.match(/^%/)) {
+      addIMR({ type: 'param', token, encoded: params[token], length: 1 });
+      return;
+    }
+
+    if (token.match(/:[a-z-]+:/)) {
+      addIMR({
+        type: 'sub',
+        token,
+        encoded: DirectSubstitutions[token],
+        length: 1
+      });
+      return;
+    }
+
+    if (token.match(/[\n]/)) {
+      addIMR({ type: 'control', token, encoded: '\\n', length: 1 });
+      return;
+    }
+
+    if (token.match(/[\f]/)) {
+      addIMR({ type: 'control', token, encoded: '\\f', length: 1 });
+      return;
+    }
+
+    while(token.length > maxTokenLength) {
+      const left = token.substring(0, maxTokenLength - 1) + '-';
+      addIMR({
+        type: 'text',
+        token: left,
+        length: left.length,
+        encoded: encode(left)
+      });
+      token = token.substring(maxTokenLength - 1);
+    }
+
+    if (token.length > 0) {
+      addIMR({
+        type: 'text',
+        token,
+        encoded: encode(token),
+        length: token.length,
+      });
     }
   });
 
@@ -138,57 +151,24 @@ function encodeString(namespace, key, str, debugOn=false) {
   let currentLineLen = 0;
   let totalLen = 0;
 
-  function addTotalLength(len) {
-    totalLen += len;
-    currentLineLen += len;
-    if (currentLineLen > maxLineLength) {
-      debug("Maximum line length exceeded, adding \\n")
-      currentLineLen = 0;
-      result += '\\n';
-      totalLen++;
-    }
+  function addLength(n) {
+    totalLen += n;
     debug('Total length updated:', totalLen);
     if (totalLen > maxStringLength) {
       debug('Maximum string length exceeded, throwing');
-      throw new Error(`String ${namespace}.${key} '${str.substring(0, 8)}...' exceeds ${maxStringLength} character limit`);
+      throw new Error(`${namespace}.${key} exceeds ${maxStringLength} chars.`);
     }
   }
 
-  // Convert from IR form to the final assembled result
-  imr.forEach((rep, idx) => {
-    debug('Encoding IR value', idx, rep);
-
-    const { type, addSpace } = rep;
-    debug(`Encoding ${type} node`)
-
-    let { value, length } = rep;
-
-    if (type == 'text') {
-      debug('Converting plain-text to game encoded hex.');
-      value = value.split('').map(c => {
-        let hex = c.charCodeAt(0).toString(16);
-        if (hex.length > 2) {
-          const msg = 'Encountered non standard ASCII character with code ${hex}';
-          debug(`${msg}, throwing`);
-          throw new Error(`String ${namespace}.${key} '${str.substring(0, 8)}...' ${msg}`);
-        }
-        const value = parseInt(hex, 16) + 0x80;
-        debug(`Converting hex ${hex} (${c}) to ${value.toString(16)}`);
-        hex = value.toString(16);
-        return `\\x${hex.toUpperCase()}`;
-      }).join('')
+  imr.forEach(rep => {
+    debug('Compiling IMR', rep);
+    if (currentLineLen + rep.length > maxLineLength) {
+      currentLineLen = 0;
+      result += '\\n';
+      addLength(1);
     }
-
-    if (addSpace) {
-      debug('Not last, appending space.');
-      value = value + '\\xA0';
-      length++;
-    }
-
-    addTotalLength(length);
-
-    debug(`Appending value '${value}'`)
-    result += value;
+    addLength(rep.length);
+    result += rep.encoded;
   })
 
   return result;
@@ -345,3 +325,5 @@ function testParse(str) {
 }
 
 main();
+
+// testParse(namespaces.ability.strings.mend);

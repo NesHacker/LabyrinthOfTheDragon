@@ -53,52 +53,52 @@
 /**
  * Tile id for the fight icon in the font tileset.
  */
-#define FIGHT_ICON 0x96
+#define FIGHT_ICON 0x30
 
 /**
  * Tile id for the magic icon in the font tileset.
  */
-#define MAGIC_ICON 0x9A
+#define MAGIC_ICON 0x34
 
 /**
  * Tile id for the tech icon in the font tileset.
  */
-#define TECH_ICON 0xFB
+#define TECH_ICON 0x40
 
 /**
  * Tile id for the item icon in the font tileset.
  */
-#define ITEM_ICON 0xA8
+#define ITEM_ICON 0x3C
 
 /**
  * Tile id for the summon icon in the font tileset.
  */
-#define SUMMON_ICON 0xDB
+#define SUMMON_ICON 0x44
 
 /**
  * Tile id for the flee icon in the font tileset.
  */
-#define FLEE_ICON 0xBB
+#define FLEE_ICON 0x38
 
 /**
  * Tile id for the left tile of the "MP" label.
  */
-#define MP_ICON_LEFT 0x8E
+#define MP_ICON_LEFT 0x98
 
 /**
  * Tile id for the right tile of the "MP" label.
  */
-#define MP_ICON_RIGHT 0x8F
+#define MP_ICON_RIGHT 0x99
 
 /**
  * Tile id for the left tile of the "SP" label.
  */
-#define SP_ICON_LEFT 0x9E
+#define SP_ICON_LEFT 0x9A
 
 /**
  * Tile id for the right tile of the "SP" label.
  */
-#define SP_ICON_RIGHT 0x9F
+#define SP_ICON_RIGHT 0x9B
 
 /**
  * ROM bank in which most data and routines related to battle are stored. This
@@ -145,8 +145,71 @@
  * Main state enumeration for the battle system.
  */
 typedef enum BattleState {
+  /**
+   * The player is on the main battle menu and choosing an action.
+   */
   BATTLE_STATE_MENU,
-  // BATTLE_STATE_TEXT,
+  /**
+   * Initiative is being rolled for the round.
+   */
+  BATTLE_ROLL_INITIATIVE,
+  /**
+   * Battle state is reset and the turn begins for the next entity in initiative
+   * order.
+   */
+  BATTLE_BEGIN_TURN,
+  /**
+   * Enitity status effects are updated, effects applied, and messages provided
+   * for specific actions (e.g. effect falls off, regen health, etc.)
+   */
+  BATTLE_UPDATE_STATUS_EFFECTS,
+  /**
+   * A status effect message is being displayed.
+   */
+  BATTLE_STATUS_EFFECT_MESSAGE,
+  /**
+   * The player/monster's action is executed to set battle results state.
+   */
+  BATTLE_TAKE_ACTION,
+  /**
+   * The results of the action are being animated. This includes the preamble
+   * text, anticipation pause, effect result text, effect animation, and final
+   * message speed pause.
+   */
+  BATTLE_ANIMATE_ACTION,
+  /**
+   * UI Gauges and Numbers are being updated.
+   */
+  BATTLE_UPDATE_UI,
+  /**
+   * The "monster flee" animation and message is being displayed.
+   */
+  BATTLE_MONSTER_FLED,
+  /**
+   * The "player flee" animation and message is being displayed.
+   */
+  BATTLE_PLAYER_FLED,
+  /**
+   * The monster death animation is being displayed.
+   */
+  BATTLE_MONSTER_DIED,
+  /**
+   * The player death animation is being displayed.
+   */
+  BATTLE_PLAYER_DIED,
+  /**
+   * End of round logic is being performed (skipping player turn etc.).
+   */
+  BATTLE_END_ROUND,
+  /**
+   * The battle has successfully concluded and xp awards, level ups, etc. are
+   * being communicated and animated.
+   */
+  BATTLE_SUCCESS,
+  /**
+   * Battle is over/inactive and the update routine should do nothing if called.
+   */
+  BATTLE_INACTIVE,
 } BattleState;
 
 /**
@@ -230,6 +293,17 @@ typedef enum MonsterPosition {
   MONSTER_POSITION3,
 } MonsterPosition;
 
+/**
+ * Used to indicate whos turn it is in the initiative order.
+ */
+typedef enum Turn {
+  TURN_END,
+  TURN_PLAYER,
+  TURN_MONSTER1,
+  TURN_MONSTER2,
+  TURN_MONSTER3,
+} Turn;
+
 // -----------------------------------------------------------------------------
 // Externs & Prototypes
 // -----------------------------------------------------------------------------
@@ -275,6 +349,16 @@ extern MonsterInstance battle_monsters[];
  * items, and summons submenus.
  */
 extern uint8_t battle_num_submenu_items;
+
+/**
+ * Holds the turn order for the current round of combat.
+ */
+extern Turn battle_turn_order[5];
+
+/**
+ * The current turn order index (who's turn it currently is).
+ */
+extern uint8_t turn_idx;
 
 /**
  * Initializes the battle system.

@@ -12,6 +12,10 @@ Direction hero_direction = DOWN;
 uint8_t hero_x = 0 + 8;
 uint8_t hero_y = 0 + 16;
 
+Timer walk_timer;
+uint8_t walk_frame;
+
+
 void init_hero(void) {
   // const uint8_t x = 8 + 16 * 4;
   // const uint8_t y = 16 + 16 * 4;

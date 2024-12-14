@@ -22,6 +22,32 @@ function addNamespace(name, bank, strings) {
 }
 
 /**
+ * Misc. game text strings used in various places.
+ */
+addNamespace('misc', 0, {
+  'empty': 'EMPTY...',
+})
+
+/**
+ * In game summon name strings.
+ */
+addNamespace('summon_name', 0, {
+  'beholder': 'Beholder',
+  'kobold': 'Kobold',
+  'wilbur': 'Wilbur',
+})
+
+/**
+ * Ability names.
+ */
+addNamespace('ability', 0, {
+  'vine_whip': 'Vine Whip',
+  'mend': ':regen:Mend',
+  'summon_ants': ':defdown:Summon Ants',
+  'dirty_fang': ':poison:Drity Fang',
+});
+
+/**
  * Battle related strings.
  */
 addNamespace('battle', 3, {

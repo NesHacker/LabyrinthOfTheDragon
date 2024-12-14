@@ -52,7 +52,7 @@ typedef struct Ability {
   /**
    * Ability's in game name.
    */
-  const char name[12];
+  const char *name;
   /**
    * Player class to which the ability belongs.
    */
@@ -98,11 +98,11 @@ typedef struct Summon {
   /**
    * Name of the summon.
    */
-  char name[12];
+  const char *name;
   /**
    * Boss / summon character name.
    */
-  char npc_name[8];
+  const char *npc_name;
   /**
    * Agility power tier.
    */
@@ -238,16 +238,6 @@ typedef struct Player {
  * etc.) to handle player related logic and graphics.
  */
 extern Player player;
-
-/**
- * Global walk timer. Used for various character walking animations.
- */
-extern Timer walk_timer;
-
-/**
- * Walk frame. Used for various walking animations.
- */
-extern uint8_t walk_frame;
 
 // TODO Temporary, remove when adding save system, etc.
 void init_player(void);

@@ -114,11 +114,19 @@ void clear_background(void);
 void fill_background(uint8_t tile, uint8_t attr);
 
 /**
- * Draws text to the given VRAM location. Assumes the text is null terminated.
+ * Draws text to the given VRAM location.
  * @param vram Pointer to VRAM where the text tiles should be written.
  * @param text The text to write.
  * @param max Maximum length for the text. Clears unused characters with spaces.
  */
-void draw_text(uint8_t *vram, char *text, uint8_t max);
+void draw_text(uint8_t *vram, const char *text, uint8_t max);
+
+/**
+ * Draws a preformatted string to the given VRAM location.
+ * @param vram Pointer to VRAM where the text tiles should be written.
+ * @param string The text to write.
+ * @param max Maximum length for the text. Clears unused characters with spaces.
+ */
+void draw_string(uint8_t *vram, const char *string, uint8_t max);
 
 #endif

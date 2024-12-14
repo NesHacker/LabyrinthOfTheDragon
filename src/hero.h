@@ -14,6 +14,17 @@ extern uint8_t hero_x;
 extern uint8_t hero_y;
 
 /**
+ * Global walk timer. Used for various character walking animations.
+ */
+extern Timer walk_timer;
+
+/**
+ * Walk frame. Used for various walking animations.
+ */
+extern uint8_t walk_frame;
+
+
+/**
  * Initializes the hero character's state and sprites.
  */
 void init_hero(void);
