@@ -37,7 +37,7 @@ void set_game_state(GameState s) NONBANKED {
  * Initializes the game.
  */
 inline void initialize(void) {
-  initrand(2);
+  initarand(100);
   // init_text_box();
   // init_main_menu();
   // init_world_map();

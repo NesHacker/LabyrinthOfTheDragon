@@ -45,11 +45,11 @@ uint8_t turn_idx = 0;
  * order for actions.
  */
 void roll_initiative(void) {
-  uint8_t rolls[4] = { 0, 0, 0, 0 };
+  uint8_t rolls[5] = { 0, 0, 0, 0, 0 };
 
   // Reset the turn order
   turn_idx = 0;
-  battle_turn_order[0] = TURN_END;
+  battle_turn_order[0] = TURN_PLAYER;
   battle_turn_order[1] = TURN_END;
   battle_turn_order[2] = TURN_END;
   battle_turn_order[3] = TURN_END;
@@ -58,32 +58,25 @@ void roll_initiative(void) {
   // Roll for the player
   uint8_t player_agl = get_agl(player.level, player.summon->agl_tier);
   rolls[0] = d32() + player_agl + 1;
-  battle_turn_order[0] = TURN_PLAYER;
 
   // Roll for the monsters
-  switch (battle_num_monsters) {
-  case 3:
-    rolls[3] = d32() + (battle_monsters + 2)->agl;
-    battle_turn_order[3] = TURN_MONSTER3;
-  case 2:
-    rolls[2] = d32() + (battle_monsters + 1)->agl;
-    battle_turn_order[2] = TURN_MONSTER3;
-  default:
-    rolls[1] = d32() + battle_monsters->agl;
-    battle_turn_order[1] = TURN_MONSTER3;
-    break;
+  MonsterInstance *mon = battle_monsters;
+  for (uint8_t m = 1; m < battle_num_monsters + 1; m++) {
+    battle_turn_order[m] = TURN_PLAYER + m;
+    rolls[m] = d32() + 1 + mon->agl;
+    mon++;
   }
 
   // When's the last time you wrote a bespoke bubble sort? ;)
-  for (uint8_t k = 0; k < battle_num_monsters; k++) {
-    for (uint8_t j = k + 1; j < battle_num_monsters + 1; k++) {
-      if (rolls[k] > rolls[j]) {
-        uint8_t tmp_roll = rolls[k];
+  for (uint8_t k = 0; k < 1 + battle_num_monsters; k++) {
+    for (uint8_t j = k; j < 1 + battle_num_monsters; j++) {
+      if (rolls[k] < rolls[j]) {
+        uint8_t tmp = rolls[k];
         rolls[k] = rolls[j];
-        rolls[j] = tmp_roll;
-        Turn tmp_turn = battle_turn_order[k];
+        rolls[j] = tmp;
+        tmp = battle_turn_order[k];
         battle_turn_order[k] = battle_turn_order[j];
-        battle_turn_order[j] = tmp_roll;
+        battle_turn_order[j] = tmp;
       }
     }
   }
@@ -580,6 +573,7 @@ void init_battle(void) {
   set_monster_layout(MONSTER_LAYOUT_2);
   load_monster(MONSTER_POSITION1, &MONSTER_KOBOLD);
   load_monster(MONSTER_POSITION2, &MONSTER_KOBOLD);
+  battle_num_monsters = 2;
 
   // Load the font and battle tilesets
   VBK_REG = VBK_BANK_1;
@@ -628,19 +622,7 @@ void cleanup_battle(void) {
  * next round of combat.
  */
 void confirm_fight(void) {
-  // battle_state = BATTLE_ROLL_INITIATIVE;
-
-  battle_text.clear();
-  show_battle_text();
-
-  char msg[256];
-  char preamble[40];
-  char result[40];
-
-  sprintf(preamble, str_battle_kobold_axe, 'C');
-  sprintf(result, str_battle_monster_hit, 999, "fire");
-  sprintf(msg, "%s\f%s", preamble, result);
-  battle_text.print(msg);
+  battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -912,6 +894,18 @@ inline void update_battle_menu(void) {
   }
 }
 
+void print_turn_order(void) {
+  char msg[40];
+  sprintf(msg, "%d\x3E%d\x3E%d\x3E%d\x3E%d",
+          battle_turn_order[0],
+          battle_turn_order[1],
+          battle_turn_order[2],
+          battle_turn_order[3],
+          battle_turn_order[4]);
+  battle_text.print(msg);
+}
+
+
 void update_battle(void) {
   if (update_timer(status_effect_timer)) {
     status_effect_frame ^= 1;
@@ -928,9 +922,11 @@ void update_battle(void) {
     break;
   case BATTLE_ROLL_INITIATIVE:
     roll_initiative();
+    print_turn_order();
     battle_state = BATTLE_BEGIN_TURN;
     break;
   case BATTLE_BEGIN_TURN:
+    battle_state = BATTLE_STATE_MENU;
     break;
   }
 }
