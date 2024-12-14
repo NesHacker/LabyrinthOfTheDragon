@@ -59,7 +59,7 @@ addNamespace('battle', 3, {
   'kobold_axe': 'Kobold %c attacks with a stone axe...',
   'player_miss': 'But you miss!',
   'player_magic_miss': 'But it has no effect!',
-  'dirty_fang_attack': 'You rush %monster %c, fangs bared!',
+  'dirty_fang_attack': 'You rush forward, fangs bared!',
   'dirty_fang_hit_poison': 'Your bite deals %damage damage and poison them!',
   'dirty_fang_hit_no_poison': 'Your filthy kobold bite deals %damage damage!',
 })

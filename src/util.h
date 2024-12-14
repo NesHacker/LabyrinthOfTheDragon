@@ -23,6 +23,21 @@
 #define FONT_DIGIT(d) ((d) + FONT_DIGIT_OFFSET)
 
 /**
+ * Tile id for the 'A' character in the font.
+ */
+#define FONT_A 0xC1
+
+/**
+ * Tile id for the 'B' character in the font.
+ */
+#define FONT_B 0xC2
+
+/**
+ * Tile id for the 'C' character in the font.
+ */
+#define FONT_C 0xC3
+
+/**
  * Tile id for a space when the font tileset is loaded.
  */
 #define FONT_SPACE 0xA0
@@ -120,13 +135,5 @@ void fill_background(uint8_t tile, uint8_t attr);
  * @param max Maximum length for the text. Clears unused characters with spaces.
  */
 void draw_text(uint8_t *vram, const char *text, uint8_t max);
-
-/**
- * Draws a preformatted string to the given VRAM location.
- * @param vram Pointer to VRAM where the text tiles should be written.
- * @param string The text to write.
- * @param max Maximum length for the text. Clears unused characters with spaces.
- */
-void draw_string(uint8_t *vram, const char *string, uint8_t max);
 
 #endif

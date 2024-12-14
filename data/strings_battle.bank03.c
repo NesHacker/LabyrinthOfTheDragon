@@ -3,19 +3,19 @@
  * Encoded string values for the "battle" namespace.
  *
  * This file was automatically generated using the tools/strings script
- * Generated at: Fri Dec 13 2024 @ 19:52:23 GMT-0500 (Eastern Standard Time)
+ * Generated at: Sat Dec 14 2024 @ 01:10:19 GMT-0500 (Eastern Standard Time)
  */
 
 #pragma bank 3
 
-const char str_battle_monster_attack[] = "\x96\xA0[object Object]\xA0[object Object]\xA0\xE1\xF4\xF4\xE1\xE3\xEB\xF3\xAE\xAE\xAE";
-const char str_battle_monster_magic_attack[] = "\x9A\xA0[object Object]\xA0[object Object]\xA0\xE3\xE1\xF3\xF4\xF3\xA0\xE1\xA0\xF3\xF0\xE5\xEC\xEC\xAE\xAE\xAE";
-const char str_battle_monster_miss[] = "\xC2\xF5\xF4\xA0\xF4\xE8\xE5\xF9\xA0\xED\xE9\xF3\xF3\xA1";
-const char str_battle_monster_miss_magic[] = "\xC2\xF5\xF4\xA0\xF4\xE8\xE5\xA0\xF3\xF0\xE5\xEC\xEC\xA0\xE7\xEF\xE5\xF3\xA0\xE1\xF3\xF4\xF2\xE1\xF9\xA1";
-const char str_battle_monster_hit[] = "\xD4\xE8\xE5\xF9\xA0\xE8\xE9\xF4\xA0\xE6\xEF\xF2\xA0[object Object]\xA0[object Object]\xA0\xE4\xE1\xED\xE1\xE7\xE5\xA1";
-const char str_battle_kobold_axe[] = "\xCB\xEF\xE2\xEF\xEC\xE4\xA0[object Object]\xA0\xE1\xF4\xF4\xE1\xE3\xEB\xF3\xA0\xF7\xE9\xF4\xE8\xA0\xE1\xA0\xF3\xF4\xEF\xEE\xE5\xA0\xE1\xF8\xE5\xAE\xAE\xAE";
-const char str_battle_player_miss[] = "\xC2\xF5\xF4\xA0\xF9\xEF\xF5\xA0\xED\xE9\xF3\xF3\xA1";
-const char str_battle_player_magic_miss[] = "\xC2\xF5\xF4\xA0\xE9\xF4\xA0\xE8\xE1\xF3\xA0\xEE\xEF\xA0\xE5\xE6\xE6\xE5\xE3\xF4\xA1";
-const char str_battle_dirty_fang_attack[] = "\xD9\xEF\xF5\xA0\xF2\xF5\xF3\xE8\xA0[object Object]\xA0undefined\xA0\xE6\xE1\xEE\xE7\xF3\xA0\xE2\xE1\xF2\xE5\xE4\xA1";
-const char str_battle_dirty_fang_hit_poison[] = "\xD9\xEF\xF5\xF2\xA0\xE2\xE9\xF4\xE5\xA0\xE4\xE5\xE1\xEC\xF3\xA0[object Object]\xA0\xE4\xE1\xED\xE1\xE7\xE5\xA0\xE1\xEE\xE4\xA0\xF0\xEF\xE9\xF3\xEF\xEE\xA0\xF4\xE8\xE5\xED\xA1";
-const char str_battle_dirty_fang_hit_no_poison[] = "\xD9\xEF\xF5\xF2\xA0\xE6\xE9\xEC\xF4\xE8\xF9\xA0\xEB\xEF\xE2\xEF\xEC\xE4\xA0\xE2\xE9\xF4\xE5\xA0\xE4\xE5\xE1\xEC\xF3\xA0[object Object]\xA0\xE4\xE1\xED\xE1\xE7\xE5\xA1";
+const char str_battle_monster_attack[] = "\x16 %s %c \nattacks\x60";
+const char str_battle_monster_magic_attack[] = "\x1a %s %c \ncasts a spell\x60";
+const char str_battle_monster_miss[] = "But they miss!";
+const char str_battle_monster_miss_magic[] = "But the spell goes\n astray!";
+const char str_battle_monster_hit[] = "They hit for %d \n%s damage!";
+const char str_battle_kobold_axe[] = "Kobold %c attacks \nwith a stone axe\x60";
+const char str_battle_player_miss[] = "But you miss!";
+const char str_battle_player_magic_miss[] = "But it has no \neffect!";
+const char str_battle_dirty_fang_attack[] = "You rush forward, \nfangs bared!";
+const char str_battle_dirty_fang_hit_poison[] = "Your bite deals \n%d damage and \npoison them!";
+const char str_battle_dirty_fang_hit_no_poison[] = "Your filthy kobold\n bite deals %d \ndamage!";

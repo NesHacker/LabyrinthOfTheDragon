@@ -457,4 +457,19 @@ inline bool has_submenu_items(void) {
   return battle_num_submenu_items > 0;
 }
 
+/**
+ * Shows the battle text box.
+ */
+inline void show_battle_text(void) {
+  move_win(7, 88);
+}
+
+/**
+ * Hides the battle textbox.
+ */
+inline void hide_battle_text(void) {
+  move_win(0, 144);
+}
+
+
 #endif

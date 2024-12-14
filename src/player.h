@@ -45,6 +45,7 @@ typedef enum TargetType {
   TARGET_ALL,
 } TargetType;
 
+
 /**
  * Defines an ability that can be used by the player or a monster.
  */
@@ -158,6 +159,10 @@ typedef struct Player {
    * The player's class.
    */
   PlayerClass player_class;
+  /**
+   * Configurable message speed for battle messages.
+   */
+  uint8_t message_speed;
   /**
    * Current experience level.
    */

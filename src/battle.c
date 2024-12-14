@@ -1,11 +1,12 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <rand.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 #include "battle.h"
+#include "battle_text.h"
 #include "bcd.h"
 #include "data.h"
 #include "joypad.h"
@@ -35,12 +36,9 @@ Turn battle_turn_order[5] = {
 };
 uint8_t turn_idx = 0;
 
-
 // Magical energy crackles around Kobold A
 // char battle_action_preamble[64] = "Kobold A attacks with a stone axe\x60";
 // char battle_action_result[64] = "But they miss!";
-
-
 
 /**
  * Rolls initiative for all active entities in the fight and sets the turn
@@ -593,7 +591,7 @@ void init_battle(void) {
   draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
   draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
 
-  draw_string(VRAM_SUMMON_NAME, player.summon->name, 9);
+  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
   set_magic_or_tech_menu();
 
   print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
@@ -631,6 +629,18 @@ void cleanup_battle(void) {
  */
 void confirm_fight(void) {
   // battle_state = BATTLE_ROLL_INITIATIVE;
+
+  battle_text.clear();
+  show_battle_text();
+
+  char msg[256];
+  char preamble[40];
+  char result[40];
+
+  sprintf(preamble, str_battle_kobold_axe, 'C');
+  sprintf(result, str_battle_monster_hit, 999, "fire");
+  sprintf(msg, "%s\f%s", preamble, result);
+  battle_text.print(msg);
 }
 
 /**
@@ -713,7 +723,7 @@ void select_next_enemy(void) {
  * Draws the "EMPTY..." message in the middle of an empty submenu.
  */
 inline void draw_menu_empty_text(void) {
-  draw_string(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
+  draw_text(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
 }
 
 /**
@@ -778,7 +788,7 @@ void load_abilities_menu(void) {
   battle_num_submenu_items = 0;
   uint8_t *vram = VRAM_SUBMENU_TEXT;
   while (ability && player.level >= ability->level) {
-    draw_string(vram, ability->name, 14);
+    draw_text(vram, ability->name, 14);
     uint8_t *cost_tile = ability->sp_cost_tiles;
     set_vram_byte(vram + 13, *cost_tile++);
     set_vram_byte(vram + 14, *cost_tile++);
@@ -909,6 +919,8 @@ void update_battle(void) {
   }
   redraw_player_status_effects();
   redraw_monster_status_effects();
+
+  battle_text.update();
 
   switch (battle_state) {
   case BATTLE_STATE_MENU:

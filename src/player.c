@@ -15,6 +15,8 @@ Player player = {
 };
 
 void init_player(void) {
+  player.message_speed = 3;
+
   player.level = 10;
   player.exp = get_exp(10) + 23;
   player.next_level_exp = get_exp(11);

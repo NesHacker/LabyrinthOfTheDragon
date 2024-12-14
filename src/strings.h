@@ -3,7 +3,7 @@
  * Extern references for encoded string values across all namespaces.
  *
  * This file was automatically generated using the tools/strings script
- * Generated at: Fri Dec 13 2024 @ 19:52:23 GMT-0500 (Eastern Standard Time)
+ * Generated at: Sat Dec 14 2024 @ 01:10:19 GMT-0500 (Eastern Standard Time)
  */
 #ifndef _GAME_STRINGS_H
 #define _GAME_STRINGS_H
@@ -89,7 +89,7 @@ extern const char str_battle_player_miss[];
 extern const char str_battle_player_magic_miss[];
 
 /**
- * "You rush %monster %c, fangs bared!"
+ * "You rush forward, fangs bared!"
  */
 extern const char str_battle_dirty_fang_attack[];
 

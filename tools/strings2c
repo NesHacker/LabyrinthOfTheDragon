@@ -10,37 +10,35 @@ const namespaces = require('../assets/strings');
  * reference special font tiles, etc.
  */
 const DirectSubstitutions = {
-  '...': '\\xE0',
-  ':blind:': '\\x60',
-  ':fear:': '\\x62',
-  ':paralyze:': '\\x64',
-  ':poison:': '\\x66',
-  ':confuse:': '\\x68',
-  ':agldown:': '\\x6B',
-  ':atkdown:': '\\x6D',
-  ':defdown:': '\\x6F',
-  ':haste:': '\\x76',
-  ':regen:': '\\x78',
-  ':aglup:': '\\x7B',
-  ':atkup:': '\\x7D',
-  ':defup:': '\\x7F',
-  ':lvl:': '\\x5C\\x5D',
-  ':gil:': '\\xA4',
-  ':soulcoin:': '\\xA5',
-  ':arrow:': '\\A6',
-  ':lquo:': '\\xA2',
-  ':rquo:': '\\xA3',
-  ':a-tier:': '\\x40',
-  ':b-tier:': '\\x41',
-  ':c-tier:': '\\x42',
-  ':s-tier:': '\\x43',
-  ':fight:': '\\x96',
-  ':magic:': '\\x9A',
-  ':tech:': '\\xFB',
-  ':item:': '\\xA8',
-  ':summon:': '\\xDB',
-  ':flee:': '\\xBB',
-  '\f': '\\f',
+  ':elipsis:': 0xE0,
+  ':blind:': 0x60,
+  ':fear:': 0x62,
+  ':paralyze:': 0x64,
+  ':poison:': 0x66,
+  ':confuse:': 0x68,
+  ':agldown:': 0x6B,
+  ':atkdown:': 0x6D,
+  ':defdown:': 0x6F,
+  ':haste:': 0x76,
+  ':regen:': 0x78,
+  ':aglup:': 0x7B,
+  ':atkup:': 0x7D,
+  ':defup:': 0x7F,
+  ':gil:': 0xA4,
+  ':soulcoin:': 0xA5,
+  ':arrow:': 0xA6,
+  ':lquo:': 0xA2,
+  ':rquo:': 0xA3,
+  ':a-tier:': 0x40,
+  ':b-tier:': 0x41,
+  ':c-tier:': 0x42,
+  ':s-tier:': 0x43,
+  ':fight:': 0x96,
+  ':magic:': 0x9A,
+  ':tech:': 0xFB,
+  ':item:': 0xA8,
+  ':summon:': 0xDB,
+  ':flee:': 0xBB,
 };
 
 const params = {
@@ -71,46 +69,71 @@ function encodeString(namespace, key, str, debugOn=false) {
 
   debug('Parsing:', str);
 
+  str = str.replace(/\.\.\./g, ':elipsis:');
+
   const maxLineLength = 18;
   const maxTokenLength = 18;
   const maxStringLength = maxLineLength * 3;
 
   // Break the string down into a series of tokens
-  const tokens = str.match(/([ ]+)|([\n\f])|(:[a-z-]+:)|([^\s]+)/g);
-  const imr = [];
+  let tokens = str.match(/([ ]+)|([%][a-z]+)|(:[a-z-]+:)|([\n\f])|([^\s]+)/g);
 
+  function expandMatch(input, regex) {
+    function recur(str) {
+      if (!str) return [];
+
+      const match = str.match(regex);
+      if (!match || match[0] == str)
+        return [ str ];
+
+      const { index } = match;
+      const [ text ] = match;
+      const length = text.length;
+      return [].concat(
+        recur(str.substring(0, index)),
+        recur(str.substring(index, index + length)),
+        recur(str.substring(index + length))
+      )
+    }
+    return recur(input);
+  }
+
+  // Recursively expand postfix and prefix subs and params
+  tokens = tokens.map(token => {
+    return expandMatch(token, /:[a-z-]+:/);
+  }).flat(1).map(token => {
+    return expandMatch(token, /[%][a-z]+/);
+  }).flat(1);
+
+  debug(tokens);
+
+  // Generate a list of intermediate representations for the tokens
   function addIMR(k) {
     debug('IMR generated:', k)
     imr.push(k);
   }
 
-  function encode(s) {
-    return s.split('').map(c => {
-      let hex = c.charCodeAt(0).toString(16);
-      if (hex.length > 2) {
-        const msg = `Encountered non standard ASCII character with code ${hex}`;
-        debug(`${msg}, throwing`);
-        throw new Error(`${namespace}.${key} ${msg}`);
-      }
-      const value = parseInt(hex, 16) + 0x80;
-      debug(`Converting hex ${hex} (${c}) to ${value.toString(16)}`);
-      hex = value.toString(16);
-      return `\\x${hex.toUpperCase()}`;
-    }).join('')
-  }
+  const imr = [];
 
-  // Generate a list of intermediate representations for the tokens
   tokens.forEach(token => {
     if (token.match(/^%/)) {
-      addIMR({ type: 'param', token, encoded: params[token], length: 1 });
+      const param = params[token];
+      if (!param) {
+        const msg = `Encountered unknown parameter '${token}'`;
+        debug(`${msg}, throwing`)
+        throw new Error(`${namespace}.${key} ${msg}`);
+      }
+      const { code, max } = param;
+      addIMR({ type: 'param', token, encoded: code, length: max })
       return;
     }
 
-    if (token.match(/:[a-z-]+:/)) {
+    if (token.match(/[:][a-z-]+[:]/) && DirectSubstitutions[token]) {
+      const hex = (DirectSubstitutions[token] - 0x80).toString(16);
       addIMR({
         type: 'sub',
         token,
-        encoded: DirectSubstitutions[token],
+        encoded:  `\\x${hex.length < 2 ? `0${hex}` : hex}`,
         length: 1
       });
       return;
@@ -132,7 +155,7 @@ function encodeString(namespace, key, str, debugOn=false) {
         type: 'text',
         token: left,
         length: left.length,
-        encoded: encode(left)
+        encoded: left
       });
       token = token.substring(maxTokenLength - 1);
     }
@@ -141,7 +164,7 @@ function encodeString(namespace, key, str, debugOn=false) {
       addIMR({
         type: 'text',
         token,
-        encoded: encode(token),
+        encoded: token,
         length: token.length,
       });
     }
@@ -153,6 +176,7 @@ function encodeString(namespace, key, str, debugOn=false) {
 
   function addLength(n) {
     totalLen += n;
+    currentLineLen += n;
     debug('Total length updated:', totalLen);
     if (totalLen > maxStringLength) {
       debug('Maximum string length exceeded, throwing');
@@ -163,6 +187,7 @@ function encodeString(namespace, key, str, debugOn=false) {
   imr.forEach(rep => {
     debug('Compiling IMR', rep);
     if (currentLineLen + rep.length > maxLineLength) {
+      debug('Line length exceeded, adding \\n');
       currentLineLen = 0;
       result += '\\n';
       addLength(1);
@@ -313,17 +338,15 @@ function testParse(str) {
   console.log('+--+--+--+--+--+--');
   console.log(parsed.replace('\\n', '\n'));
   console.log('+--+--+--+--+--+--');
+}
 
-  const revert = parsed.split('\\xA0').map(word => {
-    const letters = word.split('\\x');
-    return letters.filter(k => k.match(/[0-9A-F]{2}/))
-  }).flat(1).map(frag => {
-    return String.fromCharCode(parseInt(frag, 16) - 0x80)
-  }).join('');
 
-  console.log(revert);
+function test() {
+  testParse("Kobold %c attacks with a stone axe...")
+  // testParse(namespaces.battle.strings.kobold_axe);
+  // testParse(namespaces.battle.strings.monster_attack);
+  // testParse(namespaces.battle.strings.player_magic_miss);
 }
 
 main();
-
-// testParse(namespaces.ability.strings.mend);
+// test();

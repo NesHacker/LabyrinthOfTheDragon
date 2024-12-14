@@ -33,15 +33,3 @@ void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
     max--;
   }
 }
-
-void draw_string(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
-  VBK_REG = VBK_TILES;
-  while (*text != 0 && max) {
-    set_vram_byte(vram++, *text++);
-    max--;
-  }
-  while (max) {
-    set_vram_byte(vram++, FONT_SPACE);
-    max--;
-  }
-}

@@ -61,6 +61,13 @@
 #define TILE_PAGE(ptr,n) (void *)((ptr) + 0x80 * 16 * ((n)-1))
 
 /**
+ * Computes an offset to add to a VRAM pointer to place it at the beginning of
+ * tile of the next row on the next row of the background or window.
+ * @param col Current column where VRAM is pointing.
+ */
+#define VRAM_ROW_OFFSET(col) (32 - (col))
+
+/**
  * Safely copies data from the given bank and data address into the given
  * destination address.
  * @param bank Id of the bank from which to load the data.
