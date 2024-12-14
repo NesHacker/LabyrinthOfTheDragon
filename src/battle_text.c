@@ -84,10 +84,10 @@ void battle_text_update(void) {
       set_end_delay();
       return;
     case '\n':
-      if (battle_text.line == 1)
+      if (battle_text.line == 3)
         set_page_delay();
       else
-        battle_text.vram += VRAM_ROW_OFFSET(battle_text.col + 1) + 1 + 0x20;
+        battle_text.vram += VRAM_ROW_OFFSET(battle_text.col + 1) + 1;
       return;
     case '\f':
       set_page_delay();
@@ -96,6 +96,7 @@ void battle_text_update(void) {
       // Note: `strings2c` should preformat the text so that the maximum column
       //       length will never be exceeded, so no need to handle this case.
       battle_text.col++;
+      VBK_REG = VBK_TILES;
       set_vram_byte(battle_text.vram++, next + FONT_OFFSET);
       set_char_delay();
     }
