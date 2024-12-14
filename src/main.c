@@ -37,10 +37,14 @@ void set_game_state(GameState s) NONBANKED {
  * Initializes the game.
  */
 inline void initialize(void) {
-  initarand(100);
-  // init_text_box();
   // init_main_menu();
+
+  // init_text_box();
   // init_world_map();
+
+  // Battle Testing
+  initarand(100);
+  init_player();
   init_battle();
 }
 
