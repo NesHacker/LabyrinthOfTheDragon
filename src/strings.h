@@ -3,7 +3,7 @@
  * Extern references for encoded string values across all namespaces.
  *
  * This file was automatically generated using the tools/strings script
- * Generated at: Sat Dec 14 2024 @ 01:57:22 GMT-0500 (Eastern Standard Time)
+ * Generated at: Sat Dec 14 2024 @ 18:42:28 GMT-0500 (Eastern Standard Time)
  */
 #ifndef _GAME_STRINGS_H
 #define _GAME_STRINGS_H
@@ -49,6 +49,31 @@ extern const char str_ability_summon_ants[];
 extern const char str_ability_dirty_fang[];
 
 /**
+ * "You rush forward, fangs bared!"
+ */
+extern const char str_battle_dirty_fang_attack[];
+
+/**
+ * "Your bite deals %damage damage and poison them!"
+ */
+extern const char str_battle_dirty_fang_hit_poison[];
+
+/**
+ * "Your filthy kobold bite deals %damage damage!"
+ */
+extern const char str_battle_dirty_fang_hit_no_poison[];
+
+/**
+ * "You attack %monster %c with your claws..."
+ */
+extern const char str_battle_kobold_base_attack[];
+
+/**
+ * "Kobold %c attacks with a stone axe..."
+ */
+extern const char str_battle_kobold_axe[];
+
+/**
  * ":fight: %monster %c attacks..."
  */
 extern const char str_battle_monster_attack[];
@@ -69,14 +94,14 @@ extern const char str_battle_monster_miss[];
 extern const char str_battle_monster_miss_magic[];
 
 /**
- * "They hit for %damage %aspect damage!"
+ * "They hit for %damage damage!"
  */
 extern const char str_battle_monster_hit[];
 
 /**
- * "Kobold %c attacks with a stone axe..."
+ * "They hit for %damage %aspect damage!"
  */
-extern const char str_battle_kobold_axe[];
+extern const char str_battle_monster_hit_aspect[];
 
 /**
  * "But you miss!"
@@ -89,18 +114,23 @@ extern const char str_battle_player_miss[];
 extern const char str_battle_player_magic_miss[];
 
 /**
- * "You rush forward, fangs bared!"
+ * "You hit!"
  */
-extern const char str_battle_dirty_fang_attack[];
+extern const char str_battle_player_hit[];
 
 /**
- * "Your bite deals %damage damage and poison them!"
+ * "They're completely immune!"
  */
-extern const char str_battle_dirty_fang_hit_poison[];
+extern const char str_battle_player_hit_immune[];
 
 /**
- * "Your filthy kobold bite deals %damage damage!"
+ * "They resist your attack."
  */
-extern const char str_battle_dirty_fang_hit_no_poison[];
+extern const char str_battle_player_hit_resist[];
+
+/**
+ * "It deals massive damage!"
+ */
+extern const char str_battle_player_hit_vuln[];
 
 #endif
