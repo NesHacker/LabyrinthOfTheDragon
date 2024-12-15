@@ -228,12 +228,11 @@ inline uint16_t get_monster_dmg(uint8_t level, PowerTier tier) {
  * @return `true` if the attack succeeds.
  */
 inline bool roll_attack(uint8_t atk, uint8_t def) {
-  if (atk + def < 32)
+  if (atk + 32 < def)
     return rand() < attack_roll_target[0];
-  else if (atk + def > 32)
+  if (atk > 32 + 32)
     return rand() < attack_roll_target[64];
-  else
-    return rand() < attack_roll_target[atk - def + 32];
+  return rand() < attack_roll_target[atk - def + 32];
 }
 
 /**
@@ -326,7 +325,7 @@ inline uint8_t level_offset(uint8_t level, int8_t offset) {
     return 1;
   if ((int8_t)level + offset > 99)
     return 99;
-  return (uint8_t)(level + offset);
+  return level + offset;
 }
 
 #endif
