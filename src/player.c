@@ -125,8 +125,8 @@ void kobold_base_attack(MonsterInstance *target) {
 
 Summon summon_kobold = {
   1,
-  str_summon_kobold,
-  str_summon_wilbur,
+  str_misc_kobold,
+  str_misc_wilbur,
   B_TIER,
   EMPTY_BITFIELD,
   DAMAGE_EARTH,

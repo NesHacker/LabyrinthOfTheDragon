@@ -1,5 +1,7 @@
 #include <gb/gb.h>
+
 #include "data.h"
+#include "bcd.h"
 #include "util.h"
 
 void clear_background(void) NONBANKED {
@@ -31,5 +33,43 @@ void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
   while (max) {
     set_vram_byte(vram++, FONT_SPACE);
     max--;
+  }
+}
+
+void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
+  bcd_t left, right;
+  to_bcd16(n, &left);
+  to_bcd16(d, &right);
+
+  VBK_REG = VBK_TILES;
+
+  if (left.d2) {
+    set_vram_byte(vram++, left.d2 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  } else if (!left.d2 && left.d1) {
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  } else {
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
+  }
+
+  set_vram_byte(vram++, FONT_SLASH);
+
+  if (right.d2) {
+    set_vram_byte(vram++, right.d2 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+  } else if (!right.d2 && right.d1) {
+    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, FONT_SPACE);
+  } else {
+    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
+    set_vram_byte(vram++, FONT_SPACE);
+    set_vram_byte(vram++, FONT_SPACE);
   }
 }

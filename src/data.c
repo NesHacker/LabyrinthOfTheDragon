@@ -1,14 +1,6 @@
 #include <gb/gb.h>
 #include "data.h"
 
-void load_tiles(uint8_t bank, uint8_t *src, uint8_t *dst, uint8_t n) NONBANKED {
-  uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(bank);
-  for (uint8_t t = 0; t < n; t++)
-    for (uint8_t c = 0; c < 16; c++)
-      *dst++ = *src++;
-  SWITCH_ROM(_prev_bank);
-}
 
 void load_tile_page(uint8_t bank, uint8_t *src, uint8_t *dst) NONBANKED {
   uint8_t _prev_bank = _current_bank;

@@ -1,3 +1,5 @@
+#pragma bank 2
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <stdint.h>
@@ -373,7 +375,7 @@ bool check_action(void) {
   return false;
 }
 
-void init_world_map(void) {
+void init_world_map(void) NONBANKED {
   lcd_off();
   init_hero();
   load_area(&area0);
@@ -382,7 +384,7 @@ void init_world_map(void) {
   lcd_on();
 }
 
-void update_world_map(void) {
+void update_world_map(void) NONBANKED {
   switch (map_state) {
   case MAP_STATE_WAITING:
     if (!check_action()) {
@@ -398,7 +400,7 @@ void update_world_map(void) {
   on_update();
 }
 
-void draw_world_map(void) {
+void draw_world_map(void) NONBANKED {
   switch (map_state) {
   case MAP_STATE_TEXTBOX:
     update_textbox();

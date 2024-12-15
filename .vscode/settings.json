@@ -13,6 +13,8 @@
     "monster.h": "c",
     "flags.h": "c",
     "stdbool.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "gb.h": "c",
+    "data.h": "c"
   }
 }

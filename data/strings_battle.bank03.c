@@ -1,9 +1,9 @@
 /*
- * strings_battle.bank00.c
+ * strings_battle.bank03.c
  * Encoded string values for the "battle" namespace.
  */
 
-#pragma bank 0
+#pragma bank 3
 
 const char str_battle_monster_miss[] = "But they miss!";
 const char str_battle_monster_magic_miss[] = "But it has no \neffect!";

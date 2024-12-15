@@ -6,7 +6,13 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
 
+#include "core.h"
 #include "stats.h"
+
+/**
+ * Number of tiles in a full monster tileset.
+ */
+#define MONSTER_TILES 7 * 7 * 2
 
 /**
  * Defines a monster and its behaviors.
@@ -15,19 +21,15 @@ typedef struct Monster {
   /**
    * Unique identifier for the monster.
    */
-  uint8_t id;
+  const uint8_t id;
   /**
    * Nine character display name for the monster.
    */
-  char name[9];
+  const char name[9];
   /**
-   * ROM bank where the monster's tile data resides.
+   * Tileset for the monster.
    */
-  uint8_t tile_bank;
-  /**
-   * Pointer to the tile data for the monster.
-   */
-  uint8_t *tile_data;
+  const Tileset *tileset;
 } Monster;
 
 /**

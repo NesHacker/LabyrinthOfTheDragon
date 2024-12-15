@@ -1,12 +1,10 @@
 /*
- * strings_summon.bank00.c
+ * strings_summon.bank03.c
  * Encoded string values for the "summon" namespace.
  */
 
-#pragma bank 0
+#pragma bank 3
 
-const char str_summon_kobold[] = "Kobold";
-const char str_summon_wilbur[] = "Wilbur";
 const char str_summon_kobold_attack[] = "You attack with \nyour tiny claws\x60";
 const char str_summon_kobold_magic_attack[] = "You fling a ball \nof acid\x60";
 const char str_summon_vine_whip[] = "Vine Whip";

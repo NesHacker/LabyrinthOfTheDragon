@@ -51,6 +51,16 @@ extern const char str_misc_light[];
 extern const char str_misc_dark[];
 
 /**
+ * "Kobold"
+ */
+extern const char str_misc_kobold[];
+
+/**
+ * "Wilbur"
+ */
+extern const char str_misc_wilbur[];
+
+/**
  * "But they miss!"
  */
 extern const char str_battle_monster_miss[];
@@ -124,16 +134,6 @@ extern const char str_battle_player_hit_vuln[];
  * "CRITICAL HIT! You deal %damage damage!"
  */
 extern const char str_battle_player_hit_crit[];
-
-/**
- * "Kobold"
- */
-extern const char str_summon_kobold[];
-
-/**
- * "Wilbur"
- */
-extern const char str_summon_wilbur[];
 
 /**
  * "You attack with your tiny claws..."

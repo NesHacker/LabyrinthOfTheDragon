@@ -1,4 +1,4 @@
-#pragma bank 3
+#pragma bank 0
 
 #include <stdio.h>
 
@@ -84,12 +84,8 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
 // -----------------------------------------------------------------------------
 // Monster 1 - Kobold
 // -----------------------------------------------------------------------------
-const Monster MONSTER_KOBOLD = {
-  // id, name
-  1, "KOBOLD",
-  // tile_bank, tile_data, palette
-  4, tile_kobold,
-};
+const Tileset kobold_tileset = { MONSTER_TILES, 14, tile_kobold };
+const Monster MONSTER_KOBOLD = { 1, "KOBOLD", &kobold_tileset };
 
 const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   // C-Tier
@@ -113,7 +109,6 @@ const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   RGB_DARKGRAY,
   RGB_BLACK,
 };
-
 
 void kobold_take_turn(MonsterInstance *m) {
   const uint8_t move_roll = d16();
@@ -178,17 +173,5 @@ void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier) {
 // -----------------------------------------------------------------------------
 // Monster 2 - Beholder
 // -----------------------------------------------------------------------------
-const palette_color_t MONSTER_BEHOLDER_PALETTES[4] = {
-  // C-Tier
-  RGB_WHITE,
-  RGB8(209, 206, 107),
-  RGB8(126, 73, 73),
-  RGB8(0, 40, 51),
-};
-
-const Monster MONSTER_BEHOLDER = {
-  // id, name
-  2, "BEHOLDER",
-  // tile_bank, tile_data, palette
-  4, tile_beholder,
-};
+const Tileset beholder_tileset = { MONSTER_TILES, 14, tile_beholder };
+const Monster MONSTER_BEHOLDER = { 2, "BEHOLDER", &beholder_tileset };

@@ -34,12 +34,14 @@ addNamespace('misc', 0, {
   'fire': 'fire',
   'light': 'light',
   'dark': 'dark',
+  'kobold': 'Kobold',
+  'wilbur': 'Wilbur',
 })
 
 /**
  * General battle strings
  */
-addNamespace('battle', 0, {
+addNamespace('battle', 3, {
   'monster_miss': 'But they miss!',
   'monster_magic_miss': 'But it has no effect!',
   'monster_hit': 'You take %damage damage!',
@@ -60,10 +62,8 @@ addNamespace('battle', 0, {
 /**
  * Summon replated strings.
  */
-addNamespace('summon', 0, {
+addNamespace('summon', 3, {
   // Summon 1 - Wilbur the Kobold
-  'kobold': 'Kobold',
-  'wilbur': 'Wilbur',
   'kobold_attack': 'You attack with your tiny claws...',
   'kobold_magic_attack': 'You fling a ball of acid...',
   'vine_whip': 'Vine Whip',
@@ -80,7 +80,7 @@ addNamespace('summon', 0, {
 /**
  * Monster specific battle strings
  */
-addNamespace('monster', 0, {
+addNamespace('monster', 3, {
   'kobold_axe': 'Kobold %c raises a tiny axe...',
   'kobold_fire': 'Kobold %c spits a glob of fire...',
   'kobold_dazed': 'Kobold %c looks dazed...',

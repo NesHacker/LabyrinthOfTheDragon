@@ -14,3 +14,5 @@ const char str_misc_air[] = "air";
 const char str_misc_fire[] = "fire";
 const char str_misc_light[] = "light";
 const char str_misc_dark[] = "dark";
+const char str_misc_kobold[] = "Kobold";
+const char str_misc_wilbur[] = "Wilbur";

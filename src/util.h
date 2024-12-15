@@ -136,4 +136,12 @@ void fill_background(uint8_t tile, uint8_t attr);
  */
 void draw_text(uint8_t *vram, const char *text, uint8_t max);
 
+/**
+ * Prints a fraction to the screen at the given vram location.
+ * @param vram Vram location to print the fraction.
+ * @param n Numerator for the fraction.
+ * @param d Denominator for the fraction.
+ */
+void print_fraction(uint8_t *vram, uint16_t n, uint16_t d);
+
 #endif

@@ -35,7 +35,7 @@ typedef enum DamageAspect {
  * @return The string name for the given aspect type.
  * @param type Aspect type to convert.
  */
-inline char *damage_aspect_name(DamageAspect type) {
+inline const char *damage_aspect_name(DamageAspect type) {
   switch (type) {
   case DAMAGE_PHYSICAL:
     return str_misc_physical;
@@ -142,112 +142,89 @@ extern const uint8_t damage_roll_modifier[16];
  */
 extern const uint8_t xp_mod[16];
 
+
 /**
  * @return Experience points required to achieve the given level.
  * @param level The level.
  */
-inline uint16_t get_exp(uint8_t level) {
-  return exp_by_level[level - 1];
-}
+uint16_t get_exp(uint8_t level) BANKED;
 
 /**
  * @return Experience points awarded for the monster.
  * @param level The level of the monster.
  * @param tier Power tier for the monster.
  */
-inline uint16_t get_monster_exp(uint8_t level, PowerTier tier) {
-  return monster_exp[tier][level - 1];
-}
+uint16_t get_monster_exp(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Agility for a summon or monster.
  * @param level Level of the monster/summon.
  * @param tier Power tier for the stat.
  */
-inline uint8_t get_agl(uint8_t level, PowerTier tier) {
-  return agl[tier][level - 1];
-}
+uint8_t get_agl(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Maximum hp for the player.
  * @param level level of the player.
  * @param tier power tier for the stat.
  */
-inline uint16_t get_player_hp(uint8_t level, PowerTier tier) {
-  return player_hp[tier][level - 1];
-}
+uint16_t get_player_hp(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Maximum sp for the player.
  * @param level level of the player.
  * @param tier power tier for the stat.
  */
-inline uint8_t get_player_sp(uint8_t level, PowerTier tier) {
-  return player_sp[tier][level - 1];
-}
+uint8_t get_player_sp(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Defense for the player.
  * @param level level of the player.
  * @param tier power tier for the stat.
  */
-inline uint8_t get_player_def(uint8_t level, PowerTier tier) {
-  return player_def[tier][level - 1];
-}
+uint8_t get_player_def(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Attack for the player.
  * @param level level of the player.
  * @param tier power tier for the stat.
  */
-inline uint8_t get_player_atk(uint8_t level, PowerTier tier) {
-  return player_atk[tier][level - 1];
-}
+uint8_t get_player_atk(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Damage for the player.
  * @param level level of the player.
  * @param tier power tier for the stat.
  */
-inline uint16_t get_player_damage(uint8_t level, PowerTier tier) {
-  return player_dmg[tier][level - 1];
-}
+uint16_t get_player_damage(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Maximum HP for the monster.
  * @param level Level of the monster.
  * @param tier Power tier for the stat.
  */
-inline uint16_t get_monster_hp(uint8_t level, PowerTier tier) {
-  return monster_hp[tier][level - 1];
-}
+uint16_t get_monster_hp(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Defense for the monster.
  * @param level Level of the monster.
  * @param tier Power tier for the stat.
  */
-inline uint8_t get_monster_def(uint8_t level, PowerTier tier) {
-  return monster_def[tier][level - 1];
-}
+uint8_t get_monster_def(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Attack for the monster.
  * @param level Level of the monster.
  * @param tier Power tier for the stat.
  */
-inline uint8_t get_monster_atk(uint8_t level, PowerTier tier) {
-  return monster_atk[tier][level - 1];
-}
+uint8_t get_monster_atk(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * @return Damage for the monster.
  * @param level Level of the monster.
  * @param tier Power tier for the stat.
  */
-inline uint16_t get_monster_dmg(uint8_t level, PowerTier tier) {
-  return monster_dmg[tier][level - 1];
-}
+uint16_t get_monster_dmg(uint8_t level, PowerTier tier) BANKED;
 
 /**
  * Performs an attack roll.
@@ -255,13 +232,22 @@ inline uint16_t get_monster_dmg(uint8_t level, PowerTier tier) {
  * @param def Defender's DEF score.
  * @return `true` if the attack succeeds.
  */
-inline bool roll_attack(uint8_t atk, uint8_t def) {
-  if (atk + 32 < def)
-    return rand() < attack_roll_target[0];
-  if (atk > 32 + 32)
-    return rand() < attack_roll_target[64];
-  return rand() < attack_roll_target[atk - def + 32];
-}
+bool roll_attack(uint8_t atk, uint8_t def) BANKED;
+
+/**
+ * @return An attack's resulting damage given a roll.
+ * @param d16_roll The d16 roll.
+ * @param base_dmg The base damage for the attack.
+ */
+uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED;
+
+/**
+ * @return Experience awarded to a player of the given level from a monster.
+ * @param plvl Level of the player.
+ * @param mlvl Level of the monster.
+ * @param mtier Power tier for the monster.
+ */
+uint16_t calc_monster_exp(uint8_t plvl, uint8_t mlvl, PowerTier mtier) BANKED;
 
 /**
  * @return A random d2 roll.
@@ -317,29 +303,6 @@ inline uint8_t d128(void) {
  */
 inline uint8_t d256(void) {
   return rand();
-}
-
-/**
- * @return An attack's resulting damage given a roll.
- * @param d16_roll The d16 roll.
- * @param base_dmg The base damage for the attack.
- */
-inline uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) {
-  return (damage_roll_modifier[d16_roll & 0x0F] * base_dmg) >> 4;
-}
-
-/**
- * @return Experience awarded to a player of the given level from a monster.
- * @param plvl Level of the player.
- * @param mlvl Level of the monster.
- * @param mtier Power tier for the monster.
- */
-inline uint16_t calc_monster_exp(uint8_t plvl, uint8_t mlvl, PowerTier mtier) {
-  if (plvl - mlvl + 8 <= 0)
-    return 0;
-  if (mlvl - plvl + 8 >= 15)
-    return get_monster_exp(mlvl, mtier) << 1;
-  return (xp_mod[plvl - mlvl + 8] * get_monster_exp(mlvl, mtier)) >> 4;
 }
 
 /**

@@ -9,7 +9,7 @@
 
 #include "battle.h"
 #include "battle_text.h"
-#include "bcd.h"
+#include "core.h"
 #include "data.h"
 #include "encounter.h"
 #include "joypad.h"
@@ -17,6 +17,37 @@
 #include "palette.h"
 #include "strings.h"
 #include "util.h"
+
+const Tilemap monster_layout_1 = {
+  20, 11, 5, tilemap_battle_monster_layouts
+};
+
+const Tilemap monster_layout_2 = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 1
+};
+
+const Tilemap monster_layout_3s = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 2
+};
+
+const Tilemap monster_layout_1m2s = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 3
+};
+
+const Tilemap battle_menu_tilemap = {
+  20, 7, 5, tilemap_battle_menus
+};
+
+const Tilemap battle_submenu_tilemap = {
+  20, 7, 5, tilemap_battle_menus + 20 * 7 * 2,
+};
+
+const Tilemap battle_textbox_tilemap = {
+  20, 7, 5, tilemap_battle_menus + 20 * 2 * 7 * 2,
+};
+
+const Palette battle_bg_palette = { 5, data_battle_bg_colors };
+const Palette battle_sprite_palette = { 5, data_battle_sprite_colors };
 
 BattleState battle_state;
 BattleMenu battle_menu;
@@ -108,23 +139,6 @@ inline void hide_battle_text(void) {
   move_win(0, 144);
 }
 
-/**
- * Sets and draws the monster layout.
- * @param layout Monster layout to draw to the background.
- */
-void set_monster_layout(MonsterLayout layout) {
-  const uint16_t offset = 20 * 11 * 2 * (uint16_t)layout;
-  const uint8_t *src = tilemap_battle_monster_layouts + offset;
-  uint8_t *vram = VRAM_BACKGROUND;
-  for (uint8_t y = 0; y < 11; y++, vram += (32 - 20)) {
-    for (uint8_t x = 0; x < 20; x++, vram++) {
-      VBK_REG = VBK_TILES;
-      *vram = *src++;
-      VBK_REG = VBK_ATTRIBUTES;
-      *vram = *src++;
-    }
-  }
-}
 
 /**
  * Loads the graphics and palettes for a monster instance.
@@ -135,103 +149,31 @@ void load_monster_graphics(MonsterPosition p, MonsterInstance *m) {
   if (!m->active || !m->monster)
     return;
 
-  const uint8_t total_tiles = 2 * 7 * 7;
-  const uint8_t *src = m->monster->tile_data;
-  uint16_t page_offset = total_tiles * 16;
+  Tileset *tileset = m->monster->tileset;
 
   switch (p) {
   case MONSTER_POSITION1:
     VBK_REG = VBK_BANK_0;
-    load_tiles(
-      m->monster->tile_bank,
-      m->monster->tile_data,
-      (void *)0x9000,
-      total_tiles
-    );
+    core.load_tileset(tileset, (void *)0x9000);
     update_bg_palettes(1, 1, m->palette);
     break;
   case MONSTER_POSITION2:
     VBK_REG = VBK_BANK_0;
     // 30 -> VRAM_BG_TILES + page_offset
-    load_tiles(
-      m->monster->tile_bank,
-      m->monster->tile_data,
-      (void *)0x9620,
-      30
-    );
+    core.load_tiles(tileset, (void *)0x9620, 0, 30);
     // 68 -> VRAM_SHARED_TILES
-    load_tiles(
-      m->monster->tile_bank,
-      m->monster->tile_data + 30 * 16,
-      (void *)0x8800,
-      68
-    );
+    core.load_tiles(tileset, (void *)0x8800, 30, 68);
     update_bg_palettes(2, 1, m->palette);
     break;
   case MONSTER_POSITION3:
     // 60 -> VRAM_SHARED_TILES + 68 * 16
     VBK_REG = VBK_BANK_0;
-    load_tiles(
-      m->monster->tile_bank,
-      m->monster->tile_data,
-      (void *)0x8C40,
-      60
-    );
+    core.load_tiles(tileset, (void *)0x8C40, 0, 60);
     // 38 -> VRAM_BG_TILES BANK[2]
     VBK_REG = VBK_BANK_1;
-    load_tiles(
-      m->monster->tile_bank,
-      m->monster->tile_data + 60 * 16,
-      (void *)0x9000,
-      38
-    );
+    core.load_tiles(tileset, (void *)0x9000, 60, 38);
     update_bg_palettes(3, 1, m->palette);
     break;
-  }
-}
-
-/**
- * Draws one of the three major battle menus to the given address in VRAM.
- * The battle maps are drawn using a single tilemap that contains all three.
- * @param layout The battle menu layout to draw.
- * @param vram Pointer in VRAM to write the menu tiles.
- */
-void draw_battle_menu(BattleMenuLayout layout, uint8_t *vram) {
-  const uint8_t w = 20;
-  const uint8_t h = 7;
-  const uint8_t *src = tilemap_battle_menus;
-
-  switch (layout) {
-  case BATTLE_MENU_LAYOUT_MAIN:
-    break;
-  case BATTLE_MENU_LAYOUT_SUBMENU:
-    src = tilemap_battle_menus + w * 7 * 2;
-    break;
-  case BATTLE_MENU_LAYOUT_TEXT:
-    src = tilemap_battle_menus + w * 14 * 2;
-    break;
-  }
-
-  for (uint8_t y = 0; y < h; y++, vram += 0x20 - w) {
-    for (uint8_t x = 0; x < w; x++, vram++) {
-      VBK_REG = VBK_TILES;
-      *vram = *src++;
-      VBK_REG = VBK_ATTRIBUTES;
-      *vram = *src++;
-    }
-  }
-}
-
-/**
- * Removes a monster HP bar from the screen.
- */
-void remove_hp_bar(MonsterPosition pos) {
-  const uint8_t x = get_hp_bar_x(pos);
-  const uint8_t y = 9;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
-  VBK_REG = VBK_TILES;
-  for (uint8_t k = 0; k < 7; k++, vram++) {
-    set_vram_byte(vram, BATTLE_CLEAR_TILE);
   }
 }
 
@@ -372,71 +314,10 @@ void redraw_monster_status_effects(void) {
   // draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
 }
 
-// TODO document me
-void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
-  bcd_t left, right;
-  to_bcd16(n, &left);
-  to_bcd16(d, &right);
-
-  VBK_REG = VBK_TILES;
-
-  if (left.d2) {
-    set_vram_byte(vram++, left.d2 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
-  } else if (!left.d2 && left.d1) {
-    set_vram_byte(vram++, FONT_SPACE);
-    set_vram_byte(vram++, left.d1 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
-  } else {
-    set_vram_byte(vram++, FONT_SPACE);
-    set_vram_byte(vram++, FONT_SPACE);
-    set_vram_byte(vram++, left.d0 + FONT_DIGIT_OFFSET);
-  }
-
-  set_vram_byte(vram++, FONT_SLASH);
-
-  if (right.d2) {
-    set_vram_byte(vram++, right.d2 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
-  } else if (!right.d2 && right.d1) {
-    set_vram_byte(vram++, right.d1 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, FONT_SPACE);
-  } else {
-    set_vram_byte(vram++, right.d0 + FONT_DIGIT_OFFSET);
-    set_vram_byte(vram++, FONT_SPACE);
-    set_vram_byte(vram++, FONT_SPACE);
-  }
-}
-
-/**
- * Sets the battle system to use the magic or tech menu based on the player
- * character's chosen class.
- */
-void set_magic_or_tech_menu(void) {
-  uint8_t menu_icon, resource_icon;
-  if (is_magic_class()) {
-    menu_icon = MAGIC_ICON;
-    resource_icon = MP_ICON_LEFT;
-  } else {
-    menu_icon = TECH_ICON;
-    resource_icon = SP_ICON_LEFT;
-  }
-  uint8_t *vram = VRAM_BACKGROUND_XY(2, MENU_Y + 2);
-  VBK_REG = VBK_TILES;
-  for (uint8_t k = 0; k < 4; k++)
-    set_vram_byte(vram++, menu_icon + k);
-  vram = VRAM_BACKGROUND_XY(9, MENU_Y + 4);
-  set_vram_byte(vram++, resource_icon);
-  set_vram_byte(vram, resource_icon + 1);
-}
-
 /**
  * Moves cursor sprites offscreen to hide them.
  */
-void hide_cursor_sprites(void) {
+void hide_cursor(void) {
   move_sprite(CURSOR_SPRITE + 0, 0, 0);
   move_sprite(CURSOR_SPRITE + 1, 0, 0);
   move_sprite(CURSOR_SPRITE + 2, 0, 0);
@@ -496,7 +377,7 @@ void move_cursor(BattleCursor c) {
     move_cursor_sprites(0, 16);
     break;
   case BATTLE_CURSOR_NO_ITEMS:
-    hide_cursor_sprites();
+    hide_cursor();
   case BATTLE_CURSOR_MONSTER_1:
     switch (encounter.layout) {
     case MONSTER_LAYOUT_1:
@@ -547,17 +428,6 @@ void move_cursor(BattleCursor c) {
 }
 
 /**
- * Initializes the cursor and its sprites.
- */
-void init_cursor(void) {
-  for (uint8_t s = 0; s < 4; s++) {
-    set_sprite_tile(CURSOR_SPRITE + s, CURSOR_TILE + s);
-    set_sprite_prop(CURSOR_SPRITE + s, CURSOR_ATTR);
-  }
-  move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
-}
-
-/**
  * LCY interrupt handler for the fight and skill menus. This handler changes the
  * scroll-y position at a specific scanline to display a different part of the
  * background that contains the graphics for these menus.
@@ -592,7 +462,20 @@ void battle_init_encounter(void) {
   monster_deactivate(++monster);
 
   // Initialize graphics for the monsters in the encounter
-  set_monster_layout(encounter.layout);
+  switch (encounter.layout) {
+  case MONSTER_LAYOUT_1:
+    core.draw_tilemap(monster_layout_1, VRAM_BACKGROUND);
+    break;
+  case MONSTER_LAYOUT_2:
+    core.draw_tilemap(monster_layout_2, VRAM_BACKGROUND);
+    break;
+  case MONSTER_LAYOUT_3S:
+    core.draw_tilemap(monster_layout_3s, VRAM_BACKGROUND);
+    break;
+  case MONSTER_LAYOUT_1M_2S:
+    core.draw_tilemap(monster_layout_1m2s, VRAM_BACKGROUND);
+    break;
+  }
   monster = encounter.monsters;
 
   load_monster_graphics(MONSTER_POSITION1, monster++);
@@ -617,52 +500,56 @@ inline void update_player_sp(void) {
 /**
  * Updates the player's summon name and swaps the tech/magic menu.
  */
-inline void update_player_summon(void) {
-  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
-  set_magic_or_tech_menu();
-}
-
-/**
- * Initializes graphics and state for the player.
- */
-void battle_init_player(void) {
-  // TODO The player should already be initialized, remove this after testing
-  init_player();
-
-  // Update the player UI
+void update_player_summon(void) {
   player.summon->activate();
-  update_player_summon();
-  update_player_hp();
-  update_player_sp();
+  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  uint8_t menu_icon, resource_icon;
+  if (is_magic_class()) {
+    menu_icon = MAGIC_ICON;
+    resource_icon = MP_ICON_LEFT;
+  } else {
+    menu_icon = TECH_ICON;
+    resource_icon = SP_ICON_LEFT;
+  }
+  uint8_t *vram = VRAM_BACKGROUND_XY(2, MENU_Y + 2);
+  VBK_REG = VBK_TILES;
+  for (uint8_t k = 0; k < 4; k++)
+    set_vram_byte(vram++, menu_icon + k);
+  vram = VRAM_BACKGROUND_XY(9, MENU_Y + 4);
+  set_vram_byte(vram++, resource_icon);
+  set_vram_byte(vram, resource_icon + 1);
 }
 
-
-void init_battle(void) NONBANKED {
+void initialize_battle(void) {
   lcd_off();
-
-  // Switch to the battle ROM bank (has stats tables, etc.)
-  SWITCH_ROM(BATTLE_ROM_BANK);
 
   // Reset the background and window position
   fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
   move_win(0, 144);
 
   // Load palettes & fonts
-  update_bg_palettes(0, 8, battle_bg_palettes);
-  update_sprite_palettes(0, 8, battle_sprite_palettes);
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
-  load_tiles(1, tile_battle, (void *)(0x9300), 5 * 16);
+  core.load_bg_palette(battle_bg_palette, 0, 8);
+  core.load_sprite_palette(battle_sprite_palette, 0, 8);
+  core.load_font();
+  core.load_battle_tiles();
 
   // Draw menus and initialize cursor
-  draw_battle_menu(BATTLE_MENU_LAYOUT_MAIN, VRAM_BACKGROUND_XY(0, MENU_Y));
-  draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
-  draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
-  init_cursor();
+  core.draw_tilemap(battle_menu_tilemap, VRAM_BACKGROUND_XY(0, MENU_Y));
+  core.draw_tilemap(battle_submenu_tilemap, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
+  core.draw_tilemap(battle_textbox_tilemap, VRAM_WINDOW_XY(0, 0));
+
+  for (uint8_t s = 0; s < 4; s++) {
+    set_sprite_tile(CURSOR_SPRITE + s, CURSOR_TILE + s);
+    set_sprite_prop(CURSOR_SPRITE + s, CURSOR_ATTR);
+  }
+  move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
 
   // Initialize the encounter and player graphics
   battle_init_encounter();
-  battle_init_player();
+  // Update the player UI
+  update_player_summon();
+  update_player_hp();
+  update_player_sp();
 
   // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
@@ -679,6 +566,14 @@ void init_battle(void) NONBANKED {
   lcd_on();
 }
 
+void init_battle(void) NONBANKED {
+  // TODO The player should already be initialized, remove this after testing
+  init_player();
+  // Switch to the battle ROM bank (has stats tables, etc.)
+  SWITCH_ROM(BATTLE_ROM_BANK);
+  initialize_battle();
+}
+
 void cleanup_battle(void) {
   CRITICAL {
     remove_LCD(fight_menu_isr);
@@ -687,8 +582,6 @@ void cleanup_battle(void) {
   }
   set_interrupts(IE_REG & ~LCD_IFLAG);
 }
-
-
 
 /**
  * Confirms that the player has chosen the default "fight" action and begins the
@@ -840,7 +733,7 @@ inline void clear_submenu_body(void) {
  */
 void reset_battle_submenu(void) {
   battle_num_submenu_items = 0;
-  hide_cursor_sprites();
+  hide_cursor();
   draw_submenu_heading();
   clear_submenu_body();
 }
@@ -1148,12 +1041,11 @@ void cleanup_monsters(void) {
       continue;
     if (monster->hp == 0) {
       monster->active = false;
-      remove_hp_bar(pos);
     }
   }
 }
 
-void update_battle(void) NONBANKED {
+void update_battle(void) {
   if (battle_state == BATTLE_INACTIVE)
     return;
 
@@ -1176,7 +1068,7 @@ void update_battle(void) NONBANKED {
     break;
   case BATTLE_ROLL_INITIATIVE:
     roll_initiative();
-    hide_cursor_sprites();
+    hide_cursor();
     battle_text.clear();
     show_battle_text();
     battle_state = BATTLE_NEXT_TURN;
@@ -1244,6 +1136,6 @@ void update_battle(void) NONBANKED {
   }
 }
 
-void draw_battle(void) NONBANKED {
+void draw_battle(void) {
   move_bkg(0, 0);
 }
