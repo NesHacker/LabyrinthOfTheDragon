@@ -3,7 +3,7 @@
  * Extern references for encoded string values across all namespaces.
  *
  * This file was automatically generated using the tools/strings script
- * Generated at: Sat Dec 14 2024 @ 18:42:28 GMT-0500 (Eastern Standard Time)
+ * Generated at: Sat Dec 14 2024 @ 19:45:30 GMT-0500 (Eastern Standard Time)
  */
 #ifndef _GAME_STRINGS_H
 #define _GAME_STRINGS_H
@@ -64,9 +64,14 @@ extern const char str_battle_dirty_fang_hit_poison[];
 extern const char str_battle_dirty_fang_hit_no_poison[];
 
 /**
- * "You attack %monster %c with your claws..."
+ * "You attack with your tiny claws..."
  */
 extern const char str_battle_kobold_base_attack[];
+
+/**
+ * "You fling a ball of acid..."
+ */
+extern const char str_battle_kobold_base_magic_attack[];
 
 /**
  * "Kobold %c attacks with a stone axe..."
@@ -114,7 +119,7 @@ extern const char str_battle_player_miss[];
 extern const char str_battle_player_magic_miss[];
 
 /**
- * "You hit!"
+ * "You deal %damage damage!"
  */
 extern const char str_battle_player_hit[];
 
@@ -124,13 +129,18 @@ extern const char str_battle_player_hit[];
 extern const char str_battle_player_hit_immune[];
 
 /**
- * "They resist your attack."
+ * "They resist your attack, only %damage damage..."
  */
 extern const char str_battle_player_hit_resist[];
 
 /**
- * "It deals massive damage!"
+ * "It's SUPER EFFECTIVE dealing %damage damage!"
  */
 extern const char str_battle_player_hit_vuln[];
+
+/**
+ * "CRITICAL HIT! You deal %damage damage!"
+ */
+extern const char str_battle_player_hit_crit[];
 
 #endif

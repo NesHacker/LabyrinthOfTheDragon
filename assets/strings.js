@@ -54,7 +54,8 @@ addNamespace('battle', 3, {
   'dirty_fang_attack': 'You rush forward, fangs bared!',
   'dirty_fang_hit_poison': 'Your bite deals %damage damage and poison them!',
   'dirty_fang_hit_no_poison': 'Your filthy kobold bite deals %damage damage!',
-  'kobold_base_attack': 'You attack %monster %c with your claws...',
+  'kobold_base_attack': 'You attack with your tiny claws...',
+  'kobold_base_magic_attack': 'You fling a ball of acid...',
   'kobold_axe': 'Kobold %c attacks with a stone axe...',
   'monster_attack': ':fight: %monster %c attacks...',
   'monster_magic_attack': ':magic: %monster %c casts a spell...',
@@ -64,10 +65,11 @@ addNamespace('battle', 3, {
   'monster_hit_aspect': 'They hit for %damage %aspect damage!',
   'player_miss': 'But you miss!',
   'player_magic_miss': 'But it has no effect!',
-  'player_hit': 'You hit!',
+  'player_hit': 'You deal %damage damage!',
   'player_hit_immune': "They're completely immune!",
-  'player_hit_resist': "They resist your attack.",
-  'player_hit_vuln': "It deals massive damage!",
+  'player_hit_resist': "They resist your attack, only %damage damage...",
+  'player_hit_vuln': "It's SUPER EFFECTIVE dealing %damage damage!",
+  'player_hit_crit': 'CRITICAL HIT! You deal %damage damage!',
 })
 
 // Export the namespaces

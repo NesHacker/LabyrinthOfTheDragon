@@ -3,7 +3,7 @@
  * Encoded string values for the "ability" namespace.
  *
  * This file was automatically generated using the tools/strings script
- * Generated at: Sat Dec 14 2024 @ 18:42:28 GMT-0500 (Eastern Standard Time)
+ * Generated at: Sat Dec 14 2024 @ 19:45:30 GMT-0500 (Eastern Standard Time)
  */
 
 #pragma bank 0
