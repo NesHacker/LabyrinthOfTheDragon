@@ -43,7 +43,7 @@ const DirectSubstitutions = {
 
 const params = {
   '%damage': {
-    code: '%d',
+    code: '%u',
     max: 4,
   },
   '%aspect': {
