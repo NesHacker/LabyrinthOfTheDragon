@@ -236,6 +236,19 @@ void remove_hp_bar(MonsterPosition pos) {
 }
 
 /**
+ * Toggles the attributes of the HP bar so they match a monster's palettes so
+ * it can be faded out along with the monster upon death.
+ */
+void toggle_hp_bar_palette(MonsterPosition pos) {
+  const uint8_t x = get_hp_bar_x(pos);
+  const uint8_t y = 9;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  VBK_REG = VBK_ATTRIBUTES;
+  for (uint8_t k = 0; k < 7; k++, vram++)
+    set_vram_byte(vram, (pos + 1) | 0x08);
+}
+
+/**
  * Draws an HP bar for the monster at a given position.
  * @param pos Position of the monster on the battle screen.
  * @param hp Curent HP for the monster.
@@ -696,25 +709,41 @@ void confirm_summon(void) {
 void confirm_flee(void) {
 }
 
+
+/**
+ * Attempts to move the cursor to one of the monsters at the given indices.
+ * Doesn't move the cursor if neither are active.
+ * @param a Index for the first enemy to select if active.
+ * @param b Index for the second enemy to select if active.
+ */
+void select_monster(uint8_t a, uint8_t b) {
+  MonsterInstance *first = encounter.monsters + a;
+  MonsterInstance *second = encounter.monsters + b;
+  if (first->active) {
+    move_cursor(BATTLE_CURSOR_MONSTER_1 + a);
+    return;
+  }
+  if (second->active) {
+    move_cursor(BATTLE_CURSOR_MONSTER_1 + b);
+    return;
+  }
+}
+
 /**
  * Moves the cursor to select the previous enemy in the list.
  */
 void select_prev_enemy(void) {
-  switch (encounter.layout) {
-  case MONSTER_LAYOUT_1:
+  if (encounter.layout == MONSTER_LAYOUT_1)
     return;
-  case MONSTER_LAYOUT_2:
-    if (battle_cursor == BATTLE_CURSOR_MONSTER_1)
-      move_cursor(BATTLE_CURSOR_MONSTER_2);
-    else
-      move_cursor(BATTLE_CURSOR_MONSTER_1);
-    break;
-  case MONSTER_LAYOUT_3S:
-  case MONSTER_LAYOUT_1M_2S:
-    if (battle_cursor == BATTLE_CURSOR_MONSTER_1)
-      move_cursor(BATTLE_CURSOR_MONSTER_3);
-    else
-      move_cursor(battle_cursor - 1);
+  switch (battle_cursor) {
+  case BATTLE_CURSOR_MONSTER_1:
+    select_monster(2, 1);
+    return;
+  case BATTLE_CURSOR_MONSTER_2:
+    select_monster(0, 2);
+    return;
+  case BATTLE_CURSOR_MONSTER_3:
+    select_monster(1, 0);
     break;
   }
 }
@@ -723,21 +752,17 @@ void select_prev_enemy(void) {
  * Moves the cursor to select the next enemy in the list.
  */
 void select_next_enemy(void) {
-  switch (encounter.layout) {
-  case MONSTER_LAYOUT_1:
+  if (encounter.layout == MONSTER_LAYOUT_1)
     return;
-  case MONSTER_LAYOUT_2:
-    if (battle_cursor == BATTLE_CURSOR_MONSTER_1)
-      move_cursor(BATTLE_CURSOR_MONSTER_2);
-    else
-      move_cursor(BATTLE_CURSOR_MONSTER_1);
-    break;
-  case MONSTER_LAYOUT_3S:
-  case MONSTER_LAYOUT_1M_2S:
-    if (battle_cursor == BATTLE_CURSOR_MONSTER_3)
-      move_cursor(BATTLE_CURSOR_MONSTER_1);
-    else
-      move_cursor(battle_cursor + 1);
+  switch (battle_cursor) {
+  case BATTLE_CURSOR_MONSTER_1:
+    select_monster(1, 2);
+    return;
+  case BATTLE_CURSOR_MONSTER_2:
+    select_monster(2, 0);
+    return;
+  case BATTLE_CURSOR_MONSTER_3:
+    select_monster(0, 1);
     break;
   }
 }
@@ -852,7 +877,16 @@ void open_battle_menu(BattleMenu m) {
     move_cursor(prev_menu - 1);
     break;
   case BATTLE_MENU_FIGHT:
-    move_cursor(BATTLE_CURSOR_MONSTER_1);
+    MonsterInstance *monster = encounter.monsters;
+    for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+      if (monster->active) {
+        move_cursor(BATTLE_CURSOR_MONSTER_1 + pos);
+        return;
+      }
+    }
+    // We shouldn't reach here unless testing or an error happens
+    battle_menu = BATTLE_MENU_MAIN;
+    move_cursor(prev_menu - 1);
     break;
   case BATTLE_MENU_ABILITY:
     reset_battle_submenu();
@@ -984,6 +1018,71 @@ inline bool animate_monster_hp_bars(void) {
   return updated;
 }
 
+typedef enum MonsterDeathAnimation {
+  MONSTER_DEATH_START,
+  MONSTER_DEATH_ANIMATE,
+  MONSTER_DEATH_DONE,
+} MonsterDeathAnimation;
+
+#define MONSTER_DEATH_INITIAL_DELAY 23
+#define MONSTER_DEATH_FADE_DELAY 5
+
+Timer monster_death_timer;
+uint8_t monster_death_step = 0;
+MonsterDeathAnimation monster_death_state = MONSTER_DEATH_START;
+
+inline void reset_monster_death_animation(void) {
+  monster_death_step = 0;
+  monster_death_state = MONSTER_DEATH_START;
+}
+
+/**
+ * Palette animation for dying monsters.
+ */
+inline bool animate_monster_death(void) {
+  MonsterInstance *monster = encounter.monsters;
+
+  if (monster_death_state == MONSTER_DEATH_DONE)
+    return false;
+
+  if (monster_death_state == MONSTER_DEATH_START) {
+    for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+      if (monster->active && monster->hp == 0) {
+        monster_death_state = MONSTER_DEATH_ANIMATE;
+        return true;
+      }
+    }
+    monster_death_state = MONSTER_DEATH_DONE;
+    return false;
+  }
+
+  if (monster_death_step == 0) {
+    init_timer(monster_death_timer, MONSTER_DEATH_INITIAL_DELAY);
+  } else {
+    if (!update_timer(monster_death_timer))
+      return true;
+    init_timer(monster_death_timer, MONSTER_DEATH_FADE_DELAY);
+  }
+
+  for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+    if (!monster->active || monster->hp != 0)
+      continue;
+    if (monster_death_step == 0)
+      toggle_hp_bar_palette(pos);
+    set_bkg_palette(pos + 1, 1, monster_death_colors + 4 * monster_death_step);
+  }
+
+  monster_death_step++;
+  if (monster_death_step > 5){
+    monster_death_state = MONSTER_DEATH_DONE;
+  }
+
+  return true;
+}
+
+/**
+ * Update handler that animates the results of player & monster actions.
+ */
 void animate_action_result(void) {
   switch (animation_state) {
   case ANIMATION_PREAMBLE:
@@ -995,18 +1094,40 @@ void animate_action_result(void) {
   case ANIMATION_EFFECT:
     if (update_timer(effect_delay_timer)) {
       battle_text.print(battle_post_message);
+      reset_monster_death_animation();
       animation_state = ANIMATION_RESULT;
     }
     break;
   case ANIMATION_RESULT:
-    // Animate monster HP bars
-    bool graphics_updated = animate_monster_hp_bars();
+    bool graphics_updated = false;
+
+    // Sequence action result animations
+    if (animate_monster_hp_bars()) {
+      graphics_updated = true;
+    } else if (animate_monster_death()) {
+      graphics_updated = true;
+    }
 
     // Done when the battle text is finished an no more updates are performed.
     if (!graphics_updated && battle_text.state == BATTLE_TEXT_DONE) {
       animation_state = ANIMATION_COMPLETE;
     }
     break;
+  }
+}
+
+/**
+ * Cleans up monsters after an action (handles death, etc.).
+ */
+void cleanup_monsters(void) {
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+    if (!monster->active)
+      continue;
+    if (monster->hp == 0) {
+      monster->active = false;
+      remove_hp_bar(pos);
+    }
   }
 }
 
@@ -1060,8 +1181,12 @@ void update_battle(void) NONBANKED {
   case BATTLE_ANIMATE:
     animate_action_result();
     if (animation_state == ANIMATION_COMPLETE) {
-      battle_state = BATTLE_NEXT_TURN;
+      battle_state = BATTLE_ACTION_CLEANUP;
     }
+    break;
+  case BATTLE_ACTION_CLEANUP:
+    cleanup_monsters();
+    battle_state = BATTLE_NEXT_TURN;
     break;
   case BATTLE_PLAYER_FLED:
     // Flee success message / animation

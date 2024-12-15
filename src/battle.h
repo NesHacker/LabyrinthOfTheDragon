@@ -200,6 +200,10 @@ typedef enum BattleState {
    */
   BATTLE_ANIMATE,
   /**
+   * Performs cleanup after a round of battle (death logic, etc.)
+   */
+  BATTLE_ACTION_CLEANUP,
+  /**
    * The "player flee" animation and message is being displayed.
    */
   BATTLE_PLAYER_FLED,
@@ -309,6 +313,10 @@ extern const palette_color_t battle_bg_palettes[];
  */
 extern const palette_color_t battle_sprite_palettes[];
 
+/**
+ * Color palettes to use when animating monster death.
+ */
+extern const palette_color_t monster_death_colors[];
 
 /**
  * Main state variable for the battle system.
@@ -346,7 +354,7 @@ extern char battle_post_message[64];
 /**
  * Animation to play prior to the results of a player or monster action.
  */
-extern BattleAnimation battle_animation;
+extern BattleAnimation battle_action_effect;
 
 /**
  * Initializes the battle system.

@@ -96,7 +96,6 @@ void kobold_activate(void) {
   }
 }
 
-
 /**
  * Base attack ability execution function for the kobold.
  * @param target Monster instance target for the attack.

@@ -49,11 +49,28 @@ void roll_initiative(void) {
 }
 
 void next_turn(void) {
-  // Figure out whos turn it is and set the current turn index
-  encounter.turn = encounter.order[encounter.turn_index++];
-  if (encounter.turn == TURN_END) {
-    encounter.round_complete = true;
-  }
+  do {
+    encounter.turn = encounter.order[encounter.turn_index++];
+    switch (encounter.turn) {
+    case TURN_END:
+      encounter.round_complete = true;
+      return;
+    case TURN_PLAYER:
+      return;
+    case TURN_MONSTER1:
+      if (encounter.monsters->active)
+        return;
+      break;
+    case TURN_MONSTER2:
+      if ((encounter.monsters + 1)->active)
+        return;
+      break;
+    case TURN_MONSTER3:
+      if ((encounter.monsters + 2)->active)
+        return;
+      break;
+    }
+  } while (encounter.turn_index < 5);
 }
 
 void check_status_effects(void) {
@@ -93,8 +110,8 @@ inline void player_turn(void) {
 inline void monster_turn(void) {
   const uint8_t offset = encounter.turn - TURN_MONSTER1;
   MonsterInstance *monster = encounter.monsters + offset;
-  // TODO Determine if the monster can even take a turn
-  monster->take_turn(monster);
+  if (monster->active)
+    monster->take_turn(monster);
 }
 
 void take_action(void) {
