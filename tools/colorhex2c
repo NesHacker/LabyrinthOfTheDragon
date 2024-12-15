@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+const args = process.argv.slice(2);
+
+args.forEach((hex, index) => {
+  if (index % 4 == 0) {
+    console.log(`  // Palette ${Math.floor(index / 4)}`);
+  }
+  const rgb8 = hex.match(/([a-fA-F0-9]{2})/g).map(h => parseInt(h, 16));
+  console.log(`  RGB8(${rgb8.join(', ')}),`);
+})
