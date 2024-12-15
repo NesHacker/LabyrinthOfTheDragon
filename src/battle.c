@@ -1,3 +1,5 @@
+#pragma bank 3
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <rand.h>
@@ -9,6 +11,7 @@
 #include "battle_text.h"
 #include "bcd.h"
 #include "data.h"
+#include "encounter.h"
 #include "joypad.h"
 #include "monster.h"
 #include "palette.h"
@@ -18,77 +21,98 @@
 BattleState battle_state;
 BattleMenu battle_menu;
 BattleCursor battle_cursor;
-MonsterLayout battle_monster_layout;
 uint8_t battle_num_submenu_items;
-
-uint8_t battle_num_monsters;
-MonsterInstance battle_monsters[] = {{0}, {0}, {0}};
 
 Timer status_effect_timer;
 uint8_t status_effect_frame = 0;
 
-Turn battle_turn_order[5] = {
-  TURN_END,
-  TURN_END,
-  TURN_END,
-  TURN_END,
-  TURN_END,
-};
-uint8_t turn_idx = 0;
-
-// Magical energy crackles around Kobold A
-// char battle_action_preamble[64] = "Kobold A attacks with a stone axe\x60";
-// char battle_action_result[64] = "But they miss!";
+BattleAnimation battle_animation;
+char battle_pre_message[64];
+char battle_post_message[64];
 
 /**
- * Rolls initiative for all active entities in the fight and sets the turn
- * order for actions.
+ * Determines the x position for the HP bar based on the given monster position
+ * and the current monster layout.
+ * @param pos Position of the monster on the screen.
+ * @return The x position for the HP bar.
  */
-void roll_initiative(void) {
-  uint8_t rolls[5] = { 0, 0, 0, 0, 0 };
-
-  // Reset the turn order
-  turn_idx = 0;
-  battle_turn_order[0] = TURN_PLAYER;
-  battle_turn_order[1] = TURN_END;
-  battle_turn_order[2] = TURN_END;
-  battle_turn_order[3] = TURN_END;
-  battle_turn_order[4] = TURN_END;
-
-  // Roll for the player
-  uint8_t player_agl = get_agl(player.level, player.summon->agl_tier);
-  rolls[0] = d32() + player_agl + 1;
-
-  // Roll for the monsters
-  MonsterInstance *mon = battle_monsters;
-  for (uint8_t m = 1; m < battle_num_monsters + 1; m++) {
-    battle_turn_order[m] = TURN_PLAYER + m;
-    rolls[m] = d32() + 1 + mon->agl;
-    mon++;
-  }
-
-  // When's the last time you wrote a bespoke bubble sort? ;)
-  for (uint8_t k = 0; k < 1 + battle_num_monsters; k++) {
-    for (uint8_t j = k; j < 1 + battle_num_monsters; j++) {
-      if (rolls[k] < rolls[j]) {
-        uint8_t tmp = rolls[k];
-        rolls[k] = rolls[j];
-        rolls[j] = tmp;
-        tmp = battle_turn_order[k];
-        battle_turn_order[k] = battle_turn_order[j];
-        battle_turn_order[j] = tmp;
-      }
+inline uint8_t get_hp_bar_x(MonsterPosition pos) {
+  switch (encounter.layout) {
+  case MONSTER_LAYOUT_1:
+    // 1 Monster  - (6, 9)
+    return 6;
+  case MONSTER_LAYOUT_2:
+    // 2 Monsters - (2, 9), (11, 9)
+    return (pos == MONSTER_POSITION1) ? 2 : 11;
+  case MONSTER_LAYOUT_3S:
+    // 3 Monsters - (0, 9), (6, 9), (12, 9)
+    switch (pos) {
+    case MONSTER_POSITION1: return 0;
+    case MONSTER_POSITION2: return 6;
+    case MONSTER_POSITION3: return 12;
+    }
+  case MONSTER_LAYOUT_1M_2S:
+    // 1 md + 2 sm - (0) (7) (13)
+    switch (pos) {
+    case MONSTER_POSITION1: return 0;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
     }
   }
+  return 6;
 }
 
+/**
+ * Determines the starting x position for a monster's status effect tiles.
+ * @param pos Monster position.
+ * @return The starting x position for the status effects.
+ */
+inline uint8_t get_status_effect_x(MonsterPosition pos) {
+  switch (encounter.layout) {
+  case MONSTER_LAYOUT_1: return 7;
+  case MONSTER_LAYOUT_2: return (pos == MONSTER_POSITION1) ? 3 : 12;
+  case MONSTER_LAYOUT_3S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
+    }
+  case MONSTER_LAYOUT_1M_2S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 8;
+    case MONSTER_POSITION3: return 14;
+    }
+  }
+  return 7;
+}
+
+/**
+ * @return `true` If the submenu contains a number of selectable items.
+ */
+inline bool has_submenu_items(void) {
+  return battle_num_submenu_items > 0;
+}
+
+/**
+ * Shows the battle text box.
+ */
+inline void show_battle_text(void) {
+  move_win(7, 88);
+}
+
+/**
+ * Hides the battle textbox.
+ */
+inline void hide_battle_text(void) {
+  move_win(0, 144);
+}
 
 /**
  * Sets and draws the monster layout.
  * @param layout Monster layout to draw to the background.
  */
 void set_monster_layout(MonsterLayout layout) {
-  battle_monster_layout = layout;
   const uint16_t offset = 20 * 11 * 2 * (uint16_t)layout;
   const uint8_t *src = tilemap_battle_monster_layouts + offset;
   uint8_t *vram = VRAM_BACKGROUND;
@@ -103,69 +127,65 @@ void set_monster_layout(MonsterLayout layout) {
 }
 
 /**
- * Loads an new instance of the given monster into the given position.
+ * Loads the graphics and palettes for a monster instance.
  * @param p Position of the monsters on the battle screen.
- * @param monster Pointer to the monster to load.
+ * @param m Monster instance to load.
  */
-void load_monster(MonsterPosition p, Monster *monster) {
-
-  // TODO Instancing of the monsters should be handled by the encounter
-  //       system. This method should simply load an instance into a slot and
-  //       copy the monster's tiles to VRAM.
-  MonsterInstance *instance = get_monster_at(p);
-  monster->new_instance(p, 1, C_TIER);
+void load_monster_graphics(MonsterPosition p, MonsterInstance *m) {
+  if (!m->active || !m->monster)
+    return;
 
   const uint8_t total_tiles = 2 * 7 * 7;
-  const uint8_t *src = monster->tile_data;
+  const uint8_t *src = m->monster->tile_data;
   uint16_t page_offset = total_tiles * 16;
 
   switch (p) {
   case MONSTER_POSITION1:
     VBK_REG = VBK_BANK_0;
     load_tiles(
-      monster->tile_bank,
-      monster->tile_data,
+      m->monster->tile_bank,
+      m->monster->tile_data,
       (void *)0x9000,
       total_tiles
     );
-    update_bg_palettes(1, 1, instance->palette);
+    update_bg_palettes(1, 1, m->palette);
     break;
   case MONSTER_POSITION2:
     VBK_REG = VBK_BANK_0;
     // 30 -> VRAM_BG_TILES + page_offset
     load_tiles(
-      monster->tile_bank,
-      monster->tile_data,
+      m->monster->tile_bank,
+      m->monster->tile_data,
       (void *)0x9620,
       30
     );
     // 68 -> VRAM_SHARED_TILES
     load_tiles(
-      monster->tile_bank,
-      monster->tile_data + 30 * 16,
+      m->monster->tile_bank,
+      m->monster->tile_data + 30 * 16,
       (void *)0x8800,
       68
     );
-    update_bg_palettes(2, 1, instance->palette);
+    update_bg_palettes(2, 1, m->palette);
     break;
   case MONSTER_POSITION3:
     // 60 -> VRAM_SHARED_TILES + 68 * 16
     VBK_REG = VBK_BANK_0;
     load_tiles(
-      monster->tile_bank,
-      monster->tile_data,
+      m->monster->tile_bank,
+      m->monster->tile_data,
       (void *)0x8C40,
       60
     );
     // 38 -> VRAM_BG_TILES BANK[2]
     VBK_REG = VBK_BANK_1;
     load_tiles(
-      monster->tile_bank,
-      monster->tile_data + 60 * 16,
+      m->monster->tile_bank,
+      m->monster->tile_data + 60 * 16,
       (void *)0x9000,
       38
     );
-    update_bg_palettes(3, 1, instance->palette);
+    update_bg_palettes(3, 1, m->palette);
     break;
   }
 }
@@ -209,11 +229,9 @@ void remove_hp_bar(MonsterPosition pos) {
   const uint8_t x = get_hp_bar_x(pos);
   const uint8_t y = 9;
   uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  VBK_REG = VBK_TILES;
   for (uint8_t k = 0; k < 7; k++, vram++) {
-    VBK_REG = VBK_TILES;
     set_vram_byte(vram, BATTLE_CLEAR_TILE);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
   }
 }
 
@@ -227,28 +245,30 @@ void draw_hp_bar(MonsterPosition pos, uint8_t hp, uint8_t max) {
   // Determine the x, y position for the bar
   const uint8_t x = get_hp_bar_x(pos);
   const uint8_t y = 9;
+  uint8_t col = 0;
   uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
 
   // Calculate the number of pips based on the ratio of HP to Max HP
   uint16_t k = (40 * hp) / max;
   uint8_t p = (uint8_t)k;
 
+  // Update the attributes based on HP percentage
   // If p <= 13, then HP <= (1/3) * max, so set critical palette
-  uint8_t attr = (p <= 13) ? 0b00001101 : 0b00001100;
-  uint8_t col = 0;
+  VBK_REG = VBK_ATTRIBUTES;
+  for (col = 0; col < 7; col++)
+    set_vram_byte(vram++, p <= 13 ? 0b00001101 : 0b00001100);
+
+  // Draw the graphics
+  vram -= 7;
+  VBK_REG = VBK_TILES;
+  col = 0;
 
   // Draw the "left cap"
-  VBK_REG = VBK_TILES;
-  set_vram_byte(vram, 0x50);
-  VBK_REG = VBK_ATTRIBUTES;
-  set_vram_byte(vram++, attr);
+  set_vram_byte(vram++, HP_BAR_LEFT_CAP);
 
   // Fill full bar sprites until the pips value falls below 8
   while (p >= 8) {
-    VBK_REG = VBK_TILES;
-    set_vram_byte(vram, 0x51);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram++, attr);
+    set_vram_byte(vram++, HP_BAR_FULL_PIPS);
     p -= 8;
     col++;
   }
@@ -256,27 +276,18 @@ void draw_hp_bar(MonsterPosition pos, uint8_t hp, uint8_t max) {
   // If we've not filled all the pip sprites, then draw the next based on the
   // remaining pips
   if (col < 5) {
-    VBK_REG = VBK_TILES;
-    set_vram_byte(vram, 0x52 + p);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram++, attr);
+    set_vram_byte(vram++, HP_BAR_EMPTY_PIPS + p);
     col++;
   }
 
   // Draw any remaining pip sprites as "empty"
   while (col < 5) {
-    VBK_REG = VBK_TILES;
-    set_vram_byte(vram, 0x52);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram++, attr);
+    set_vram_byte(vram++, HP_BAR_EMPTY_PIPS);
     col++;
   }
 
   // Finally draw the "right cap"
-  VBK_REG = VBK_TILES;
-  set_vram_byte(vram, 0x5A);
-  VBK_REG = VBK_ATTRIBUTES;
-  set_vram_byte(vram++, attr);
+  set_vram_byte(vram, HP_BAR_RIGHT_CAP);
 }
 
 /**
@@ -474,7 +485,7 @@ void move_cursor(BattleCursor c) {
   case BATTLE_CURSOR_NO_ITEMS:
     hide_cursor_sprites();
   case BATTLE_CURSOR_MONSTER_1:
-    switch (battle_monster_layout) {
+    switch (encounter.layout) {
     case MONSTER_LAYOUT_1:
       move_cursor_sprites(5, 5);
       break;
@@ -488,7 +499,7 @@ void move_cursor(BattleCursor c) {
     }
     break;
   case BATTLE_CURSOR_MONSTER_2:
-    switch (battle_monster_layout) {
+    switch (encounter.layout) {
     case MONSTER_LAYOUT_1:
       move_cursor_sprites(5, 5);
       break;
@@ -504,7 +515,7 @@ void move_cursor(BattleCursor c) {
     }
     break;
   case BATTLE_CURSOR_MONSTER_3:
-    switch (battle_monster_layout) {
+    switch (encounter.layout) {
     case MONSTER_LAYOUT_1:
       move_cursor_sprites(5, 5);
       break;
@@ -550,32 +561,60 @@ void fight_menu_isr(void) {
   }
 }
 
-void init_battle(void) {
+/**
+ * Initializes graphics and state for the encounter and monsters.
+ */
+void battle_init_encounter(void) {
+  // The encounter should already be generate prior to this point
+  // TODO Remove this after testing
+  encounter.layout = MONSTER_LAYOUT_2;
+  MonsterInstance *monster = encounter.monsters;
+
+  kobold_generator(monster, 2, C_TIER);
+  monster->id = 'A';
+
+  kobold_generator(++monster, 3, B_TIER);
+  monster->id = 'B';
+
+  monster_deactivate(++monster);
+
+  // Initialize graphics for the monsters in the encounter
+  set_monster_layout(encounter.layout);
+  monster = encounter.monsters;
+
+  load_monster_graphics(MONSTER_POSITION1, monster++);
+  load_monster_graphics(MONSTER_POSITION2, monster++);
+  load_monster_graphics(MONSTER_POSITION3, monster);
+}
+
+/**
+ * Initializes graphics and state for the player.
+ */
+void battle_init_player(void) {
+  player.summon->activate();
+  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  set_magic_or_tech_menu();
+
+  // TODO The player should already be initialized, remove this after testing
+  init_player();
+
+  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
+  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
+}
+
+void init_battle(void) NONBANKED {
   lcd_off();
 
   // Switch to the battle ROM bank (has stats tables, etc.)
   SWITCH_ROM(BATTLE_ROM_BANK);
 
-  // TODO Load player & skills, and monsters
-  init_player(); // TODO remove me after testing
-  player.summon->activate();
-
   // Reset the background and window position
   fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
   move_win(0, 144);
 
-  // Load Palettes for the battle system
+  // Load palettes & fonts
   update_bg_palettes(0, 8, battle_bg_palettes);
   update_sprite_palettes(0, 8, battle_sprite_palettes);
-
-  // Draw the monster layout and instantiate the monsters for the fight
-  // TODO Load this data based on the fight type
-  set_monster_layout(MONSTER_LAYOUT_2);
-  load_monster(MONSTER_POSITION1, &MONSTER_KOBOLD);
-  load_monster(MONSTER_POSITION2, &MONSTER_KOBOLD);
-  battle_num_monsters = 2;
-
-  // Load the font and battle tilesets
   VBK_REG = VBK_BANK_1;
   load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
   load_tiles(1, tile_battle, (void *)(0x9300), 5 * 16);
@@ -584,14 +623,11 @@ void init_battle(void) {
   draw_battle_menu(BATTLE_MENU_LAYOUT_MAIN, VRAM_BACKGROUND_XY(0, MENU_Y));
   draw_battle_menu(BATTLE_MENU_LAYOUT_SUBMENU, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
   draw_battle_menu(BATTLE_MENU_LAYOUT_TEXT, VRAM_WINDOW_XY(0, 0));
-
-  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
-  set_magic_or_tech_menu();
-
-  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
-  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
-
   init_cursor();
+
+  // Initialize the encounter and player graphics
+  battle_init_encounter();
+  battle_init_player();
 
   // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
@@ -609,19 +645,24 @@ void init_battle(void) {
 }
 
 void cleanup_battle(void) {
-  // CRITICAL {
-  //   remove_LCD(fight_menu_isr);
-  //   remove_LCD(nowait_int_handler);
-  //   STAT_REG = 0;
-  // }
-  // set_interrupts(IE_REG & ~LCD_IFLAG);
+  CRITICAL {
+    remove_LCD(fight_menu_isr);
+    remove_LCD(nowait_int_handler);
+    STAT_REG = 0;
+  }
+  set_interrupts(IE_REG & ~LCD_IFLAG);
 }
+
+
 
 /**
  * Confirms that the player has chosen the default "fight" action and begins the
  * next round of combat.
  */
 void confirm_fight(void) {
+  uint8_t monster_idx = battle_cursor - BATTLE_CURSOR_MONSTER_1;
+  MonsterInstance *target = get_monster(monster_idx);
+  set_player_fight(target);
   battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
@@ -659,7 +700,7 @@ void confirm_flee(void) {
  * Moves the cursor to select the previous enemy in the list.
  */
 void select_prev_enemy(void) {
-  switch (battle_monster_layout) {
+  switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
     return;
   case MONSTER_LAYOUT_2:
@@ -682,7 +723,7 @@ void select_prev_enemy(void) {
  * Moves the cursor to select the next enemy in the list.
  */
 void select_next_enemy(void) {
-  switch (battle_monster_layout) {
+  switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
     return;
   case MONSTER_LAYOUT_2:
@@ -828,7 +869,7 @@ void open_battle_menu(BattleMenu m) {
   }
 }
 
-/**
+/*
  * Moves the battle cursor for submenu item selection according to the current
  * number items available.
  */
@@ -894,27 +935,97 @@ inline void update_battle_menu(void) {
   }
 }
 
-void print_turn_order(void) {
-  char msg[40];
-  sprintf(msg, "%d\x3E%d\x3E%d\x3E%d\x3E%d",
-          battle_turn_order[0],
-          battle_turn_order[1],
-          battle_turn_order[2],
-          battle_turn_order[3],
-          battle_turn_order[4]);
-  battle_text.print(msg);
+//------------------------------------------------------------------------------
+// TODO Organize animation code elsewhere
+//------------------------------------------------------------------------------
+
+typedef enum AnimationState {
+  ANIMATION_PREAMBLE,
+  ANIMATION_EFFECT,
+  ANIMATION_RESULT,
+  ANIMATION_COMPLETE,
+} AnimationState;
+
+#define ANIMATION_HP_DELTA_FACTOR 4
+
+AnimationState animation_state = ANIMATION_PREAMBLE;
+Timer effect_delay_timer;
+
+inline uint8_t tween_hp(uint16_t hp, uint16_t target) {
+  uint16_t delta;
+  if (hp < target) {
+    delta = (target - hp) >> ANIMATION_HP_DELTA_FACTOR;
+    if (delta == 0)
+      delta = 1;
+    hp += delta;
+    if (hp > target)
+      hp = target;
+  } else if (hp > target) {
+    delta = (hp - target) >> ANIMATION_HP_DELTA_FACTOR;
+    if (delta == 0)
+      delta = 1;
+    hp -= delta;
+    if (hp < target)
+      hp = target;
+  }
+  return hp;
 }
 
+inline bool animate_monster_hp_bars(void) {
+  bool updated = false;
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+    if (!monster->active || monster->hp == monster->target_hp)
+      continue;
+    updated = true;
+    monster->hp = tween_hp(monster->hp, monster->target_hp);
+    draw_hp_bar(pos, monster->hp, monster->max_hp);
+  }
+  return updated;
+}
 
-void update_battle(void) {
+void animate_action_result(void) {
+  switch (animation_state) {
+  case ANIMATION_PREAMBLE:
+    if (battle_text.state == BATTLE_TEXT_DONE) {
+      init_timer(effect_delay_timer, 30);
+      animation_state = ANIMATION_EFFECT;
+    }
+    break;
+  case ANIMATION_EFFECT:
+    if (update_timer(effect_delay_timer)) {
+      battle_text.print(battle_post_message);
+      animation_state = ANIMATION_RESULT;
+    }
+    break;
+  case ANIMATION_RESULT:
+    // Animate monster HP bars
+    bool graphics_updated = animate_monster_hp_bars();
+
+    // Done when the battle text is finished an no more updates are performed.
+    if (!graphics_updated && battle_text.state == BATTLE_TEXT_DONE) {
+      animation_state = ANIMATION_COMPLETE;
+    }
+    break;
+  }
+}
+
+void update_battle(void) NONBANKED {
+  if (battle_state == BATTLE_INACTIVE)
+    return;
+
+  // Update animation timers, etc.
   if (update_timer(status_effect_timer)) {
     status_effect_frame ^= 1;
     reset_timer(status_effect_timer);
   }
-  redraw_player_status_effects();
-  redraw_monster_status_effects();
 
+  // Update the battle text
   battle_text.update();
+
+  // TODO should this just always happen every frame?
+  // redraw_player_status_effects();
+  // redraw_monster_status_effects();
 
   switch (battle_state) {
   case BATTLE_STATE_MENU:
@@ -922,15 +1033,63 @@ void update_battle(void) {
     break;
   case BATTLE_ROLL_INITIATIVE:
     roll_initiative();
-    print_turn_order();
-    battle_state = BATTLE_BEGIN_TURN;
+    hide_cursor_sprites();
+    battle_text.clear();
+    show_battle_text();
+    battle_state = BATTLE_NEXT_TURN;
     break;
-  case BATTLE_BEGIN_TURN:
+  case BATTLE_NEXT_TURN:
+    next_turn();
+    if (encounter.round_complete) {
+      battle_state = BATTLE_END_ROUND;
+    } else {
+      check_status_effects();
+      battle_state = BATTLE_UPDATE_STATUS_EFFECTS;
+    }
+    break;
+  case BATTLE_UPDATE_STATUS_EFFECTS:
+    // TODO Handle this when implementing status effects
+    battle_state =BATTLE_TAKE_ACTION;
+    break;
+  case BATTLE_TAKE_ACTION:
+    take_action();
+    battle_text.print(battle_pre_message);
+    animation_state = ANIMATION_PREAMBLE;
+    battle_state = BATTLE_ANIMATE;
+    break;
+  case BATTLE_ANIMATE:
+    animate_action_result();
+    if (animation_state == ANIMATION_COMPLETE) {
+      battle_state = BATTLE_NEXT_TURN;
+    }
+    break;
+  case BATTLE_PLAYER_FLED:
+    // Flee success message / animation
+    // Re
+    break;
+  case BATTLE_PLAYER_DIED:
+    // Transition to the game over screen.
+    break;
+  case BATTLE_END_ROUND:
+    // TODO Determine if the player can take actions
     battle_state = BATTLE_STATE_MENU;
+    battle_menu = BATTLE_MENU_MAIN;
+    hide_battle_text();
+    move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+    break;
+  case BATTLE_SUCCESS:
+    // Calculate and display rewards
+    break;
+  case BATTLE_LEVEL_UP:
+    // Handle level up messages and logic.
+    break;
+  case BATTLE_COMPLETE:
+    // Fade out and return to the world map.
+    battle_state = BATTLE_INACTIVE;
     break;
   }
 }
 
-void draw_battle(void) {
+void draw_battle(void) NONBANKED {
   move_bkg(0, 0);
 }

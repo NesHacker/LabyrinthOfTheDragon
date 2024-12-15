@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "monster.h"
 #include "stats.h"
 #include "tables.h"
 
@@ -137,8 +138,9 @@ typedef struct Summon {
   void (*activate)(void);
   /**
    * Base attack method to be executed when selected during battle.
+   * @param target The monster instance the attack is targeting.
    */
-  void (*base_attack)(void);
+  void (*base_attack)(MonsterInstance *target);
   /**
    * Pointer to a linked list of abilities for the summon. For the most part
    * this list is static but is initialized once a player's class has been
@@ -178,21 +180,21 @@ typedef struct Player {
   /**
    * Current HP (health points).
    */
-  uint8_t hp;
+  uint16_t hp;
   /**
    * Maximum HP (health points).
    */
-  uint8_t max_hp;
+  uint16_t max_hp;
   /**
    * Current SP (skill points) for martial classes and MP (magic points) for
    * magic classes.
    */
-  uint8_t sp;
+  uint16_t sp;
   /**
    * Maximum SP (skill points) for martial classes and MP (magic points) for
    * magic classes.
    */
-  uint8_t max_sp;
+  uint16_t max_sp;
   /**
    * Base attack score.
    */
@@ -246,6 +248,11 @@ extern Player player;
 
 // TODO Temporary, remove when adding save system, etc.
 void init_player(void);
+
+/**
+ * Resets the players current stats back to their base values.
+ */
+void reset_player_stats(void);
 
 /**
  * Wilbur the Kobold. Defines all properties and methods for the

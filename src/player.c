@@ -2,8 +2,10 @@
 #include <gb/cgb.h>
 #include <rand.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "battle.h"
+#include "encounter.h"
 #include "player.h"
 #include "monster.h"
 #include "tables.h"
@@ -31,6 +33,47 @@ void init_player(void) {
   player.default_summon = &summon_kobold;
 }
 
+void reset_player_stats(void) {
+  player.atk = player.atk_base;
+  player.def = player.def_base;
+  player.matk = player.matk_base;
+  player.mdef = player.mdef_base;
+}
+
+/**
+ * Applies damage to a monster taking vulnerabilities, immunites, and
+ * resistances into account.
+ * @param monster The monster to damage.
+ * @param base_damage Base damage for the damage roll.
+ * @param type The damage type.
+ */
+void damage_monster(
+  MonsterInstance *monster,
+  uint16_t base_damage,
+  DamageType type
+) {
+  if (monster->aspect_immune & type) {
+    sprintf(battle_post_message, str_battle_player_hit_immune);
+    return;
+  }
+
+  uint8_t roll = d16();
+  uint16_t damage = calc_damage(roll, base_damage);
+  monster->target_hp = monster->hp < damage ? 0 : monster->hp - damage;
+  bool critical = roll >= 12;
+
+  if (critical) {
+    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
+  } else  if (monster->aspect_resist & type) {
+    damage >>= 1;
+    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
+  } else if (monster->aspect_vuln & type) {
+    damage <<= 1;
+  } else {
+    sprintf(battle_post_message, str_battle_player_hit, damage);
+  }
+}
+
 //------------------------------------------------------------------------------
 // Summon 1 - Wilbur the Kobold
 //------------------------------------------------------------------------------
@@ -53,11 +96,27 @@ void kobold_activate(void) {
   }
 }
 
+
 /**
  * Base attack ability execution function for the kobold.
- * @see `Summon.base_attack`
+ * @param target Monster instance target for the attack.
  */
-void kobold_base_attack(void) {
+void kobold_base_attack(MonsterInstance *target) {
+  const char *msg = is_magic_class() ?
+    str_battle_kobold_base_magic_attack :
+    str_battle_kobold_base_attack;
+  sprintf(battle_pre_message, msg);
+
+  const uint8_t atk = is_magic_class() ? player.matk : player.atk;
+  if (!roll_attack(atk, target->def)) {
+    sprintf(battle_post_message, str_battle_player_miss);
+    return;
+  }
+
+  const uint8_t def = is_magic_class() ? target->mdef : target->def;
+  const uint8_t level = level_offset(player.level, -2);
+  const uint16_t base_dmg = get_player_damage(level, B_TIER);
+  damage_monster(target, base_dmg, DAMAGE_PHYSICAL);
 }
 
 Summon summon_kobold = {

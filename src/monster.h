@@ -28,24 +28,16 @@ typedef struct Monster {
    * Pointer to the tile data for the monster.
    */
   uint8_t *tile_data;
-  /**
-   * Generates a new instance of the monster.
-   * @param m Instance to initialize.
-   * @param level Level for the instance.
-   * @param tier Power tier for the instance.
-   */
-  void (*new_instance)(uint8_t pos, uint8_t level, PowerTier tier);
-  /**
-   * Takes a turn for the given monster instance.
-   * @param m Monster instance for which to take a turn.
-   */
-  void (*take_turn)(uint8_t pos);
 } Monster;
 
 /**
  * An instance of a monster that is used for battle.
  */
 typedef struct MonsterInstance {
+  /**
+   * Whether or not the monster is active in combat and can take a turn.
+   */
+  bool active;
   /**
    * Monster definition that generated this instance.
    */
@@ -70,11 +62,15 @@ typedef struct MonsterInstance {
   /**
    * Current HP (health points).
    */
-  uint8_t hp;
+  uint16_t hp;
   /**
    * Maximum HP (health points).
    */
-  uint8_t max_hp;
+  uint16_t max_hp;
+  /**
+   * Target HP after taking damage (used for animations).
+   */
+  uint16_t target_hp;
   /**
    * Base physical attack score.
    */
@@ -135,6 +131,16 @@ typedef struct MonsterInstance {
    * @see `StatusEffectImmunity`
    */
   uint8_t debuff_immune;
+  /**
+   * Parameter used when generating this monster instance. Can be used to alter
+   * behaviors in the `take_turn` handler.
+   */
+  uint8_t parameter;
+  /**
+   * Takes a turn for the given monster instance.
+   * @param m Monster instance for which to take a turn.
+   */
+  void (*take_turn)(struct MonsterInstance *m);
 } MonsterInstance;
 
 /**
@@ -143,14 +149,34 @@ typedef struct MonsterInstance {
 extern const Monster MONSTER_KOBOLD;
 
 /**
+ * Basic kobold generator.
+ * @param level Level for the kobold to generate.
+ */
+void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier);
+
+/**
  * Monster 2 - The Beholder.
  */
 extern const Monster MONSTER_BEHOLDER;
 
 /**
- * Fully resets / clears the fields of the given monster instance.
+ * Initializes a monster instance for a monster generator.
+ * @param i Monster instance to reset.
+ * @param m Base monster for the instance.
+ */
+void monster_init_instance(MonsterInstance *i, Monster *m);
+
+/**
+ * Resets base stats at the start of each round of combat.
  * @param m Monster instance to reset.
  */
-void reset_monster_instance(MonsterInstance *m);
+void monster_reset_stats(MonsterInstance *m);
+
+/**
+ * Deactivates a monster instance and removes it from combat.
+ */
+inline void monster_deactivate(MonsterInstance *m) {
+  m->active = false;
+}
 
 #endif

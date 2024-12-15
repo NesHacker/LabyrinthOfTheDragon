@@ -1,36 +1,57 @@
 #pragma bank 3
 
+#include <stdio.h>
+
 #include "battle.h"
 #include "data.h"
 #include "monster.h"
 #include "stats.h"
 
-void reset_monster_instance(MonsterInstance *m) {
-  m->monster = NULL;
-  m->palette = NULL;
-  m->id = '\0';
-  m->exp_tier = C_TIER;
-  m->hp = 0;
-  m->max_hp = 0;
-  m->atk_base = 0;
-  m->atk = 0;
-  m->def_base = 0;
-  m->def = 0;
-  m->matk_base = 0;
-  m->matk = 0;
-  m->mdef_base = 0;
-  m->mdef = 0;
-  m->agl_base = 0;
-  m->agl = 0;
-  m->aspect_immune = 0;
-  m->aspect_resist = 0;
-  m->aspect_vuln = 0;
-  m->debuff_immune = 0;
+void monster_init_instance(MonsterInstance *i, Monster *m) {
+  i->active = true;
+  i->monster = m;
+  i->palette = NULL;
+  i->id = '\0';
+  i->exp_tier = C_TIER;
+  i->hp = 0;
+  i->max_hp = 0;
+  i->target_hp = 0;
+  i->atk_base = 0;
+  i->atk = 0;
+  i->def_base = 0;
+  i->def = 0;
+  i->matk_base = 0;
+  i->matk = 0;
+  i->mdef_base = 0;
+  i->mdef = 0;
+  i->agl_base = 0;
+  i->agl = 0;
+  i->aspect_immune = 0;
+  i->aspect_resist = 0;
+  i->aspect_vuln = 0;
+  i->debuff_immune = 0;
+  i->parameter = 0;
+}
+
+void monster_reset_stats(MonsterInstance *m) {
+  m->agl = m->agl_base;
+  m->atk = m->atk_base;
+  m->def = m->def_base;
+  m->matk = m->matk_base;
+  m->mdef = m->mdef_base;
+  m->target_hp = m->hp;
 }
 
 // -----------------------------------------------------------------------------
 // Monster 1 - Kobold
 // -----------------------------------------------------------------------------
+const Monster MONSTER_KOBOLD = {
+  // id, name
+  1, "KOBOLD",
+  // tile_bank, tile_data, palette
+  4, tile_kobold,
+};
+
 const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   // C-Tier
   RGB_WHITE,
@@ -39,55 +60,49 @@ const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   RGB8(37, 3, 40),
   // B-Tier
   RGB_WHITE,
-  RGB8(177, 113, 51),
+  RGB8(113, 51, 177),
   RGB8(77, 22, 11),
   RGB8(37, 3, 40),
   // A-Tier
   RGB_WHITE,
-  RGB8(177, 113, 51),
-  RGB8(77, 22, 11),
-  RGB8(37, 3, 40),
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
   // S-Tier
   RGB_WHITE,
-  RGB8(177, 113, 51),
-  RGB8(77, 22, 11),
-  RGB8(37, 3, 40),
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
 };
 
-void kobold_new_instance(uint8_t pos, uint8_t level, PowerTier tier) {
-  MonsterInstance *m = get_monster_at(pos);
-  reset_monster_instance(m);
-  m->monster = &MONSTER_KOBOLD;
-  m->palette = MONSTER_KOBOLD_PALETTES;
-  m->level = level;
+void kobold_take_turn(MonsterInstance *m) {
+  // TODO make em' damage some shit!
+  sprintf(battle_pre_message, "Kobold %c looks\ndazed.", m->id);
+  sprintf(battle_post_message, "And does\nnothing...");
+}
+
+void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier) {
+  monster_init_instance(m, &MONSTER_KOBOLD);
+
+  m->palette = MONSTER_KOBOLD_PALETTES + tier * 4;
   m->exp_tier = tier;
+  m->level = level;
 
-  // TODO Implement me
-  // switch (tier) {
-  // case C_TIER:
-  //   break;
-  // case B_TIER:
-  //   break;
-  // case A_TIER:
-  //   break;
-  // case S_TIER:
-  //   break;
-  // }
+  m->max_hp = get_monster_hp(level_offset(level, 2), tier);
+  m->hp = m->max_hp;
+
+  m->atk_base = get_monster_atk(level_offset(level, 3), tier);
+  m->def_base = get_monster_def(level_offset(level, -1), tier);
+  m->matk_base = get_monster_atk(level_offset(level, -1), tier);
+  m->mdef_base = get_monster_def(level_offset(level, -2), tier);
+  m->agl_base = get_agl(level_offset(level, 2), tier == C_TIER ? B_TIER : tier);
+
+  m->aspect_resist = DAMAGE_EARTH;
+  m->aspect_vuln = DAMAGE_FIRE;
+  m->take_turn = kobold_take_turn;
+
+  monster_reset_stats(m);
 }
-
-void kobold_take_turn(uint8_t pos) {
-  // TODO Implement me
-}
-
-const Monster MONSTER_KOBOLD = {
-  // id, name
-  1, "KOBOLD",
-  // tile_bank, tile_data, palette
-  4, tile_kobold,
-  // Callbacks
-  kobold_new_instance,
-  kobold_take_turn,
-};
 
 // -----------------------------------------------------------------------------
 // Monster 2 - Beholder
@@ -100,37 +115,9 @@ const palette_color_t MONSTER_BEHOLDER_PALETTES[4] = {
   RGB8(0, 40, 51),
 };
 
-void beholder_new_instance(uint8_t pos, uint8_t level, PowerTier tier) {
-  MonsterInstance *m = get_monster_at(pos);
-  reset_monster_instance(m);
-  m->monster = &MONSTER_BEHOLDER;
-  m->palette = MONSTER_BEHOLDER_PALETTES;
-  m->level = level;
-  m->exp_tier = tier;
-
-  // TODO Implement me
-  // switch (tier) {
-  // case C_TIER:
-  //   break;
-  // case B_TIER:
-  //   break;
-  // case A_TIER:
-  //   break;
-  // case S_TIER:
-  //   break;
-  // }
-}
-
-void beholder_take_turn(uint8_t pos) {
-  // TODO Implement me
-}
-
 const Monster MONSTER_BEHOLDER = {
   // id, name
   2, "BEHOLDER",
   // tile_bank, tile_data, palette
   4, tile_beholder,
-  // Callbacks
-  beholder_new_instance,
-  beholder_take_turn,
 };

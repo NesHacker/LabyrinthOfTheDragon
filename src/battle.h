@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "data.h"
+#include "encounter.h"
 #include "flags.h"
 #include "monster.h"
 #include "player.h"
@@ -128,6 +129,27 @@
 #define SUBMENU_TEXT_X 2
 
 /**
+ * Tile for the HP bar graphics's left cap.
+ */
+#define HP_BAR_LEFT_CAP 0x50
+
+/**
+ * Tile with full pips for the HP bar.
+ */
+#define HP_BAR_FULL_PIPS 0x51
+
+/**
+ * Tile with empty pips for the HP bar.
+ */
+#define HP_BAR_EMPTY_PIPS 0x52
+
+/**
+ * Tile for the HP bar graphics's right cap.
+ */
+#define HP_BAR_RIGHT_CAP 0x5A
+
+
+/**
  * VRAM address for the main menu summon text in the background.
  */
 #define VRAM_SUMMON_NAME VRAM_BACKGROUND_XY(10, MENU_Y + 1)
@@ -157,7 +179,7 @@ typedef enum BattleState {
    * Battle state is reset and the turn begins for the next entity in initiative
    * order.
    */
-  BATTLE_BEGIN_TURN,
+  BATTLE_NEXT_TURN,
   /**
    * Enitity status effects are updated, effects applied, and messages provided
    * for specific actions (e.g. effect falls off, regen health, etc.)
@@ -176,23 +198,11 @@ typedef enum BattleState {
    * text, anticipation pause, effect result text, effect animation, and final
    * message speed pause.
    */
-  BATTLE_ANIMATE_ACTION,
-  /**
-   * UI Gauges and Numbers are being updated.
-   */
-  BATTLE_UPDATE_UI,
-  /**
-   * The "monster flee" animation and message is being displayed.
-   */
-  BATTLE_MONSTER_FLED,
+  BATTLE_ANIMATE,
   /**
    * The "player flee" animation and message is being displayed.
    */
   BATTLE_PLAYER_FLED,
-  /**
-   * The monster death animation is being displayed.
-   */
-  BATTLE_MONSTER_DIED,
   /**
    * The player death animation is being displayed.
    */
@@ -202,10 +212,17 @@ typedef enum BattleState {
    */
   BATTLE_END_ROUND,
   /**
-   * The battle has successfully concluded and xp awards, level ups, etc. are
-   * being communicated and animated.
+   * Battle is over and successful, calulates & displays rewards, etc.
    */
   BATTLE_SUCCESS,
+  /**
+   * Handles any level up messages or effects when the player levels up.
+   */
+  BATTLE_LEVEL_UP,
+  /**
+   * Exits battle mode and send the player back to the world map.
+   */
+  BATTLE_COMPLETE,
   /**
    * Battle is over/inactive and the update routine should do nothing if called.
    */
@@ -244,28 +261,6 @@ typedef enum BattleCursor {
 } BattleCursor;
 
 /**
- * Enumerates the four possible monster layouts for a battle.
- */
-typedef enum MonsterLayout {
-  /**
-   * One monster of any type (Sm, Md, Lg).
-   */
-  MONSTER_LAYOUT_1,
-  /**
-   * Two monsters of any type (Sm, Md, Lg).
-   */
-  MONSTER_LAYOUT_2,
-  /**
-   * Three small monsters.
-   */
-  MONSTER_LAYOUT_3S,
-  /**
-   * One medium and two small monsters.
-   */
-  MONSTER_LAYOUT_1M_2S,
-} MonsterLayout;
-
-/**
  * Enumeration of the three major layouts for the battle menu at the bottom of
  * the screen.
  */
@@ -294,15 +289,11 @@ typedef enum MonsterPosition {
 } MonsterPosition;
 
 /**
- * Used to indicate whos turn it is in the initiative order.
+ * List of all battle animations that can be set as a result of actions.
  */
-typedef enum Turn {
-  TURN_END,
-  TURN_PLAYER,
-  TURN_MONSTER1,
-  TURN_MONSTER2,
-  TURN_MONSTER3,
-} Turn;
+typedef enum BattleAnimation {
+  BATTLE_ANIMATION_PAUSE,
+} BattleAnimation;
 
 // -----------------------------------------------------------------------------
 // Externs & Prototypes
@@ -335,30 +326,27 @@ extern BattleMenu battle_menu;
 extern BattleCursor battle_cursor;
 
 /**
- * The monster layout for the current battle.
- */
-extern MonsterLayout battle_monster_layout;
-
-/**
- * The instanced monsters for the current battle.
- */
-extern MonsterInstance battle_monsters[];
-
-/**
  * Number of selectable submenu items. General limit value for the abilities,
  * items, and summons submenus.
  */
 extern uint8_t battle_num_submenu_items;
 
 /**
- * Holds the turn order for the current round of combat.
+ * Message to show prior to an action animation.
+ * Ex: The kobold attacks with a stone axe...
  */
-extern Turn battle_turn_order[5];
+extern char battle_pre_message[64];
 
 /**
- * The current turn order index (who's turn it currently is).
+ * Message to show after the action animation.
+ * Ex: But they miss!
  */
-extern uint8_t turn_idx;
+extern char battle_post_message[64];
+
+/**
+ * Animation to play prior to the results of a player or monster action.
+ */
+extern BattleAnimation battle_animation;
 
 /**
  * Initializes the battle system.
@@ -379,97 +367,5 @@ void update_battle(void);
  * VBLANK draw updates for the battle system.
  */
 void draw_battle(void);
-
-// -----------------------------------------------------------------------------
-// Inline functions
-// -----------------------------------------------------------------------------
-
-/**
- * Determines the x position for the HP bar based on the given monster position
- * and the current monster layout.
- * @param pos Position of the monster on the screen.
- * @return The x position for the HP bar.
- */
-inline uint8_t get_hp_bar_x(MonsterPosition pos) {
-  switch (battle_monster_layout) {
-  case MONSTER_LAYOUT_1:
-    // 1 Monster  - (6, 9)
-    return 6;
-  case MONSTER_LAYOUT_2:
-    // 2 Monsters - (2, 9), (11, 9)
-    return (pos == MONSTER_POSITION1) ? 2 : 11;
-  case MONSTER_LAYOUT_3S:
-    // 3 Monsters - (0, 9), (6, 9), (12, 9)
-    switch (pos) {
-    case MONSTER_POSITION1: return 0;
-    case MONSTER_POSITION2: return 6;
-    case MONSTER_POSITION3: return 12;
-    }
-  case MONSTER_LAYOUT_1M_2S:
-    // 1 md + 2 sm - (0) (7) (13)
-    switch (pos) {
-    case MONSTER_POSITION1: return 0;
-    case MONSTER_POSITION2: return 7;
-    case MONSTER_POSITION3: return 13;
-    }
-  }
-  return 6;
-}
-
-/**
- * Determines the starting x position for a monster's status effect tiles.
- * @param pos Monster position.
- * @return The starting x position for the status effects.
- */
-inline uint8_t get_status_effect_x(MonsterPosition pos) {
-  switch (battle_monster_layout) {
-  case MONSTER_LAYOUT_1: return 7;
-  case MONSTER_LAYOUT_2: return (pos == MONSTER_POSITION1) ? 3 : 12;
-  case MONSTER_LAYOUT_3S:
-    switch (pos) {
-    case MONSTER_POSITION1: return 1;
-    case MONSTER_POSITION2: return 7;
-    case MONSTER_POSITION3: return 13;
-    }
-  case MONSTER_LAYOUT_1M_2S:
-    switch (pos) {
-    case MONSTER_POSITION1: return 1;
-    case MONSTER_POSITION2: return 8;
-    case MONSTER_POSITION3: return 14;
-    }
-  }
-  return 7;
-}
-
-/**
- * @return A pointer to monster instance at the given monster position in the
- *   current battle.
- * @param pos Position for the monster.
- */
-inline MonsterInstance *get_monster_at(MonsterPosition pos) {
-  return battle_monsters + sizeof(MonsterInstance) * pos;
-}
-
-/**
- * @return `true` If the submenu contains a number of selectable items.
- */
-inline bool has_submenu_items(void) {
-  return battle_num_submenu_items > 0;
-}
-
-/**
- * Shows the battle text box.
- */
-inline void show_battle_text(void) {
-  move_win(7, 88);
-}
-
-/**
- * Hides the battle textbox.
- */
-inline void hide_battle_text(void) {
-  move_win(0, 144);
-}
-
 
 #endif
