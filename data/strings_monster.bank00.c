@@ -1,0 +1,12 @@
+/*
+ * strings_monster.bank00.c
+ * Encoded string values for the "monster" namespace.
+ */
+
+#pragma bank 0
+
+const char str_monster_kobold_axe[] = "Kobold %c raises a \ntiny axe\x60";
+const char str_monster_kobold_fire[] = "Kobold %c spits a \nglob of fire\x60";
+const char str_monster_kobold_dazed[] = "Kobold %c looks \ndazed\x60";
+const char str_monster_kobold_does_nothing[] = "And does nothing!";
+const char str_monster_kobold_miss[] = "But instead it \nfalls back and \nhiccups!";

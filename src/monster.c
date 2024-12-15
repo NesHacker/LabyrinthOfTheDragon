@@ -6,6 +6,7 @@
 #include "data.h"
 #include "monster.h"
 #include "stats.h"
+#include "strings.h"
 
 void monster_init_instance(MonsterInstance *i, Monster *m) {
   i->active = true;
@@ -42,6 +43,44 @@ void monster_reset_stats(MonsterInstance *m) {
   m->target_hp = m->hp;
 }
 
+/**
+ * Applies damage to the player.
+ * @param base_damage Base damage for the attck.
+ * @param type Type of damage dealt.
+ */
+void damage_player(uint16_t base_damage, DamageAspect type) {
+  Summon *summon = player.summon;
+
+  if (summon->aspect_immune & type) {
+    sprintf(battle_post_message, str_battle_monster_hit_immune);
+    return;
+  }
+
+  uint8_t roll = d16();
+  uint16_t damage = calc_damage(roll, base_damage);
+  bool critical = roll >= 12;
+
+  if (critical) {
+    sprintf(battle_post_message, str_battle_monster_hit_crit, damage);
+  } else  if (summon->aspect_resist & type) {
+    damage >>= 1;
+    sprintf(battle_post_message, str_battle_monster_hit_resist, damage);
+  } else if (summon->aspect_vuln & type) {
+    damage <<= 1;
+  } else if (type == DAMAGE_PHYSICAL) {
+    sprintf(battle_post_message, str_battle_monster_hit, damage);
+  } else {
+    const char *aspect = damage_aspect_name(type);
+    sprintf(battle_post_message, str_battle_monster_hit_aspect, damage, aspect);
+  }
+
+  if (player.target_hp < damage)
+    player.target_hp = 0;
+  else
+    player.target_hp -= damage;
+}
+
+
 // -----------------------------------------------------------------------------
 // Monster 1 - Kobold
 // -----------------------------------------------------------------------------
@@ -75,10 +114,42 @@ const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   RGB_BLACK,
 };
 
+
 void kobold_take_turn(MonsterInstance *m) {
-  // TODO make em' damage some shit!
-  sprintf(battle_pre_message, "Kobold %c looks\ndazed.", m->id);
-  sprintf(battle_post_message, "And does\nnothing...");
+  const uint8_t move_roll = d16();
+
+  // Dazed (silly kobolds being dazed 6.25% of the time)
+  if (move_roll == 15) {
+    sprintf(battle_pre_message, str_monster_kobold_dazed, m->id);
+    sprintf(battle_post_message, str_monster_kobold_does_nothing);
+    return;
+  }
+
+  uint8_t atk, def;
+  DamageAspect type;
+
+  if (move_roll < 4) {
+    // Fire loogie
+    atk = m->matk;
+    def = player.mdef;
+    type = DAMAGE_FIRE;
+    sprintf(battle_pre_message, str_monster_kobold_fire, m->id);
+  } else {
+    // Axe attack
+    atk = m->atk;
+    def = player.def;
+    type = DAMAGE_PHYSICAL;
+    sprintf(battle_pre_message, str_monster_kobold_axe, m->id);
+  }
+
+  if (roll_attack(atk, def)) {
+    damage_player(get_monster_dmg(m->level, m->exp_tier), type);
+  } else if (!d16()) {
+    // Silly kobolds falling over on their ass 6.25% of the time
+    sprintf(battle_post_message, str_monster_kobold_miss);
+  } else {
+    sprintf(battle_post_message, str_battle_monster_miss);
+  }
 }
 
 void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier) {

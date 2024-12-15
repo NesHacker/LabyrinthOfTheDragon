@@ -23,7 +23,7 @@ void init_player(void) {
   player.exp = get_exp(10) + 23;
   player.next_level_exp = get_exp(11);
 
-  player.hp = player.max_hp = get_player_hp(10, B_TIER);
+  player.hp = player.target_hp = player.max_hp = get_player_hp(10, B_TIER);
   player.sp = player.max_sp = get_player_sp(10, A_TIER);
   player.atk = player.atk_base = get_player_atk(10, C_TIER);
   player.def = player.def_base = get_player_def(10, B_TIER);
@@ -38,6 +38,7 @@ void reset_player_stats(void) {
   player.def = player.def_base;
   player.matk = player.matk_base;
   player.mdef = player.mdef_base;
+  player.target_hp = player.hp;
 }
 
 /**
@@ -50,7 +51,7 @@ void reset_player_stats(void) {
 void damage_monster(
   MonsterInstance *monster,
   uint16_t base_damage,
-  DamageType type
+  DamageAspect type
 ) {
   if (monster->aspect_immune & type) {
     sprintf(battle_post_message, str_battle_player_hit_immune);
@@ -59,7 +60,6 @@ void damage_monster(
 
   uint8_t roll = d16();
   uint16_t damage = calc_damage(roll, base_damage);
-  monster->target_hp = monster->hp < damage ? 0 : monster->hp - damage;
   bool critical = roll >= 12;
 
   if (critical) {
@@ -72,6 +72,11 @@ void damage_monster(
   } else {
     sprintf(battle_post_message, str_battle_player_hit, damage);
   }
+
+  if (monster->hp < damage)
+    monster->target_hp = 0;
+  else
+    monster->target_hp -= damage;
 }
 
 //------------------------------------------------------------------------------
@@ -102,8 +107,8 @@ void kobold_activate(void) {
  */
 void kobold_base_attack(MonsterInstance *target) {
   const char *msg = is_magic_class() ?
-    str_battle_kobold_base_magic_attack :
-    str_battle_kobold_base_attack;
+    str_summon_kobold_magic_attack :
+    str_summon_kobold_attack;
   sprintf(battle_pre_message, msg);
 
   const uint8_t atk = is_magic_class() ? player.matk : player.atk;
@@ -120,8 +125,8 @@ void kobold_base_attack(MonsterInstance *target) {
 
 Summon summon_kobold = {
   1,
-  str_summon_name_kobold,
-  str_summon_name_wilbur,
+  str_summon_kobold,
+  str_summon_wilbur,
   B_TIER,
   EMPTY_BITFIELD,
   DAMAGE_EARTH,
@@ -135,7 +140,7 @@ void execute_kobold_vine_whip(void) {
 }
 
 Ability kobold_vine_whip = {
-  str_ability_vine_whip,
+  str_summon_vine_whip,
   CLASS_DRUID,
   C_TIER,
   3,
@@ -150,7 +155,7 @@ void execute_kobold_mend(void) {
 }
 
 Ability kobold_mend = {
-  str_ability_mend,
+  str_summon_mend,
   CLASS_DRUID,
   C_TIER,
   5,
@@ -165,7 +170,7 @@ void execute_kobold_summon_ants(void) {
 }
 
 Ability kobold_summon_ants = {
-  str_ability_summon_ants,
+  str_summon_summon_ants,
   CLASS_DRUID,
   B_TIER,
   9,
@@ -180,7 +185,7 @@ void execute_kobold_dirty_fang(void) {
 }
 
 Ability kobold_dirty_fang = {
-  str_ability_dirty_fang,
+  str_summon_dirty_fang,
   CLASS_DRUID,
   B_TIER,
   14,

@@ -36,7 +36,7 @@ char battle_post_message[64];
  * @param pos Position of the monster on the screen.
  * @return The x position for the HP bar.
  */
-inline uint8_t get_hp_bar_x(MonsterPosition pos) {
+uint8_t get_hp_bar_x(MonsterPosition pos) {
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
     // 1 Monster  - (6, 9)
@@ -67,7 +67,7 @@ inline uint8_t get_hp_bar_x(MonsterPosition pos) {
  * @param pos Monster position.
  * @return The starting x position for the status effects.
  */
-inline uint8_t get_status_effect_x(MonsterPosition pos) {
+uint8_t get_status_effect_x(MonsterPosition pos) {
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1: return 7;
   case MONSTER_LAYOUT_2: return (pos == MONSTER_POSITION1) ? 3 : 12;
@@ -601,19 +601,41 @@ void battle_init_encounter(void) {
 }
 
 /**
+ * Updates the player's HP fraction.
+ */
+inline void update_player_hp(void) {
+  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
+}
+
+/**
+ * Updates the player's SP fraction on the main menu.
+ */
+inline void update_player_sp(void) {
+  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
+}
+
+/**
+ * Updates the player's summon name and swaps the tech/magic menu.
+ */
+inline void update_player_summon(void) {
+  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  set_magic_or_tech_menu();
+}
+
+/**
  * Initializes graphics and state for the player.
  */
 void battle_init_player(void) {
-  player.summon->activate();
-  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
-  set_magic_or_tech_menu();
-
   // TODO The player should already be initialized, remove this after testing
   init_player();
 
-  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
-  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
+  // Update the player UI
+  player.summon->activate();
+  update_player_summon();
+  update_player_hp();
+  update_player_sp();
 }
+
 
 void init_battle(void) NONBANKED {
   lcd_off();
@@ -1186,7 +1208,13 @@ void update_battle(void) NONBANKED {
     break;
   case BATTLE_ACTION_CLEANUP:
     cleanup_monsters();
-    battle_state = BATTLE_NEXT_TURN;
+    if (player.target_hp == 0) {
+      battle_state = BATTLE_PLAYER_DIED;
+    } else {
+      player.hp = player.target_hp;
+      update_player_hp();
+      battle_state = BATTLE_NEXT_TURN;
+    }
     break;
   case BATTLE_PLAYER_FLED:
     // Flee success message / animation
@@ -1194,6 +1222,7 @@ void update_battle(void) NONBANKED {
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
+    battle_text.print("GAME OVER");
     break;
   case BATTLE_END_ROUND:
     // TODO Determine if the player can take actions

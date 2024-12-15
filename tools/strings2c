@@ -67,6 +67,12 @@ function encodeString(namespace, key, str, debugOn=false) {
     console.log.apply(console, args);
   }
 
+  if (str.length == 0) {
+    debug('Empty string.')
+    return '';
+  }
+
+
   debug('Parsing:', str);
 
   str = str.replace(/\.\.\./g, ':elipsis:');

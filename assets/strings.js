@@ -26,43 +26,28 @@ function addNamespace(name, bank, strings) {
  */
 addNamespace('misc', 0, {
   'empty': 'EMPTY...',
+  'physical': '',
+  'magical': 'magical',
+  'earth': 'earth',
+  'water': 'water',
+  'air': 'air',
+  'fire': 'fire',
+  'light': 'light',
+  'dark': 'dark',
 })
 
 /**
- * In game summon name strings.
+ * General battle strings
  */
-addNamespace('summon_name', 0, {
-  'beholder': 'Beholder',
-  'kobold': 'Kobold',
-  'wilbur': 'Wilbur',
-})
-
-/**
- * Ability names, attack strings, etc.
- */
-addNamespace('ability', 0, {
-  'vine_whip': 'Vine Whip',
-  'mend': ':regen:Mend',
-  'summon_ants': ':defdown:Summon Ants',
-  'dirty_fang': ':poison:Drity Fang',
-});
-
-/**
- * Battle related strings.
- */
-addNamespace('battle', 3, {
-  'dirty_fang_attack': 'You rush forward, fangs bared!',
-  'dirty_fang_hit_poison': 'Your bite deals %damage damage and poison them!',
-  'dirty_fang_hit_no_poison': 'Your filthy kobold bite deals %damage damage!',
-  'kobold_base_attack': 'You attack with your tiny claws...',
-  'kobold_base_magic_attack': 'You fling a ball of acid...',
-  'kobold_axe': 'Kobold %c attacks with a stone axe...',
-  'monster_attack': ':fight: %monster %c attacks...',
-  'monster_magic_attack': ':magic: %monster %c casts a spell...',
+addNamespace('battle', 0, {
   'monster_miss': 'But they miss!',
-  'monster_miss_magic': 'But the spell goes astray!',
-  'monster_hit': 'They hit for %damage damage!',
-  'monster_hit_aspect': 'They hit for %damage %aspect damage!',
+  'monster_magic_miss': 'But it has no effect!',
+  'monster_hit': 'You take %damage damage!',
+  'monster_hit_aspect': 'You take %damage %aspect damage!',
+  'monster_hit_immune': "But you're completely immune!",
+  'monster_hit_resist': 'You resist, only %damage damage',
+  'monster_hit_vuln': "It's SUPER BAD! %damage damage!",
+  'monster_hit_crit': 'CRITICAL HIT! You take %damage damage!',
   'player_miss': 'But you miss!',
   'player_magic_miss': 'But it has no effect!',
   'player_hit': 'You deal %damage damage!',
@@ -70,6 +55,37 @@ addNamespace('battle', 3, {
   'player_hit_resist': "They resist your attack, only %damage damage...",
   'player_hit_vuln': "It's SUPER EFFECTIVE dealing %damage damage!",
   'player_hit_crit': 'CRITICAL HIT! You deal %damage damage!',
+})
+
+/**
+ * Summon replated strings.
+ */
+addNamespace('summon', 0, {
+  // Summon 1 - Wilbur the Kobold
+  'kobold': 'Kobold',
+  'wilbur': 'Wilbur',
+  'kobold_attack': 'You attack with your tiny claws...',
+  'kobold_magic_attack': 'You fling a ball of acid...',
+  'vine_whip': 'Vine Whip',
+  'mend': ':regen:Mend',
+  'summon_ants': ':defdown:Summon Ants',
+  'dirty_fang': ':poison:Drity Fang',
+  'dirty_fang_attack': 'You rush forward, fangs bared!',
+  'dirty_fang_hit_poison': 'Your bite deals %damage damage and poison them!',
+  'dirty_fang_hit_no_poison': 'Your filthy kobold bite deals %damage damage!',
+  // Summon 2 - Beholder
+  'beholder': 'Beholder',
+});
+
+/**
+ * Monster specific battle strings
+ */
+addNamespace('monster', 0, {
+  'kobold_axe': 'Kobold %c raises a tiny axe...',
+  'kobold_fire': 'Kobold %c spits a glob of fire...',
+  'kobold_dazed': 'Kobold %c looks dazed...',
+  'kobold_does_nothing': 'And does nothing!',
+  'kobold_miss': 'But instead it falls back and hiccups!',
 })
 
 // Export the namespaces

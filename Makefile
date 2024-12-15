@@ -43,6 +43,9 @@ COLORTBL_BIN := $(subst assets/,res/,$(patsubst %.png,%.bin,$(COLORTBL_PNG)))
 
 all: assets $(BINS)
 
+usage:
+	~/gbdk/bin/romusage $(BINS)
+
 assets: tables strings $(TILEBIN) $(COLORTBL_BIN)
 
 tables: assets/tables.csv
@@ -69,3 +72,4 @@ clean:
 	rm -f *.o *.lst *.map *.gb *.ihx *.sym *.cdb *.adb *.asm *.noi *.rst
 	rm -f res/tiles/*.bin res/tiles/manifest.json
 	rm -f res/color_tables/*.bin res/color_tables/manifest.json
+	rm -f data/strings_*bank*.c

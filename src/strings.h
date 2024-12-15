@@ -11,79 +11,44 @@
 extern const char str_misc_empty[];
 
 /**
- * "Beholder"
+ * ""
  */
-extern const char str_summon_name_beholder[];
+extern const char str_misc_physical[];
 
 /**
- * "Kobold"
+ * "magical"
  */
-extern const char str_summon_name_kobold[];
+extern const char str_misc_magical[];
 
 /**
- * "Wilbur"
+ * "earth"
  */
-extern const char str_summon_name_wilbur[];
+extern const char str_misc_earth[];
 
 /**
- * "Vine Whip"
+ * "water"
  */
-extern const char str_ability_vine_whip[];
+extern const char str_misc_water[];
 
 /**
- * ":regen:Mend"
+ * "air"
  */
-extern const char str_ability_mend[];
+extern const char str_misc_air[];
 
 /**
- * ":defdown:Summon Ants"
+ * "fire"
  */
-extern const char str_ability_summon_ants[];
+extern const char str_misc_fire[];
 
 /**
- * ":poison:Drity Fang"
+ * "light"
  */
-extern const char str_ability_dirty_fang[];
+extern const char str_misc_light[];
 
 /**
- * "You rush forward, fangs bared!"
+ * "dark"
  */
-extern const char str_battle_dirty_fang_attack[];
-
-/**
- * "Your bite deals %damage damage and poison them!"
- */
-extern const char str_battle_dirty_fang_hit_poison[];
-
-/**
- * "Your filthy kobold bite deals %damage damage!"
- */
-extern const char str_battle_dirty_fang_hit_no_poison[];
-
-/**
- * "You attack with your tiny claws..."
- */
-extern const char str_battle_kobold_base_attack[];
-
-/**
- * "You fling a ball of acid..."
- */
-extern const char str_battle_kobold_base_magic_attack[];
-
-/**
- * "Kobold %c attacks with a stone axe..."
- */
-extern const char str_battle_kobold_axe[];
-
-/**
- * ":fight: %monster %c attacks..."
- */
-extern const char str_battle_monster_attack[];
-
-/**
- * ":magic: %monster %c casts a spell..."
- */
-extern const char str_battle_monster_magic_attack[];
+extern const char str_misc_dark[];
 
 /**
  * "But they miss!"
@@ -91,19 +56,39 @@ extern const char str_battle_monster_magic_attack[];
 extern const char str_battle_monster_miss[];
 
 /**
- * "But the spell goes astray!"
+ * "But it has no effect!"
  */
-extern const char str_battle_monster_miss_magic[];
+extern const char str_battle_monster_magic_miss[];
 
 /**
- * "They hit for %damage damage!"
+ * "You take %damage damage!"
  */
 extern const char str_battle_monster_hit[];
 
 /**
- * "They hit for %damage %aspect damage!"
+ * "You take %damage %aspect damage!"
  */
 extern const char str_battle_monster_hit_aspect[];
+
+/**
+ * "But you're completely immune!"
+ */
+extern const char str_battle_monster_hit_immune[];
+
+/**
+ * "You resist, only %damage damage"
+ */
+extern const char str_battle_monster_hit_resist[];
+
+/**
+ * "It's SUPER BAD! %damage damage!"
+ */
+extern const char str_battle_monster_hit_vuln[];
+
+/**
+ * "CRITICAL HIT! You take %damage damage!"
+ */
+extern const char str_battle_monster_hit_crit[];
 
 /**
  * "But you miss!"
@@ -139,5 +124,90 @@ extern const char str_battle_player_hit_vuln[];
  * "CRITICAL HIT! You deal %damage damage!"
  */
 extern const char str_battle_player_hit_crit[];
+
+/**
+ * "Kobold"
+ */
+extern const char str_summon_kobold[];
+
+/**
+ * "Wilbur"
+ */
+extern const char str_summon_wilbur[];
+
+/**
+ * "You attack with your tiny claws..."
+ */
+extern const char str_summon_kobold_attack[];
+
+/**
+ * "You fling a ball of acid..."
+ */
+extern const char str_summon_kobold_magic_attack[];
+
+/**
+ * "Vine Whip"
+ */
+extern const char str_summon_vine_whip[];
+
+/**
+ * ":regen:Mend"
+ */
+extern const char str_summon_mend[];
+
+/**
+ * ":defdown:Summon Ants"
+ */
+extern const char str_summon_summon_ants[];
+
+/**
+ * ":poison:Drity Fang"
+ */
+extern const char str_summon_dirty_fang[];
+
+/**
+ * "You rush forward, fangs bared!"
+ */
+extern const char str_summon_dirty_fang_attack[];
+
+/**
+ * "Your bite deals %damage damage and poison them!"
+ */
+extern const char str_summon_dirty_fang_hit_poison[];
+
+/**
+ * "Your filthy kobold bite deals %damage damage!"
+ */
+extern const char str_summon_dirty_fang_hit_no_poison[];
+
+/**
+ * "Beholder"
+ */
+extern const char str_summon_beholder[];
+
+/**
+ * "Kobold %c raises a tiny axe..."
+ */
+extern const char str_monster_kobold_axe[];
+
+/**
+ * "Kobold %c spits a glob of fire..."
+ */
+extern const char str_monster_kobold_fire[];
+
+/**
+ * "Kobold %c looks dazed..."
+ */
+extern const char str_monster_kobold_dazed[];
+
+/**
+ * "And does nothing!"
+ */
+extern const char str_monster_kobold_does_nothing[];
+
+/**
+ * "But instead it falls back and hiccups!"
+ */
+extern const char str_monster_kobold_miss[];
 
 #endif

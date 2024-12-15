@@ -186,6 +186,10 @@ typedef struct Player {
    */
   uint16_t max_hp;
   /**
+   * Target HP set by the last action in combat.
+   */
+  uint8_t target_hp;
+  /**
    * Current SP (skill points) for martial classes and MP (magic points) for
    * magic classes.
    */
