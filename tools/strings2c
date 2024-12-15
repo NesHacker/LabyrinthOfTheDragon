@@ -129,7 +129,8 @@ function encodeString(namespace, key, str, debugOn=false) {
     }
 
     if (token.match(/[:][a-z-]+[:]/) && DirectSubstitutions[token]) {
-      const hex = (DirectSubstitutions[token] - 0x80).toString(16);
+      const delta = DirectSubstitutions[token] - 0x80;
+      const hex = (delta < 0 ? delta + 0xFF : delta).toString(16);
       addIMR({
         type: 'sub',
         token,
@@ -203,14 +204,6 @@ function varName(ns, key) {
   return `str_${ns}_${key}`;
 }
 
-function generatedAt() {
-  const now = new Date();
-  return [
-    ' * This file was automatically generated using the tools/strings script',
-    ` * Generated at: ${now.toDateString()} @ ${now.toTimeString()}`,
-  ].join('\n');
-}
-
 class Header {
   constructor () {
     this.variables = [];
@@ -249,8 +242,6 @@ class Header {
       '/*',
       ` * ${this.filename}`,
       ` * Extern references for encoded string values across all namespaces.`,
-      ` *`,
-      generatedAt(),
       ' */',
       `#ifndef ${this.headerConst}`,
       `#define ${this.headerConst}`,
@@ -300,8 +291,6 @@ class SourceFile {
       '/*',
       ` * ${this.filename}`,
       ` * Encoded string values for the "${this.name}" namespace.`,
-      ' *',
-      generatedAt(),
       ' */',
       '',
       `#pragma bank ${this.bank}`,
@@ -342,7 +331,8 @@ function testParse(str) {
 
 
 function test() {
-  testParse("Kobold %c attacks with a stone axe...")
+  // testParse("Kobold %c attacks with a stone axe...")
+  testParse(':regen:Mend');
   // testParse(namespaces.battle.strings.kobold_axe);
   // testParse(namespaces.battle.strings.monster_attack);
   // testParse(namespaces.battle.strings.player_magic_miss);

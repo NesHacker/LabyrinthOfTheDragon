@@ -1,9 +1,6 @@
 /*
  * strings.h
  * Extern references for encoded string values across all namespaces.
- *
- * This file was automatically generated using the tools/strings script
- * Generated at: Sat Dec 14 2024 @ 19:45:30 GMT-0500 (Eastern Standard Time)
  */
 #ifndef _GAME_STRINGS_H
 #define _GAME_STRINGS_H
