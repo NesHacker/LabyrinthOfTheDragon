@@ -2,11 +2,11 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
+#include "core.h"
 #include "data.h"
 #include "joypad.h"
 #include "main_menu.h"
 #include "player.h"
-#include "hero.h"
 #include "util.h"
 
 /**
@@ -14,6 +14,13 @@
  */
 MainMenuState main_menu_state = TITLE;
 uint8_t cursor = 0;
+
+
+Timer menu_walk_timer;
+uint8_t menu_walk_frame;
+
+Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
+Tilemap save_select_tilemap = { 20, 18, 1, tilemap_save_select };
 
 /**
  * Initializes the save select screen.
@@ -24,7 +31,7 @@ void init_save_select(void) {
   // TODO Need to load data from Save RAM and update graphics appropriately
 
   // Load the save select screen tilemap
-  load_screen(0, tilemap_save_select);
+  core.draw_tilemap(save_select_tilemap, VRAM_BACKGROUND);
 
   // Reset the cursor sprite and state
   cursor = SAVE_SELECT_CURSOR_SAVE1;
@@ -85,7 +92,7 @@ void init_save_select(void) {
   move_sprite(SPRITE_HERO3 + 2, HERO3_X, HERO3_Y + 8);
   move_sprite(SPRITE_HERO3 + 3, HERO3_X + 8, HERO3_Y + 8);
 
-  init_timer(walk_timer, 12);
+  init_timer(menu_walk_timer, 12);
 
   lcd_on();
 }
@@ -144,12 +151,12 @@ void move_save_select_cursor(void) {
 }
 
 void update_save_select_sprites(void) {
-  if (update_timer(walk_timer)) {
-    reset_timer(walk_timer);
-    walk_frame ^= 1;
+  if (update_timer(menu_walk_timer)) {
+    reset_timer(menu_walk_timer);
+    menu_walk_frame ^= 1;
   }
 
-  const uint8_t walk_tile_offset = walk_frame << 1;
+  const uint8_t walk_tile_offset = menu_walk_frame << 1;
   const uint8_t hero1_offset = (cursor == SAVE_SELECT_CURSOR_SAVE1)
     ? walk_tile_offset
     : 0;
@@ -181,15 +188,13 @@ void init_main_menu(void) {
 
 
   // Load tiles
-  VBK_REG = VBK_BANK_0;
-  load_tile_page(1, tile_data_hero, VRAM_SPRITE_TILES);
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
+  core.load_font();
+  core.load_all_heros();
 
   // Load tilesets and palettes
   scroll_bkg(0, 0);
   SWITCH_ROM(1);
-  load_screen(0, tilemap_title_screen);
+  core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
   set_bkg_palette(0, 8, main_menu_palettes);
 
   // Initialize menu state

@@ -1,6 +1,6 @@
 #include <gb/gb.h>
 
-#include "data.h"
+#include "core.h"
 #include "bcd.h"
 #include "util.h"
 

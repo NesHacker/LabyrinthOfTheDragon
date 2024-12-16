@@ -1,11 +1,82 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#include <gb/gb.h>
+#include <gb/cgb.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+#include "data.h"
+#include "palette.h"
 
 // TODO Convert existing code to use core routines and structures
 // TODO Automatically generate Tileset structures when compiling tile data
 // TODO Make all asset compile tools take core structures into account
+
+/**
+ * Creates a pointer to VRAM at the given offset.
+ * @param offset Offset in VRAM for the pointer.
+ */
+#define VRAM(offset) (void *)(0x8000 + (offset))
+
+/**
+ * VRAM address to sprite tile data.
+ */
+#define VRAM_SPRITE_TILES (void *)0x8000
+
+/**
+ * VRAM address to shared bg/sprite tile data.
+ */
+#define VRAM_SHARED_TILES (void *)0x8800
+
+/**
+ * VRAM address to background tile data.
+ */
+#define VRAM_BG_TILES (void *)0x9000
+
+/**
+ * VRAM address for the background tilemap.
+ */
+#define VRAM_BACKGROUND (void *)0x9800
+
+/**
+ * VRAM address for the window tilemap.
+ */
+#define VRAM_WINDOW (void *)0x9C00
+
+/**
+ * Computes the background tilemap VRAM address for the given column and row.
+ * @param x Column in VRAM.
+ * @param y Row in VRAM.
+ */
+#define VRAM_BACKGROUND_XY(x, y)  (void *)(0x9800 + (x) + 0x20 * (y))
+
+/**
+ * Computes the window tilemap VRAM address for the given column and row.
+ * @param x Column in VRAM.
+ * @param y Row in VRAM.
+ */
+#define VRAM_WINDOW_XY(x, y)  (void *)(0x9C00 + (x) + 0x20 * (y))
+
+/**
+ * Adds a number of page (64 tiles) offsets to the given tile source pointer.
+ * @param ptr Source data pointer.
+ * @param n Number of pages by which offset.
+ */
+#define TILE_PAGE(ptr,n) (void *)((ptr) + 0x80 * 16 * ((n)-1))
+
+/**
+ * Computes an offset to add to a VRAM pointer to place it at the beginning of
+ * tile of the next row on the next row of the background or window.
+ * @param col Current column where VRAM is pointing.
+ */
+#define VRAM_ROW_OFFSET(col) (32 - (col))
+
+/**
+ * Random Seed to use for the game. If set to 0 then the game will generate a
+ * seed value on the title while waiting for the player to begin the game.
+ */
+#define RANDOM_SEED 100
 
 /**
  * Number of bytes per 8x8 pixel 2BBP tile.
@@ -93,6 +164,10 @@ typedef struct Tilemap {
   const TilemapType type;
 } Tilemap;
 
+
+// TODO Remove this far pointer palette wrapper, palette data is small enough
+//      that if you can't fit it in the bank alongside the code you have bigger
+//      fish to fry.
 /**
  * Represents a banked set of palette data.
  */
@@ -126,13 +201,25 @@ typedef struct Core {
    */
   const void (*load_tiles)(Tileset *s, uint8_t *dst, uint8_t o, uint8_t n);
   /**
+   * Loads the core battle tileset.
+   */
+  const void (*load_battle_tiles)(void);
+  /**
    * Loads the core font tileset.
    */
   const void (*load_font)(void);
   /**
-   * Loads the core battle tileset.
+   * Loads the font tiles for the given player class.
    */
-  const void (*load_battle_tiles)(void);
+  const void (*load_hero_tiles)(uint8_t player_class);
+  /**
+   * Loads all hero tiles.
+   */
+  const void (*load_all_heros)(void);
+  /**
+   * Loads the map objects tileset.
+   */
+  const void (*load_object_tiles)(void);
   /**
    * Draws a tilemap at the given location.
    * @param m Tilemap to load.

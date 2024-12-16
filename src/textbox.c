@@ -2,6 +2,9 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
+// TODO Abstract this and battle text out into a generalized "text writer"
+
+#include "core.h"
 #include "data.h"
 #include "joypad.h"
 #include "palette.h"
@@ -24,24 +27,18 @@ uint8_t textbox_line = 0;
 uint8_t textbox_y = 144;
 uint8_t textbox_scroll_line = 0;
 
+
+Tilemap textbox_tilemap = {
+  TILEMAP_TEXTBOX_W, TILEMAP_TEXTBOX_H, 1, tilemap_textbox
+};
+
 void init_text_box(void) {
-  uint8_t t = 0;
-  uint8_t a = TILEMAP_TEXTBOX_H * TILEMAP_TEXTBOX_W;
-  for (uint8_t y = 0; y < TILEMAP_TEXTBOX_H; y++) {
-    uint8_t *tile_addr = (void *)(0x9C00 + y * 0x20);
-    for (uint8_t x = 0; x < TILEMAP_TEXTBOX_W; x++) {
-      VBK_REG = VBK_TILES;
-      set_vram_byte(tile_addr, tilemap_textbox[t++]);
-      VBK_REG = VBK_ATTRIBUTES;
-      set_vram_byte(tile_addr++, tilemap_textbox[a++]);
-    }
-  }
+  core.draw_tilemap(textbox_tilemap, VRAM_WINDOW);
   textbox_y = 144;
   textbox_state = TEXTBOX_CLOSED;
   move_win(7, textbox_y);
   update_bg_palettes(7, 1, textbox_palette);
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_font, VRAM_SHARED_TILES);
+  core.load_font();
 }
 
 void open_textbox(const char *text) {

@@ -6,12 +6,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "core.h"
 #include "data.h"
 #include "flags.h"
-#include "hero.h"
 #include "joypad.h"
 #include "map.h"
-#include "palette.h"
 #include "textbox.h"
 #include "util.h"
 
@@ -34,26 +33,117 @@ uint8_t map_scroll_y = 0;
 Direction map_move_direction = NO_DIRECTION;
 uint8_t map_move_counter = 0;
 
+HeroState hero_state = HERO_STILL;
+Direction hero_direction = DOWN;
+uint8_t hero_x = 0 + 8;
+uint8_t hero_y = 0 + 16;
+
+Timer walk_timer;
+uint8_t walk_frame;
+
 // External area data references
 // Might want to just define the area list in this file, since I think they will
 // only be referenced here.
 extern Area area0;
 
-/**
- * Lookup table that converts map_tile ids into graphic tile ids. The graphics
- * for map tiles are laid out in a way that allows for easy editing, this makes
- * it easy to compute the position for a tile given a 6-bit tile id.
- */
-const uint8_t map_tile_lookup[64] = {
-  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
-  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
-  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
-  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
-  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
-  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
-  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
-  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
-};
+// TODO This is in core right now, perhaps pull data loading out into a factory?
+extern const uint8_t map_tile_lookup[];
+
+void init_hero(void) {
+  // const uint8_t x = 8 + 16 * 4;
+  // const uint8_t y = 16 + 16 * 4;
+
+  const uint8_t offset = 0x00;
+  const uint8_t frame = (walk_frame << 1) + offset;
+
+  // TODO Load the sprites for the player's class instead of just the fighter
+  core.load_hero_tiles(1);
+
+  // TODO Setup hero palettes
+  const uint16_t hpal[4] = {
+    RGB(0, 0, 0),
+    RGB8(245, 213, 135),
+    RGB8(167, 75, 0),
+    RGB8(8, 46, 54),
+  };
+  set_sprite_palette(0, 1, hpal);
+
+  init_timer(walk_timer, 8);
+
+  set_sprite_tile(0, frame);
+  set_sprite_tile(1, frame + 0x01);
+  set_sprite_tile(2, frame + 0x10);
+  set_sprite_tile(3, frame + 0x11);
+
+  set_sprite_prop(0, 0);
+  set_sprite_prop(1, 0);
+  set_sprite_prop(2, 0);
+  set_sprite_prop(3, 0);
+
+  move_sprite(0, hero_x + 8, hero_y + 16);
+  move_sprite(1, hero_x + 8 + 8, hero_y + 16);
+  move_sprite(2, hero_x + 8, hero_y + 8 + 16);
+  move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
+}
+
+void update_hero(void) {
+  if (hero_state == HERO_WALKING) {
+    if (update_timer(walk_timer)) {
+      reset_timer(walk_timer);
+      walk_frame ^= 1;
+    }
+  } else {
+    walk_frame = 0;
+  }
+
+  uint8_t offset = 0x00;
+  switch (hero_direction) {
+  case DOWN:
+    offset = 0x00;
+    break;
+  case UP:
+    offset = 0x04;
+    break;
+  case LEFT:
+  case RIGHT:
+    offset = 0x08;
+    break;
+  }
+
+  const uint8_t frame = (walk_frame << 1) + offset;
+
+  if (hero_direction != LEFT) {
+    set_sprite_tile(0, frame);
+    set_sprite_tile(1, frame + 0x01);
+    set_sprite_tile(2, frame + 0x10);
+    set_sprite_tile(3, frame + 0x11);
+    set_sprite_prop(0, 0b00000000);
+    set_sprite_prop(1, 0b00000000);
+    set_sprite_prop(2, 0b00000000);
+    set_sprite_prop(3, 0b00000000);
+  } else {
+    set_sprite_tile(1, frame);
+    set_sprite_tile(0, frame + 0x01);
+    set_sprite_tile(3, frame + 0x10);
+    set_sprite_tile(2, frame + 0x11);
+    set_sprite_prop(0, 0b00100000);
+    set_sprite_prop(1, 0b00100000);
+    set_sprite_prop(2, 0b00100000);
+    set_sprite_prop(3, 0b00100000);
+  }
+
+  move_sprite(0, hero_x + 8, hero_y + 16);
+  move_sprite(1, hero_x + 8 + 8, hero_y + 16);
+  move_sprite(2, hero_x + 8, hero_y + 8 + 16);
+  move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
+}
+
+void clear_hero(void) {
+  move_sprite(0, 0, 0);
+  move_sprite(1, 0, 0);
+  move_sprite(2, 0, 0);
+  move_sprite(3, 0, 0);
+}
 
 /**
  * Sets the map position x & y coordinates from the current column and row.
@@ -116,6 +206,8 @@ void update_map_positions(void) {
  * @param a Area to load.
  */
 void load_area(Area *a) {
+  // TODO This is a data loader, refactor into a core data service
+
   // Initialize area state
   active_area = a;
   map_col = a->default_start_column;
@@ -126,10 +218,11 @@ void load_area(Area *a) {
 
   // Load tilesets and palettes
   VBK_REG = VBK_BANK_0;
-  load_tile_page(a->tile_bank, a->bg_tile_data, VRAM_BG_TILES);
-  load_tile_page(a->tile_bank, a->bg_tile_data + 16 * 0x80, VRAM_SHARED_TILES);
-  VBK_REG = VBK_BANK_1;
-  load_tile_page(1, tile_data_objects, a->sprite_tile_data);
+
+  // TODO Area tilesets need a revamp now called "Environments" and you can
+  //      load up to 3 at a time.
+  core.load_tileset(a->tileset, VRAM_BG_TILES);
+  core.load_object_tiles();
   update_bg_palettes(0, 4, a->palettes);
 
   on_init();
@@ -147,6 +240,7 @@ void load_area(Area *a) {
  *  attribute data should be placed.
  */
 inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
+  // TODO This is a data loader, refactor into a core data service
   uint8_t data = *map_data;
   uint8_t attr = *(map_data + 1);
   uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
@@ -173,16 +267,17 @@ inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
  * Loads a map in the current area with the given map_id.
  * @param map_id Id of the map to load.
  */
-void load_map(uint8_t map_id) {
+void load_map(uint8_t map_id) NONBANKED {
+  // TODO This is a data loader, refactor into a core data service
   Map *map = &active_area->maps[map_id];
   active_map = map;
 
-  uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(map->bank);
-
-  uint8_t *map_data = map->data;
   uint8_t *vram = VRAM_BACKGROUND;
   MapTileAttribute *map_attr = map_tile_attributes;
+  uint8_t *map_data = map->data;
+
+  uint8_t _prev_bank = _current_bank;
+  SWITCH_ROM(map->bank);
 
   for (uint8_t y = 0; y < 16; y++) {
     for (uint8_t x = 0; x < 16; x++) {
@@ -285,7 +380,7 @@ bool handle_exit(void) {
 
     // TODO Add player "exiting" animation based on exit type
     // TODO Handle exits in the same map
-    // TODO Handle area spanning exits
+    // TODO Handle area spanning exis
     // TODO Gracefully handle map sprites
 
     return true;
@@ -375,16 +470,23 @@ bool check_action(void) {
   return false;
 }
 
+// TODO Put me somewhere
+#define MAP_SYSTEM_BANK 2
+
+
 void init_world_map(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
   lcd_off();
   init_hero();
+
   load_area(&area0);
   load_map(0);
+
   init_text_box();
   lcd_on();
 }
 
-void update_world_map(void) NONBANKED {
+void update_world_map(void) {
   switch (map_state) {
   case MAP_STATE_WAITING:
     if (!check_action()) {
@@ -400,7 +502,7 @@ void update_world_map(void) NONBANKED {
   on_update();
 }
 
-void draw_world_map(void) NONBANKED {
+void draw_world_map(void) {
   switch (map_state) {
   case MAP_STATE_TEXTBOX:
     update_textbox();

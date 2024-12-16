@@ -14,10 +14,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "core.h"
 #include "flags.h"
-#include "hero.h"
 #include "textbox.h"
 #include "util.h"
+
+typedef enum HeroState {
+  HERO_STILL,
+  HERO_WALKING,
+} HeroState;
 
 /**
  * Main state enumaration for the world map controller.
@@ -197,19 +202,9 @@ typedef struct Area {
   uint8_t default_start_row;
 
   /**
-   * Bank for the map's tile data.
+   * Tileset to use for the area.
    */
-  uint8_t tile_bank;
-
-  /**
-   * Pointer to the background tile data for the map.
-   */
-  uint8_t *bg_tile_data;
-
-  /**
-   * Pointer to the sprite tile data for the map.
-   */
-  uint8_t *sprite_tile_data;
+  Tileset *tileset;
 
   /**
    * Palettes to use for the dungeon.
@@ -418,6 +413,12 @@ extern uint8_t map_move_counter;
  * player's sprite and such after the transition.
  */
 extern Exit *current_exit;
+
+// TODO Factor me out in to a struct
+extern HeroState hero_state;
+extern Direction hero_direction;
+extern uint8_t hero_x;
+extern uint8_t hero_y;
 
 /**
  * Initialize the world map controller.

@@ -15,6 +15,11 @@
     "stdbool.h": "c",
     "string.h": "c",
     "gb.h": "c",
-    "data.h": "c"
+    "data.h": "c",
+    "player.h": "c",
+    "palette.h": "c",
+    "core.h": "c",
+    "map.h": "c",
+    "main.h": "c"
   }
 }

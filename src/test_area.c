@@ -1,15 +1,14 @@
+#pragma bank 2
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 
 #include "data.h"
 #include "flags.h"
-#include "hero.h"
 #include "map.h"
 #include "palette.h"
 
-// -----------------------------------------------------------------------------
-// Potentially can be factored out
-// -----------------------------------------------------------------------------
+// TODO Factor me out into a general flame class
 Timer flame_timer;
 uint8_t flame_state = 0;
 
@@ -35,8 +34,8 @@ palette_color_t fire_palette[4] = {
 
 const Map area0_maps[] = {
   // id, bank, data
-  { MAP_FLOOR1, 2, map_example_0 },
-  { MAP_FLOOR2, 2, map_example_1 }
+  { MAP_FLOOR1, 8, map_example_0 },
+  { MAP_FLOOR2, 8, map_example_1 }
 };
 
 const Exit area0_exits[] = {
@@ -158,20 +157,19 @@ Chest area0_chests[] = {
   { CHEST_TORCH, MAP_FLOOR1, 9, 13, TEST_FLAGS, FLAG_HAS_TORCH }
 };
 
+Tileset dungeon_tileset = { 128, 12, tile_data_dungeon };
+
+Palette palette_area0 = { 2, area0_palettes };
+
 Area area0 = {
   0,                    // Id
   2, 14,                // Default column & row
-  1,                    // Tilesets
-  tile_data_dungeon,
-  tile_data_objects,
+  &dungeon_tileset,
   area0_palettes,       // Palettes (always 4 palettes / area)
-  2,                    // Maps
-  area0_maps,
-  4,                    // Exits
-  area0_exits,
-  1,                    // Chests
-  area0_chests,
-  0,                    // Callback Bank & Callbacks
+  2, area0_maps,
+  4, area0_exits,
+  1, area0_chests,
+  2,                    // Callback Bank & Callbacks
   area0_on_init,
   area0_on_update,
   NULL, // on_draw

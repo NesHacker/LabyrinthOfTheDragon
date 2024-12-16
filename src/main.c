@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "battle.h"
-#include "data.h"
+#include "core.h"
 #include "joypad.h"
 #include "main.h"
 #include "map.h"
@@ -37,33 +37,36 @@ void set_game_state(GameState s) NONBANKED {
  * Initializes the game.
  */
 inline void initialize(void) {
+  initarand(RANDOM_SEED);
+
   // init_main_menu();
 
-  // init_text_box();
-  // init_world_map();
+  init_text_box();
+  init_world_map();
 
   // Battle Testing
-  initarand(100);
-  init_player();
-  init_battle();
+  // init_player();
+  // init_battle();
 }
 
 /**
  * Executes core gameloop logic.
  */
 inline void game_loop(void) {
+  update_world_map();
+
+  // update_battle();
   // update_main_menu();
-  // update_world_map();
-  update_battle();
 }
 
 /**
  * Executes rendering logic that must occur during a VBLANK.
  */
 inline void render(void) {
+  draw_world_map();
+
   // draw_main_menu();
-  // draw_world_map();
-  draw_battle();
+  // draw_battle();
 }
 
 /**

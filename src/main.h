@@ -13,8 +13,6 @@ typedef enum GameState {
 } GameState;
 
 
-// Function prototypes
-void render(void);
 void set_game_state(GameState s);
 
 #endif

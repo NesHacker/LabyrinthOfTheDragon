@@ -1,9 +1,25 @@
-#include <gb/gb.h>
-#include <gb/cgb.h>
-
 #include "core.h"
-#include "data.h"
-#include "palette.h"
+
+// TODO NONE OF THESE BELONG HERE
+
+/**
+ * Lookup table that converts map_tile ids into graphic tile ids. The graphics
+ * for map tiles are laid out in a way that allows for easy editing, this makes
+ * it easy to compute the position for a tile given a 6-bit tile id.
+ */
+const uint8_t map_tile_lookup[64] = {
+  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
+  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
+  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
+  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
+  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
+  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
+  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
+  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
+};
+
+
+// --- These, however, do...
 
 /**
  * Font tileset.
@@ -14,6 +30,16 @@ const Tileset tileset_font = { 128, 10, tile_data_font };
  * Battle tileset.
  */
 const Tileset tileset_battle = { 5 * 16, 10, tile_battle };
+
+/**
+ * Common objects tileset.
+ */
+const Tileset objects_tileset = { 128, 10, tile_data_objects };
+
+/**
+ * Hero sprites tileset.
+ */
+Tileset hero_tileset = { 12 * 8, 10, tile_data_hero };
 
 void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
   const uint8_t *src = s->data;
@@ -47,14 +73,42 @@ void core_load_tiles(
   SWITCH_ROM(_prev_bank);
 }
 
+void load_battle_tiles(void) NONBANKED {
+  VBK_REG = VBK_BANK_1;
+  load_tileset(&tileset_battle, VRAM_BATTLE_TILES);
+}
+
 void load_font(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
   load_tileset(&tileset_font, VRAM_FONT_TILES);
 }
 
-void load_battle_tiles(void) NONBANKED {
+void load_hero_tiles(uint8_t player_class) NONBANKED {
+  const uint8_t row_width = 12;
+  const uint8_t offset = player_class * row_width * 2;
+  const uint8_t offset2 = offset + row_width;
+  uint8_t *const vram = VRAM_SPRITE_TILES;
+  uint8_t *const vram2 = vram + 16 * BYTES_PER_TILE;
+
+  VBK_REG = VBK_BANK_0;
+  core_load_tiles(&hero_tileset, vram, offset, row_width);
+  core_load_tiles(&hero_tileset, vram2, offset2, row_width);
+}
+
+void load_all_heros(void) NONBANKED {
+  const uint8_t row = 4 * 3;
+  VBK_REG = VBK_BANK_0;
+  for (uint8_t k = 0; k < 4; k++) {
+    const uint8_t offset = k * row * 2;
+    uint8_t *vram = VRAM_SPRITE_TILES + 0x20 * k;
+    core_load_tiles(&hero_tileset, vram, offset, row);
+    core_load_tiles(&hero_tileset, vram, offset + row, row);
+  }
+}
+
+void load_object_tiles(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
-  load_tileset(&tileset_battle, VRAM_BATTLE_TILES);
+  load_tileset(&objects_tileset, VRAM_SPRITE_TILES);
 }
 
 void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
@@ -92,8 +146,11 @@ void load_sprite_palette(Palette p, uint8_t index, uint8_t n) {
 const Core core = {
   load_tileset,
   core_load_tiles,
-  load_font,
   load_battle_tiles,
+  load_font,
+  load_hero_tiles,
+  load_all_heros,
+  load_object_tiles,
   draw_tilemap,
   load_bg_palette,
   load_sprite_palette,
