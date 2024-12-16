@@ -17,7 +17,7 @@ Player player = {
 };
 
 void init_player(void) {
-  player.message_speed = 3;
+  player.message_speed = AUTO_PAGE_MED;
 
   player.level = 10;
   player.exp = get_exp(10) + 23;

@@ -17,6 +17,7 @@ void text_writer_set_origin(uint8_t *vram, uint8_t col, uint8_t row) {
 
 void text_writer_clear(void) {
   uint8_t *vram = text_writer.origin;
+
   for (uint8_t row = 0; row < text_writer.height; row++) {
     uint8_t col;
     for (col = 0; col < text_writer.width; col++) {

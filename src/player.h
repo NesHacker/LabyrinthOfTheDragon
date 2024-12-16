@@ -6,6 +6,7 @@
 #include "monster.h"
 #include "stats.h"
 #include "tables.h"
+#include "text_writer.h"
 
 /*
   TODO Implement player saves
@@ -164,7 +165,7 @@ typedef struct Player {
   /**
    * Configurable message speed for battle messages.
    */
-  uint8_t message_speed;
+  AutoPageSpeed message_speed;
   /**
    * Current experience level.
    */

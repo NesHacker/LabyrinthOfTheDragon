@@ -6,22 +6,22 @@
 /**
  * Number of frames to wait with a slow auto page speed.
  */
-#define AUTO_PAGE_SLOW_FRAMES 40
+#define AUTO_PAGE_SLOW_FRAMES 60
 
 /**
  * Number of frames to wait with a medium auto page speed.
  */
-#define AUTO_PAGE_MED_FRAMES 20
+#define AUTO_PAGE_MED_FRAMES 30
 
 /**
  * Number of frames to wait with a fast auto page speed.
  */
-#define AUTO_PAGE_FAST_FRAMES 10
+#define AUTO_PAGE_FAST_FRAMES 15
 
 /**
  * Default number of frames to wait between characters.
  */
-#define TEXT_WRITER_DEFAULT_CHARACTER_DELAY 1
+#define TEXT_WRITER_DEFAULT_CHARACTER_DELAY 2
 
 /**
  * Default width for the text writing area.
@@ -31,7 +31,7 @@
 /**
  * Default height for the text writing area.
  */
-#define TEXT_WRITER_DEFAULT_HEIGHT 6
+#define TEXT_WRITER_DEFAULT_HEIGHT 4
 
 /**
  * Default column for the origin.
@@ -213,5 +213,10 @@ typedef struct TextWriter {
  * screen.
  */
 extern TextWriter text_writer;
+
+
+inline bool text_writer_done(void) {
+  return text_writer.state == TEXT_WRITER_DONE;
+}
 
 #endif

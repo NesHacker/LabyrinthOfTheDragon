@@ -26,10 +26,10 @@ inline void initialize(void) {
 
   // init_main_menu();
   // init_world_map();
-  // init_battle();
+  init_battle();
 
-  init_world_map();
-  game_state = GAME_STATE_WORLD_MAP;
+  // game_state = GAME_STATE_WORLD_MAP;
+  game_state = GAME_STATE_BATTLE;
 }
 
 /**

@@ -8,7 +8,6 @@
 #include <stdbool.h>
 
 #include "battle.h"
-#include "battle_text.h"
 #include "core.h"
 #include "data.h"
 #include "encounter.h"
@@ -16,6 +15,7 @@
 #include "monster.h"
 #include "palette.h"
 #include "strings.h"
+#include "text_writer.h"
 #include "util.h"
 
 const Tilemap monster_layout_1 = {
@@ -530,6 +530,11 @@ void initialize_battle(void) {
   core.load_font();
   core.load_battle_tiles();
 
+  // Configure the text writer
+  text_writer.set_origin(VRAM_WINDOW, 1, 2);
+  text_writer.set_auto_page(player.message_speed);
+  text_writer.set_size(18, 4);
+
   // Draw menus and initialize cursor
   core.draw_tilemap(battle_menu_tilemap, VRAM_BACKGROUND_XY(0, MENU_Y));
   core.draw_tilemap(battle_submenu_tilemap, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
@@ -543,6 +548,7 @@ void initialize_battle(void) {
 
   // Initialize the encounter and player graphics
   battle_init_encounter();
+
   // Update the player UI
   update_player_summon();
   update_player_hp();
@@ -998,14 +1004,14 @@ inline bool animate_monster_death(void) {
 void animate_action_result(void) {
   switch (animation_state) {
   case ANIMATION_PREAMBLE:
-    if (battle_text.state == BATTLE_TEXT_DONE) {
+    if (text_writer_done()) {
       init_timer(effect_delay_timer, 30);
       animation_state = ANIMATION_EFFECT;
     }
     break;
   case ANIMATION_EFFECT:
     if (update_timer(effect_delay_timer)) {
-      battle_text.print(battle_post_message);
+      text_writer.print(battle_post_message);
       reset_monster_death_animation();
       animation_state = ANIMATION_RESULT;
     }
@@ -1021,7 +1027,7 @@ void animate_action_result(void) {
     }
 
     // Done when the battle text is finished an no more updates are performed.
-    if (!graphics_updated && battle_text.state == BATTLE_TEXT_DONE) {
+    if (!graphics_updated && text_writer_done()) {
       animation_state = ANIMATION_COMPLETE;
     }
     break;
@@ -1053,7 +1059,7 @@ void update_battle(void) {
   }
 
   // Update the battle text
-  battle_text.update();
+  text_writer.update();
 
   // TODO should this just always happen every frame?
   // redraw_player_status_effects();
@@ -1066,7 +1072,7 @@ void update_battle(void) {
   case BATTLE_ROLL_INITIATIVE:
     roll_initiative();
     hide_cursor();
-    battle_text.clear();
+    text_writer.clear();
     show_battle_text();
     battle_state = BATTLE_NEXT_TURN;
     break;
@@ -1085,7 +1091,7 @@ void update_battle(void) {
     break;
   case BATTLE_TAKE_ACTION:
     take_action();
-    battle_text.print(battle_pre_message);
+    text_writer.print(battle_pre_message);
     animation_state = ANIMATION_PREAMBLE;
     battle_state = BATTLE_ANIMATE;
     break;
@@ -1111,7 +1117,7 @@ void update_battle(void) {
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
-    battle_text.print("GAME OVER");
+    text_writer.print("GAME OVER");
     break;
   case BATTLE_END_ROUND:
     // TODO Determine if the player can take actions

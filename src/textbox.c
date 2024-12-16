@@ -18,6 +18,7 @@ void init_textbox(void) {
   move_win(7, textbox.y);
   text_writer.set_origin(VRAM_WINDOW, 1, 1);
   text_writer.set_size(18, 4);
+  text_writer.set_auto_page(AUTO_PAGE_OFF);
 }
 
 void open_textbox(const char *text) {
