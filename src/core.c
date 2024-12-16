@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "core.h"
 
 // TODO NONE OF THESE BELONG HERE
@@ -20,6 +21,12 @@ const uint8_t map_tile_lookup[64] = {
 
 
 // --- These, however, do...
+
+uint8_t flags[32] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
 
 /**
  * Font tileset.
@@ -136,6 +143,44 @@ void load_sprite_palette(palette_color_t *data, uint8_t index, uint8_t n) {
   update_sprite_palettes(index, n, data);
 }
 
+void clear_bg(void) NONBANKED {
+  uint8_t *vram = VRAM_BACKGROUND;
+  for (uint16_t k = 0; k < 32 * 32; k++) {
+    VBK_REG = VBK_TILES;
+    *vram = 0;
+    VBK_REG = VBK_ATTRIBUTES;
+    *vram++ = 0;
+  }
+}
+
+void fill_bg(uint8_t tile_id, uint8_t attr) NONBANKED {
+  uint8_t *vram = VRAM_BACKGROUND;
+  for (uint16_t k = 0; k < 32 * 32; k++) {
+    VBK_REG = VBK_TILES;
+    *vram = tile_id;
+    VBK_REG = VBK_ATTRIBUTES;
+    *vram++ = attr;
+  }
+}
+
+void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
+  VBK_REG = VBK_TILES;
+  while (*text != 0 && max) {
+    set_vram_byte(vram++, (*text++) + FONT_OFFSET);
+    max--;
+  }
+  while (max) {
+    set_vram_byte(vram++, FONT_SPACE);
+    max--;
+  }
+}
+
+void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
+  char buf[10];
+  sprintf(buf, " %3u/%u", n, d);
+  draw_text(vram, buf, 7);
+}
+
 const Core core = {
   load_tileset,
   core_load_tiles,
@@ -147,4 +192,8 @@ const Core core = {
   draw_tilemap,
   load_bg_palette,
   load_sprite_palette,
+  clear_bg,
+  fill_bg,
+  draw_text,
+  print_fraction,
 };

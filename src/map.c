@@ -7,11 +7,8 @@
 #include <stddef.h>
 
 #include "core.h"
-#include "data.h"
-#include "flags.h"
-#include "joypad.h"
 #include "map.h"
-#include "util.h"
+
 
 // TODO Put me somewhere ---V
 

@@ -1,4 +1,4 @@
-#include "joypad.h"
+#include "core.h"
 #include "textbox.h"
 
 const Tilemap textbox_tilemap = { 20, 6, 1, tilemap_textbox };

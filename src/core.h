@@ -10,8 +10,6 @@
 #include "palette.h"
 
 // TODO Convert existing code to use core routines and structures
-// TODO Automatically generate Tileset structures when compiling tile data
-// TODO Make all asset compile tools take core structures into account
 
 /**
  * Tile offset where the font tiles begin.
@@ -202,6 +200,101 @@ typedef struct Timer {
 #define reset_timer(t) (t).counter = (t).duration
 
 /**
+ * @param b Bit for the flag mask.
+ * @return Mask for a flag at the given bit.
+ */
+#define FLAG(b) (1 << (b))
+
+/**
+ * Enumeration of names for each page in the global game flags.
+ */
+typedef enum FlagPage {
+  TEST_FLAGS = 31
+} FlagPage;
+
+/**
+ * Global game flags. Used as boolean indicators for various aspects of maps,
+ * items, scenarios, etc.
+ */
+extern uint8_t flags[32];
+
+/**
+ * Determines if the flag on the given page is set.
+ * @param page The flag page to check.
+ * @param mask Bitmask to test.
+ * @return `true` if all of the masked flag bits are set.
+ */
+inline bool check_flags(FlagPage page, uint8_t mask) {
+  return flags[page] & mask;
+}
+
+/**
+ * Sets global flags.
+ * @param page The page for flag.
+ * @param mask Mask for all flags to set.
+ */
+inline void set_flags(FlagPage page, uint8_t mask) {
+  flags[page] |= mask;
+}
+
+/**
+ * Unsets global flags.
+ * @param page The page for flag.
+ * @param mask Mask for all flags to unset.
+ */
+inline void unset_flags(FlagPage page, uint8_t mask) {
+  flags[page] &= ~mask;
+}
+
+/**
+ * Toggles global flags.
+ * @param page The page for flag.
+ * @param mask Mask for all flags to toggle.
+ */
+inline void toggle_flags(FlagPage page, uint8_t mask) {
+  flags[page] ^= mask;
+}
+
+/**
+ * Bitfield for buttons that are currently being held down.
+ *
+ * @see J_START, J_SELECT, J_A, J_B, J_UP, J_DOWN, J_LEFT, J_RIGHT
+ */
+extern uint8_t joypad_down;
+
+/**
+ * Bitfield for buttons that were pressed as of this frame.
+ *
+ * @see J_START, J_SELECT, J_A, J_B, J_UP, J_DOWN, J_LEFT, J_RIGHT
+ */
+extern uint8_t joypad_pressed;
+
+/**
+ * Bitfield for buttons that were released as of this frame.
+ *
+ * @see J_START, J_SELECT, J_A, J_B, J_UP, J_DOWN, J_LEFT, J_RIGHT
+ */
+extern uint8_t joypad_released;
+
+/**
+ * @param b Button bitmask.
+ * @return `true` If the button is down.
+ */
+#define is_down(b)      (joypad_down & (b))
+
+/**
+ * @param b Button bitmask.
+ * @return `true` If the button was pressed this frame.
+ */
+#define was_pressed(b)  (joypad_pressed & (b))
+
+/**
+ * @param b Button bitmask.
+ * @return `true` If the button was released this frame.
+ */
+#define was_released(b) (joypad_released & (b))
+
+/**
  * Core tileset structure.
  */
 typedef struct Tileset {
@@ -325,6 +418,31 @@ typedef struct Core {
    * @param n Number of palettes to load.
    */
   const void (*load_sprite_palette)(palette_color_t *data, uint8_t index, uint8_t n);
+
+  /**
+   * Clears the 32x32 tile background and fills tiles and attribute bytes with 0s.
+   */
+  const void (*clear_bg)(void);
+  /**
+   * Fill the background with the given tile and attribute.
+   * @param tile Tile to fill.
+   * @param attr Attribute to fill.
+   */
+  const void (*fill_bg)(uint8_t tile_id, uint8_t attr);
+  /**
+   * Draws text to the given VRAM location.
+   * @param vram Pointer to VRAM where the text tiles should be written.
+   * @param text The text to write.
+   * @param max Maximum length for the text. Clears unused characters with spaces.
+   */
+  const void (*draw_text)(uint8_t *vram, const char *text, uint8_t max);
+  /**
+   * Prints a fraction to the screen at the given vram location.
+   * @param vram Vram location to print the fraction.
+   * @param n Numerator for the fraction.
+   * @param d Denominator for the fraction.
+   */
+  const void (*print_fraction)(uint8_t *vram, uint16_t n, uint16_t d);
 } Core;
 
 /**

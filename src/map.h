@@ -6,8 +6,6 @@
 #include <stdint.h>
 
 #include "core.h"
-#include "flags.h"
-#include "util.h"
 #include "textbox.h"
 
 /**

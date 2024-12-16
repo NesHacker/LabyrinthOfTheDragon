@@ -21,6 +21,7 @@
     "core.h": "c",
     "map.h": "c",
     "main.h": "c",
-    "textbox.h": "c"
+    "textbox.h": "c",
+    "text_writer.h": "c"
   }
 }

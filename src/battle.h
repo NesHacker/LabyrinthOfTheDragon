@@ -5,9 +5,8 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
-#include "data.h"
+#include "core.h"
 #include "encounter.h"
-#include "flags.h"
 #include "monster.h"
 #include "player.h"
 #include "tables.h"

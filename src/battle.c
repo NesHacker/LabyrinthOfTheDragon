@@ -9,14 +9,11 @@
 
 #include "battle.h"
 #include "core.h"
-#include "data.h"
 #include "encounter.h"
-#include "joypad.h"
 #include "monster.h"
 #include "palette.h"
 #include "strings.h"
 #include "text_writer.h"
-#include "util.h"
 
 const Tilemap monster_layout_1 = {
   20, 11, 5, tilemap_battle_monster_layouts
@@ -484,14 +481,14 @@ void battle_init_encounter(void) {
  * Updates the player's HP fraction.
  */
 inline void update_player_hp(void) {
-  print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
+  core.print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
 }
 
 /**
  * Updates the player's SP fraction on the main menu.
  */
 inline void update_player_sp(void) {
-  print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
+  core.print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
 }
 
 /**
@@ -499,7 +496,7 @@ inline void update_player_sp(void) {
  */
 void update_player_summon(void) {
   player.summon->activate();
-  draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+  core.draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
   uint8_t menu_icon, resource_icon;
   if (is_magic_class()) {
     menu_icon = MAGIC_ICON;
@@ -521,7 +518,7 @@ void initialize_battle(void) {
   lcd_off();
 
   // Reset the background and window position
-  fill_background(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
+  core.fill_bg(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
   move_win(0, 144);
 
   // Load palettes & fonts
@@ -570,8 +567,6 @@ void initialize_battle(void) {
 }
 
 void init_battle(void) NONBANKED {
-  // TODO The player should already be initialized, remove this after testing
-  init_player();
   // Switch to the battle ROM bank (has stats tables, etc.)
   SWITCH_ROM(BATTLE_ROM_BANK);
   initialize_battle();
@@ -689,7 +684,7 @@ void select_next_enemy(void) {
  * Draws the "EMPTY..." message in the middle of an empty submenu.
  */
 inline void draw_menu_empty_text(void) {
-  draw_text(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
+  core.draw_text(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
 }
 
 /**
@@ -754,7 +749,7 @@ void load_abilities_menu(void) {
   battle_num_submenu_items = 0;
   uint8_t *vram = VRAM_SUBMENU_TEXT;
   while (ability && player.level >= ability->level) {
-    draw_text(vram, ability->name, 14);
+    core.draw_text(vram, ability->name, 14);
     uint8_t *cost_tile = ability->sp_cost_tiles;
     set_vram_byte(vram + 13, *cost_tile++);
     set_vram_byte(vram + 14, *cost_tile++);
@@ -874,13 +869,11 @@ inline void update_battle_menu(void) {
     break;
   case BATTLE_MENU_ITEM:
     // Select an item from the inventory
-    // TODO Create inventory/item system xD
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
     break;
   case BATTLE_MENU_SUMMON:
     // Select an available summon
-    // TODO Create more than one summon to build this out
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
     break;
@@ -1086,8 +1079,7 @@ void update_battle(void) {
     }
     break;
   case BATTLE_UPDATE_STATUS_EFFECTS:
-    // TODO Handle this when implementing status effects
-    battle_state =BATTLE_TAKE_ACTION;
+    battle_state = BATTLE_TAKE_ACTION;
     break;
   case BATTLE_TAKE_ACTION:
     take_action();
@@ -1120,7 +1112,6 @@ void update_battle(void) {
     text_writer.print("GAME OVER");
     break;
   case BATTLE_END_ROUND:
-    // TODO Determine if the player can take actions
     battle_state = BATTLE_STATE_MENU;
     battle_menu = BATTLE_MENU_MAIN;
     hide_battle_text();

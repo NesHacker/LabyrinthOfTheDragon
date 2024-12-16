@@ -1,12 +1,7 @@
 #pragma bank 2
 
-#include <gb/gb.h>
-#include <gb/cgb.h>
-
-#include "data.h"
-#include "flags.h"
+#include "core.h"
 #include "map.h"
-#include "palette.h"
 
 // TODO Factor me out into a general flame class
 Timer flame_timer;

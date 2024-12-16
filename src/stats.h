@@ -7,7 +7,7 @@
 #include <rand.h>
 #include <stdint.h>
 
-#include "flags.h"
+#include "core.h"
 #include "tables.h"
 #include "strings.h"
 

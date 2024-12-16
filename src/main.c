@@ -5,11 +5,9 @@
 
 #include "battle.h"
 #include "core.h"
-#include "joypad.h"
 #include "main.h"
 #include "map.h"
 #include "main_menu.h"
-#include "util.h"
 
 uint8_t joypad_down;
 uint8_t joypad_pressed;

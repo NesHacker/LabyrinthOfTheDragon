@@ -10,7 +10,7 @@
 #include "monster.h"
 #include "tables.h"
 #include "strings.h"
-#include "util.h"
+
 
 Player player = {
   CLASS_DRUID,

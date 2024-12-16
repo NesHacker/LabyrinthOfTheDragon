@@ -3,11 +3,9 @@
 #include <stdint.h>
 
 #include "core.h"
-#include "data.h"
-#include "joypad.h"
 #include "main_menu.h"
 #include "player.h"
-#include "util.h"
+
 
 /**
  * Top level state for the main menu.
