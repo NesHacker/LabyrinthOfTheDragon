@@ -9,8 +9,6 @@
 #include "data.h"
 #include "palette.h"
 
-// TODO Convert existing code to use core routines and structures
-
 /**
  * Tile offset where the font tiles begin.
  */

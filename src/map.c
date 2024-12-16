@@ -9,15 +9,6 @@
 #include "core.h"
 #include "map.h"
 
-
-// TODO Put me somewhere ---V
-
-
-
-// TODO ^--- Put me somewhere!
-
-
-
 Area *active_area;
 Map *active_map;
 Exit *active_exit;
@@ -60,17 +51,15 @@ void init_hero(void) {
   const uint8_t offset = 0x00;
   const uint8_t frame = (walk_frame << 1) + offset;
 
-  // TODO Load the sprites for the player's class instead of just the fighter
+  // TODO Load the sprites and palettes based on player model
   core.load_hero_tiles(1);
-
-  // TODO Setup hero palettes
   const uint16_t hpal[4] = {
     RGB(0, 0, 0),
     RGB8(245, 213, 135),
     RGB8(167, 75, 0),
     RGB8(8, 46, 54),
   };
-  set_sprite_palette(0, 1, hpal);
+  core.load_sprite_palette(hpal, 0, 1);
 
   init_timer(walk_timer, 8);
 
@@ -533,7 +522,7 @@ void draw_world_map(void) {
     break;
   case MAP_STATE_FADE_IN:
     if (fade_update()) {
-      // TODO Animate the character based on heading type
+      // TODO Animate the character based on exit type and heading
       map_state = MAP_STATE_WAITING;
       LCDC_REG ^= LCDCF_OBJON;
     }
