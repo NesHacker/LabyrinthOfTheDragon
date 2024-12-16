@@ -2,8 +2,7 @@
 #define _BATTLE_TEXT_H
 
 #include <stdint.h>
-
-#include "data.h"
+#include "core.h"
 #include "util.h"
 
 /**
