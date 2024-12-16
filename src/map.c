@@ -11,8 +11,15 @@
 #include "flags.h"
 #include "joypad.h"
 #include "map.h"
-#include "textbox.h"
 #include "util.h"
+
+// TODO Put me somewhere ---V
+
+
+
+// TODO ^--- Put me somewhere!
+
+
 
 Area *active_area;
 Map *active_map;
@@ -223,7 +230,7 @@ void load_area(Area *a) {
   //      load up to 3 at a time.
   core.load_tileset(a->tileset, VRAM_BG_TILES);
   core.load_object_tiles();
-  update_bg_palettes(0, 4, a->palettes);
+  core.load_bg_palette(a->palettes, 0, 4);
 
   on_init();
 }
@@ -470,19 +477,17 @@ bool check_action(void) {
   return false;
 }
 
-// TODO Put me somewhere
-#define MAP_SYSTEM_BANK 2
-
-
 void init_world_map(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   lcd_off();
-  init_hero();
 
+  textbox.init();
+  core.load_font();
+
+  init_hero();
   load_area(&area0);
   load_map(0);
 
-  init_text_box();
   lcd_on();
 }
 
@@ -505,8 +510,8 @@ void update_world_map(void) {
 void draw_world_map(void) {
   switch (map_state) {
   case MAP_STATE_TEXTBOX:
-    update_textbox();
-    if (textbox_state == TEXTBOX_CLOSED) {
+    textbox.update();
+    if (textbox.state == TEXT_BOX_CLOSED) {
       map_state = MAP_STATE_WAITING;
     }
     break;

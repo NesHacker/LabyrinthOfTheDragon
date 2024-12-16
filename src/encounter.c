@@ -134,6 +134,7 @@ void set_player_ability(Ability *a, MonsterInstance *target) {
 
 void set_player_summon(Summon *summon) {
   encounter.player_action = PLAYER_ACTION_SUMMON;
+  encounter.summon = summon;
 }
 
 void set_player_flee(void) {

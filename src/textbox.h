@@ -1,41 +1,56 @@
 #ifndef _TEXTBOX_H
 #define _TEXTBOX_H
 
-#include <gb/cgb.h>
+#include "text_writer.h"
 
-typedef enum TextboxState {
-  TEXTBOX_CLOSED,
-  TEXTBOX_OPENING,
-  TEXTBOX_CLOSING,
-  TEXTBOX_RESET,
-  TEXTBOX_CLEAR,
-  TEXTBOX_CLEAR_WAIT,
-  TEXTBOX_PRINTING,
-  TEXTBOX_LINE_WAIT,
-  TEXTBOX_SCROLL,
-  TEXTBOX_PAGE_WAIT,
-  TEXTBOX_FINISHED
-} TextboxState;
+/**
+ * State enumeration for the animated pop-up textbox.
+ */
+typedef enum TextBoxState {
+  TEXT_BOX_CLOSED,
+  TEXT_BOX_OPENING,
+  TEXT_BOX_OPEN,
+  TEXT_BOX_CLOSING,
+} TextBoxState;
 
-#define TILEMAP_TEXTBOX_W 20
-#define TILEMAP_TEXTBOX_H 6
+/**
+ * Animated pop-up text box.
+ */
+typedef struct TextBox {
+  /**
+   * Initializes the text box.
+   */
+  const void (*init)(void);
+  /**
+   * Opens the textbox and starts printing the given text.
+   */
+  const void (*open)(const char *text);
+  /**
+   * Closes the text box.
+   */
+  const void (*close)(void);
+  /**
+   * Called to render updates for the textbox.
+   */
+  const void (*update)(void);
+  /**
+   * Current state of the textbox.
+   */
+  TextBoxState state;
+  /**
+   * Current y position for the window (which contains the text box).
+   */
+  uint8_t y;
+  /**
+   * Text to be written to the text box.
+   */
+  const char *text;
+} TextBox;
 
-#define TEXTBOX_CLEAR_DELAY     10
-#define TEXTBOX_CHAR_DELAY      3
-#define TEXTBOX_SCROLL_DELAY    6
-#define TEXTBOX_ARROW_DELAY     40
-#define TEXTBOX_MAX_LINE_CHARS  17
-
-#define TEXTBOX_PAGE_BREAK  '\f'
-#define TEXTBOX_LINE_BREAK  '\n'
-#define TEXTBOX_END         0
-
-extern TextboxState textbox_state;
-extern palette_color_t textbox_palette[4];
-
-void init_text_box(void);
-void open_textbox(const char *text);
-void update_textbox(void);
-void clear_textbox(void);
+/**
+ * Animated pop-up text box. Uses the `TextWriter` under the hood to animate
+ * text for interaction on the world map or in cutscenes.
+ */
+extern TextBox textbox;
 
 #endif

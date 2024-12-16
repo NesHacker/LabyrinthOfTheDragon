@@ -1,12 +1,3 @@
-/*
- * Map.h - general structures and functions for handling the world map state.
- *
- * The game world is represented by a series of areas, with each area having
- * at least one 16x16 tile map that fills an entire background tilemap. Maps are
- * connected to one another (both within an area, and across areas) via exits
- * and can extensively scripted using function pointer callbacks.
- */
-
 #ifndef _MAP_H
 #define _MAP_H
 
@@ -16,9 +7,17 @@
 
 #include "core.h"
 #include "flags.h"
-#include "textbox.h"
 #include "util.h"
+#include "textbox.h"
 
+/**
+ * Bank in which the map system resides.
+ */
+#define MAP_SYSTEM_BANK 2
+
+/**
+ * State animation state for the overworld hero.
+ */
 typedef enum HeroState {
   HERO_STILL,
   HERO_WALKING,
@@ -441,7 +440,7 @@ void draw_world_map(void) NONBANKED;
  */
 inline void map_textbox(const char *text) {
   map_state = MAP_STATE_TEXTBOX;
-  open_textbox(text);
+  textbox.open(text);
 }
 
 /**

@@ -9,63 +9,71 @@
 #include "main.h"
 #include "map.h"
 #include "main_menu.h"
-#include "textbox.h"
 #include "util.h"
 
 uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
-GameState game_state = MAIN_MENU;
+GameState game_state = GAME_STATE_TITLE;
 
 /**
- * Sets the main game state and executes any initialization code related to that
- * state.
- * @param s Game state to set.
- */
-void set_game_state(GameState s) NONBANKED {
-  switch (game_state = s) {
-  case MAIN_MENU:
-    init_main_menu();
-    break;
-  case WORLD_MAP:
-    init_world_map();
-    break;
-  }
-}
-
-/**
- * Initializes the game.
+ * Initializes the core game engine.
  */
 inline void initialize(void) {
   initarand(RANDOM_SEED);
   init_player();
+  move_win(7, 144);
 
   // init_main_menu();
-
-  // init_text_box();
   // init_world_map();
+  // init_battle();
 
-  init_battle();
+  init_world_map();
+  game_state = GAME_STATE_WORLD_MAP;
 }
 
 /**
  * Executes core gameloop logic.
  */
 inline void game_loop(void) {
-  // update_world_map();
-
-  update_battle();
-  // update_main_menu();
+  switch (game_state) {
+  case GAME_STATE_TITLE:
+    update_main_menu();
+    break;
+  case GAME_STATE_WORLD_MAP:
+    update_world_map();
+    break;
+  case GAME_STATE_BATTLE:
+    update_battle();
+    break;
+  }
 }
 
 /**
  * Executes rendering logic that must occur during a VBLANK.
  */
 inline void render(void) {
-  // draw_world_map();
+  switch (game_state) {
+  case GAME_STATE_TITLE:
+    draw_main_menu();
+    break;
+  case GAME_STATE_WORLD_MAP:
+    draw_world_map();
+    break;
+  case GAME_STATE_BATTLE:
+    draw_battle();
+    break;
+  }
+}
 
-  // draw_main_menu();
-  draw_battle();
+/**
+ * Reads and updates the joypad state.
+ */
+inline void update_joypad(void) {
+  uint8_t last = joypad_down;
+  joypad_down = joypad();
+  joypad_pressed = ~last & joypad_down;
+  joypad_released = last & ~joypad_down;
 }
 
 /**
@@ -73,7 +81,6 @@ inline void render(void) {
  * joypad state updates.
  */
 void main(void) {
-  // Initialize the game state
   lcd_off();
   LCDC_REG = LCDCF_OFF
     | LCDCF_OBJON
@@ -83,18 +90,10 @@ void main(void) {
   initialize();
   lcd_on();
 
-  // Start the main game loop
   while (1) {
-    // Update joypad bitfields
-    uint8_t last = joypad_down;
-    joypad_down = joypad();
-    joypad_pressed = ~last & joypad_down;
-    joypad_released = last & ~joypad_down;
-
-    // Execute game logic
+    update_joypad();
+    text_writer.update();
     game_loop();
-
-    // Wait for a VBLANK then execute rendering logic
     vsync();
     render();
   }
