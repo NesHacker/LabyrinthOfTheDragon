@@ -41,3 +41,90 @@ const palette_color_t monster_death_colors[] = {
   RGB8(255, 255, 255),
   RGB8(255, 255, 255),
 };
+
+const palette_color_t data_battle_bg_colors[] = {
+  // Palette 0 - Background / Textbox
+  RGB_WHITE,
+  RGB8(111, 127, 243),
+  RGB8(60, 80, 60),
+  RGB8(28, 28, 0),
+  // Palette 1 - Monster 1
+  RGB_WHITE,
+  RGB8(209, 206, 107),
+  RGB8(126, 73, 73),
+  RGB8(0, 40, 51),
+  // Palette 2 - Monster 2
+  RGB_WHITE,
+  RGB8(209, 206, 107),
+  RGB8(126, 73, 73),
+  RGB8(0, 40, 51),
+  // Palette 3 - Monster 3
+  RGB_WHITE,
+  RGB8(209, 206, 107),
+  RGB8(126, 73, 73),
+  RGB8(0, 40, 51),
+  // Palette 4 - HP Normal
+  RGB_WHITE,
+  RGB8(150, 200, 150),
+  RGB8(80, 120, 80),
+  RGB8(0, 32, 0),
+  // Palette 5 - HP Critical
+  RGB_WHITE,
+  RGB8(200, 150, 150),
+  RGB8(120, 80, 80),
+  RGB8(32, 0, 0),
+  // Palette 6 - Buff
+  RGB8(40, 150, 40),
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB_BLACK,
+  // Palette 7 - Debuff
+  RGB8(150, 40, 40),
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB_BLACK,
+};
+
+const palette_color_t data_battle_sprite_colors[] = {
+  // Palette 0 - Cursor
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 1 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 2 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 3 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 4 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 5 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 6 - UNUSED
+  RGB_WHITE,
+  RGB_LIGHTGRAY,
+  RGB_DARKGRAY,
+  RGB_BLACK,
+  // Palette 7 - CURSOR
+  RGB_WHITE,
+  RGB_BLACK,
+  RGB_DARKGRAY,
+  RGB_WHITE,
+};
+

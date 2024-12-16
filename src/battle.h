@@ -385,8 +385,6 @@ extern const Tilemap monster_layout_1;
 extern const Tilemap monster_layout_2;
 extern const Tilemap monster_layout_3s;
 extern const Tilemap monster_layout_1m2s;
-extern const Palette battle_bg_palette;
-extern const Palette battle_sprite_palette;
 extern const Tilemap battle_menu_tilemap;
 extern const Tilemap battle_submenu_tilemap;
 extern const Tilemap battle_textbox_tilemap;

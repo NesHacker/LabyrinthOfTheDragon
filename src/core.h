@@ -164,24 +164,6 @@ typedef struct Tilemap {
   const TilemapType type;
 } Tilemap;
 
-
-// TODO Remove this far pointer palette wrapper, palette data is small enough
-//      that if you can't fit it in the bank alongside the code you have bigger
-//      fish to fry.
-/**
- * Represents a banked set of palette data.
- */
-typedef struct Palette {
-  /**
-   * Bank on which the data resides.
-   */
-  const uint8_t bank;
-  /**
-   * Color data for the palette.
-   */
-  const palette_color_t *const data;
-} Palette;
-
 /**
  * Core module wrapper.
  */
@@ -228,18 +210,18 @@ typedef struct Core {
   const void (*draw_tilemap)(Tilemap s, uint8_t *dst);
   /**
    * Loads the given palette into the background palette set.
-   * @param p Palette to load.
+   * @param data Palette data to load.
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_bg_palette)(Palette p, uint8_t index, uint8_t n);
+  const void (*load_bg_palette)(palette_color_t *data, uint8_t index, uint8_t n);
   /**
    * Loads the given palette into the foreground palette set.
-   * @param p Palette to load.
+   * @param data Palette data to load.
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_sprite_palette)(Palette p, uint8_t index, uint8_t n);
+  const void (*load_sprite_palette)(palette_color_t *data, uint8_t index, uint8_t n);
 } Core;
 
 /**

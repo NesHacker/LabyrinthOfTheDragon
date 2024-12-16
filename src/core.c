@@ -128,19 +128,12 @@ void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
   SWITCH_ROM(_prev_bank);
 }
 
-void load_bg_palette(Palette p, uint8_t index, uint8_t n) {
-  uint8_t _prev_bank = _current_bank;
-  const uint8_t *data = p.data;
-  SWITCH_ROM(p.bank);
+void load_bg_palette(palette_color_t *data, uint8_t index, uint8_t n) {
   update_bg_palettes(index, n, data);
-  SWITCH_ROM(_prev_bank);
 }
 
-void load_sprite_palette(Palette p, uint8_t index, uint8_t n) {
-  uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(p.bank);
-  update_sprite_palettes(index, n, p.data);
-  SWITCH_ROM(_prev_bank);
+void load_sprite_palette(palette_color_t *data, uint8_t index, uint8_t n) {
+  update_sprite_palettes(index, n, data);
 }
 
 const Core core = {

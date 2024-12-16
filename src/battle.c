@@ -46,9 +46,6 @@ const Tilemap battle_textbox_tilemap = {
   20, 7, 5, tilemap_battle_menus + 20 * 2 * 7 * 2,
 };
 
-const Palette battle_bg_palette = { 5, data_battle_bg_colors };
-const Palette battle_sprite_palette = { 5, data_battle_sprite_colors };
-
 BattleState battle_state;
 BattleMenu battle_menu;
 BattleCursor battle_cursor;
@@ -528,8 +525,8 @@ void initialize_battle(void) {
   move_win(0, 144);
 
   // Load palettes & fonts
-  core.load_bg_palette(battle_bg_palette, 0, 8);
-  core.load_sprite_palette(battle_sprite_palette, 0, 8);
+  core.load_bg_palette(data_battle_bg_colors, 0, 8);
+  core.load_sprite_palette(data_battle_sprite_colors, 0, 8);
   core.load_font();
   core.load_battle_tiles();
 

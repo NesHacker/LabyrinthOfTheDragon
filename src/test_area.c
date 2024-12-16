@@ -159,8 +159,6 @@ Chest area0_chests[] = {
 
 Tileset dungeon_tileset = { 128, 12, tile_data_dungeon };
 
-Palette palette_area0 = { 2, area0_palettes };
-
 Area area0 = {
   0,                    // Id
   2, 14,                // Default column & row

@@ -1,5 +1,5 @@
 /**
- * [Core] Bank 3 - Map System
+ * [Core] Bank 2 - Map System
  */
 #pragma bank 2
 
