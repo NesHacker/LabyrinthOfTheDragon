@@ -6,22 +6,22 @@
 /**
  * Number of frames to wait with a slow auto page speed.
  */
-#define AUTO_PAGE_SLOW_FRAMES 60
+#define AUTO_PAGE_SLOW_FRAMES 50
 
 /**
  * Number of frames to wait with a medium auto page speed.
  */
-#define AUTO_PAGE_MED_FRAMES 30
+#define AUTO_PAGE_MED_FRAMES 25
 
 /**
  * Number of frames to wait with a fast auto page speed.
  */
-#define AUTO_PAGE_FAST_FRAMES 15
+#define AUTO_PAGE_FAST_FRAMES 10
 
 /**
  * Default number of frames to wait between characters.
  */
-#define TEXT_WRITER_DEFAULT_CHARACTER_DELAY 2
+#define TEXT_WRITER_DEFAULT_CHARACTER_DELAY 1
 
 /**
  * Default width for the text writing area.

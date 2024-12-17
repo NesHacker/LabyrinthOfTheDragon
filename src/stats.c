@@ -63,9 +63,9 @@ uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED {
 }
 
 uint16_t calc_monster_exp(uint8_t plvl, uint8_t mlvl, PowerTier mtier) BANKED {
-  if (plvl - mlvl + 8 <= 0)
+  if (plvl + 8 <= mlvl)
     return 0;
-  if (mlvl - plvl + 8 >= 15)
+  if (mlvl >= 7 + plvl)
     return get_monster_exp(mlvl, mtier) << 1;
   return (xp_mod[plvl - mlvl + 8] * get_monster_exp(mlvl, mtier)) >> 4;
 }

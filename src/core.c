@@ -181,6 +181,28 @@ void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
   draw_text(vram, buf, 7);
 }
 
+void hide_sprites(void) {
+  for (uint8_t k = 0; k < 40; k++)
+    move_sprite(k, 0, 0);
+}
+
+void core_fill(
+  uint8_t *vram,
+  uint8_t w,
+  uint8_t h,
+  uint8_t tile,
+  uint8_t attr
+) {
+  for (uint8_t y = 0; y < h; y++, vram += 32 - w) {
+    for (uint8_t x = 0; x < w; x++, vram++) {
+      VBK_REG = VBK_TILES;
+      set_vram_byte(vram, tile);
+      VBK_REG = VBK_ATTRIBUTES;
+      set_vram_byte(vram, attr);
+    }
+  }
+}
+
 const Core core = {
   load_tileset,
   core_load_tiles,
@@ -196,4 +218,6 @@ const Core core = {
   fill_bg,
   draw_text,
   print_fraction,
+  hide_sprites,
+  core_fill,
 };

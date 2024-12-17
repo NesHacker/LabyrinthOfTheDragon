@@ -26,6 +26,10 @@ typedef enum HeroState {
  */
 typedef enum MapState {
   /**
+   * Denotes that the map is currently inactive and should perform no updates.
+   */
+  MAP_STATE_INACTIVE,
+  /**
    * Denotes that the player is standing still and the world map controller is
    * awaiting input.
    */
@@ -51,6 +55,10 @@ typedef enum MapState {
    * Denotes that the textbox is currently displayed.
    */
   MAP_STATE_TEXTBOX,
+  /**
+   * Map is being transitioned to the battle system.
+   */
+  MAP_STATE_START_BATTLE,
 } MapState;
 
 /**
@@ -185,79 +193,64 @@ typedef struct Area {
    * table.
    */
   uint8_t id;
-
   /**
    * Default starting column for the player if the map is loaded directly and
    * not via an exit from another map.
    */
   uint8_t default_start_column;
-
   /**
    * Default starting row for the player if the map is loaded directly and not
    * via an exit from another map.
    */
   uint8_t default_start_row;
-
   /**
    * Tileset to use for the area.
    */
   Tileset *tileset;
-
   /**
    * Palettes to use for the dungeon.
    */
   palette_color_t *palettes;
-
   /**
    * Number of pages in the map.
    */
   uint8_t num_maps;
-
   /**
    * List of all pages for the map.
    */
   Map *maps;
-
   /**
    * Number of exit entries for the area.
    */
   uint8_t num_exits;
-
   /**
    * List of exits for all pages on the map.
    */
   Exit *exits;
-
   /**
    * Number of chests in the area.
    */
   uint8_t num_chests;
-
   /**
    * Array of treasure chests for the area.
    */
   Chest *chests;
-
   /**
    * Bank where the map's callback functions reside.
    */
   uint8_t callback_bank;
-
   /**
    * Called when the map is initialized by the game engine.
    */
   void (*on_init)(void);
-
   /**
    * Called on game loop update when the map is active.
    */
   void (*on_update)(void);
-
   /**
    * Called on VBLANK draw when the map is active.
    */
   void (*on_draw)(void);
-
   /**
    * Called when the player interacts by pressing the "A" button while in the
    * area.
@@ -266,42 +259,39 @@ typedef struct Area {
    * @param row Current row for the player.
    */
   void (*on_action)(void);
-
   /**
    * Called before a chest is opened.
    * @param chest_id Id of the chest being opened.
    * @return `true` if the chest can be opened.
    */
   bool (*before_chest)(Chest *chest);
-
   /**
    * Called after a chest has been opened.
    */
   void (*on_chest)(Chest *chest);
-
   /**
-   * Called when the player enters the map from another map.
+   * Called when the player enters a map from another map.
    * @param from_id Id of the map the player exited.
    * @param to_id Id of the map the player is entering.
    */
   void (*on_enter)(uint8_t from_id, uint8_t to_id);
-
   /**
    * Called when the map is active and the player moves into a special tile.
+   * @return `true` if the map should prevent default behavior.
    */
-  void (*on_special)(uint8_t col, uint8_t row);
-
+  bool (*on_special)(void);
   /**
    * Called when the map is active and the player moves into an "exit" tile.
-   * @param col_row The packed column & row for the exit.
+   * @return `true` if the map should prevent default behavior.
    */
-  void (*on_exit)(void);
-
+  bool (*on_exit)(void);
   /**
    * Called when the map is active and the player moves into a floor tile.
-   * @param col_row The packed column & row for the tile.
+   * @param col The column for the tile.
+   * @param row The row for the tile.
+   * @return `true` if the map should prevent default behavior.
    */
-  void (*on_move)(uint8_t col, uint8_t row);
+  bool (*on_move)(void);
 } Area;
 
 /**
@@ -433,6 +423,24 @@ void update_world_map(void) NONBANKED;
 void draw_world_map(void) NONBANKED;
 
 /**
+ * Set the "open" state graphics for the given chest.
+ * @param chest Chest that needs to be graphically depicted as "open".
+ */
+void set_chest_open_graphics(Chest *chest);
+
+/**
+ * Initiates battle using the currently configured encounter. This should be
+ * called by area handlers to start battle after initalizing the `encounter`
+ * state used by the battle system.
+ */
+void start_battle(void);
+
+/**
+ * Called when returning to the map system from the battle system.
+ */
+void return_from_battle(void) NONBANKED;
+
+/**
  * Opens a textbox while on the world map.
  * @param text Text to display in the text box.
  */
@@ -485,13 +493,22 @@ inline bool is_map(uint8_t id) {
 }
 
 /**
+ * @param c Column to check.
+ * @param r Row to check.
+ * @return `true` If the player is at the given column and row in the map.
+ */
+inline bool player_at(uint8_t c, uint8_t r) {
+  return map_col == c && map_row == r;
+}
+
+/**
  * @param col Column to check.
  * @param row Row to check.
  * @param d Direction to check.
  * @return `true` If the player is at the given position in the map and is
  *   facing the given direction.
  */
-inline bool player_at(uint8_t col, uint8_t row, Direction d) {
+inline bool player_at_facing(uint8_t col, uint8_t row, Direction d) {
   return map_col == col && map_row == row && hero_direction == d;
 }
 
@@ -502,25 +519,11 @@ inline bool player_at(uint8_t col, uint8_t row, Direction d) {
  */
 inline bool player_facing(uint8_t col, uint8_t row) {
   return (
-    player_at(col - 1, row, RIGHT) ||
-    player_at(col + 1, row, LEFT) ||
-    player_at(col, row - 1, DOWN) ||
-    player_at(col, row + 1, UP)
+    player_at_facing(col - 1, row, RIGHT) ||
+    player_at_facing(col + 1, row, LEFT) ||
+    player_at_facing(col, row - 1, DOWN) ||
+    player_at_facing(col, row + 1, UP)
   );
-}
-
-/**
- * Set the "open" state graphics for the given chest.
- * @param chest Chest that needs to be graphically depicted as "open".
- */
-inline void set_chest_open_graphics(Chest *chest) {
-  // TODO Decide on a standard position for chest graphics in the general area
-  //      tileset layout, 0x2C will suffice for now.
-  uint8_t *vram = VRAM_BACKGROUND_XY(chest->col * 2, chest->row * 2);
-  set_vram_byte(vram, 0x2C);
-  set_vram_byte(vram + 1, 0x2D);
-  set_vram_byte(vram + 0x20, 0x3C);
-  set_vram_byte(vram + 0x20 + 1, 0x3D);
 }
 
 /**
@@ -570,6 +573,41 @@ inline bool before_chest(Chest *chest) {
 inline void on_chest(Chest *chest) {
   if (active_area->on_chest)
     active_area->on_chest(chest);
+}
+
+/**
+ * Executes the active area's `on_enter` callback if one is set.
+ */
+inline void on_enter(uint8_t from_id, uint8_t to_id) {
+  if (active_area->on_enter)
+    active_area->on_enter(from_id, to_id);
+}
+
+/**
+ * Executes the active area's `on_special` callback if one is set.
+ */
+inline bool on_special(void) {
+  if (active_area->on_special)
+    return active_area->on_special();
+  return false;
+}
+
+/**
+ * Executes the active area's `on_exit` callback if one is set.
+ */
+inline bool on_exit(void) {
+  if (active_area->on_exit)
+    return active_area->on_exit();
+  return false;
+}
+
+/**
+ * Executes the active area's `on_move` callback if one is set.
+ */
+inline bool on_move(void) {
+  if (active_area->on_move)
+    return active_area->on_move();
+  return false;
 }
 
 #endif

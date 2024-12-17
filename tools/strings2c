@@ -57,6 +57,14 @@ const params = {
   '%c': {
     code: '%c',
     max: 1
+  },
+  '%exp': {
+    code: '%u',
+    max: 3
+  },
+  '%level': {
+    code: '%u',
+    max: 2
   }
 };
 

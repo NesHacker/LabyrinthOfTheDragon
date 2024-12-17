@@ -141,6 +141,34 @@ void set_player_flee(void) {
   encounter.player_action = PLAYER_ACTION_FLEE;
 }
 
+bool monsters_slain(void) {
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++) {
+    if (monster->active)
+      return false;
+  }
+  return true;
+}
+
+void reset_encounter(MonsterLayout layout) NONBANKED {
+  encounter.layout = layout;
+  for (uint8_t k = 0; k < 5; k++) {
+    encounter.order[k] = TURN_END;
+  }
+  encounter.turn = TURN_END;
+  encounter.turn_index = 0;
+  encounter.round_complete = 0;
+  encounter.player_action = PLAYER_ACTION_FIGHT;
+  encounter.summon = NULL;
+  encounter.player_ability = NULL;
+  encounter.target = NULL;
+  encounter.xp_reward = 0;
+
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++)
+    monster_deactivate(monster++);
+}
+
 Encounter encounter = {
   MONSTER_LAYOUT_1,
   { {NULL}, {NULL}, {NULL} },

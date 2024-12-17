@@ -10,6 +10,7 @@
 #include "battle.h"
 #include "core.h"
 #include "encounter.h"
+#include "map.h"
 #include "monster.h"
 #include "palette.h"
 #include "strings.h"
@@ -54,6 +55,7 @@ uint8_t status_effect_frame = 0;
 BattleAnimation battle_animation;
 char battle_pre_message[64];
 char battle_post_message[64];
+char rewards_buf[64];
 
 /**
  * Determines the x position for the HP bar based on the given monster position
@@ -133,6 +135,20 @@ inline void hide_battle_text(void) {
   move_win(0, 144);
 }
 
+void erase_monster_tiles(MonsterPosition p) {
+  const uint8_t monster_clear_x[4][3] = {
+    { 7, 0xFF, 0xFF },
+    { 2, 11, 0xFF },
+    { 0, 6, 12 },
+    { 0, 7, 13 }
+  };
+  if (p > MONSTER_POSITION3) return;
+  if (encounter.layout > MONSTER_LAYOUT_1M_2S) return;
+  uint8_t x = monster_clear_x[encounter.layout][p];
+  if (x == 0xFF) return;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, 1);
+  core.fill(vram, 7, 7, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
+}
 
 /**
  * Loads the graphics and palettes for a monster instance.
@@ -182,6 +198,21 @@ void toggle_hp_bar_palette(MonsterPosition pos) {
   VBK_REG = VBK_ATTRIBUTES;
   for (uint8_t k = 0; k < 7; k++, vram++)
     set_vram_byte(vram, (pos + 1) | 0x08);
+}
+
+/**
+ * Removes an HP bar from the screen.
+ */
+void erase_hp_bar(MonsterPosition pos) {
+  const uint8_t x = get_hp_bar_x(pos);
+  const uint8_t y = 9;
+  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
+  for (uint8_t k = 0; k < 7; k++, vram++) {
+    VBK_REG = VBK_TILES;
+    set_vram_byte(vram, BATTLE_CLEAR_TILE);
+    VBK_REG = VBK_ATTRIBUTES;
+    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
+  }
 }
 
 /**
@@ -442,19 +473,6 @@ void fight_menu_isr(void) {
  * Initializes graphics and state for the encounter and monsters.
  */
 void battle_init_encounter(void) {
-  // The encounter should already be generate prior to this point
-  // TODO Remove this after testing
-  encounter.layout = MONSTER_LAYOUT_2;
-  MonsterInstance *monster = encounter.monsters;
-
-  kobold_generator(monster, 2, C_TIER);
-  monster->id = 'A';
-
-  kobold_generator(++monster, 3, B_TIER);
-  monster->id = 'B';
-
-  monster_deactivate(++monster);
-
   // Initialize graphics for the monsters in the encounter
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
@@ -470,8 +488,8 @@ void battle_init_encounter(void) {
     core.draw_tilemap(monster_layout_1m2s, VRAM_BACKGROUND);
     break;
   }
-  monster = encounter.monsters;
 
+  MonsterInstance *monster = encounter.monsters;
   load_monster_graphics(MONSTER_POSITION1, monster++);
   load_monster_graphics(MONSTER_POSITION2, monster++);
   load_monster_graphics(MONSTER_POSITION3, monster);
@@ -517,9 +535,10 @@ void update_player_summon(void) {
 void initialize_battle(void) {
   lcd_off();
 
-  // Reset the background and window position
+  // Reset the background, window, and sprites
   core.fill_bg(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
-  move_win(0, 144);
+  core.hide_sprites();
+  hide_window();
 
   // Load palettes & fonts
   core.load_bg_palette(data_battle_bg_colors, 0, 8);
@@ -542,6 +561,7 @@ void initialize_battle(void) {
     set_sprite_prop(CURSOR_SPRITE + s, CURSOR_ATTR);
   }
   move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+  battle_menu = BATTLE_MENU_MAIN;
 
   // Initialize the encounter and player graphics
   battle_init_encounter();
@@ -563,6 +583,11 @@ void initialize_battle(void) {
   // Animation & timers
   init_timer(status_effect_timer, 40);
 
+  // Initiate the fade-in and start battle
+  battle_state = BATTLE_FADE_IN;
+  fade_in();
+  game_state = GAME_STATE_BATTLE;
+
   lcd_on();
 }
 
@@ -572,7 +597,7 @@ void init_battle(void) NONBANKED {
   initialize_battle();
 }
 
-void cleanup_battle(void) {
+void cleanup_isr(void) {
   CRITICAL {
     remove_LCD(fight_menu_isr);
     remove_LCD(nowait_int_handler);
@@ -586,7 +611,18 @@ void cleanup_battle(void) {
  * next round of combat.
  */
 void confirm_fight(void) {
-  uint8_t monster_idx = battle_cursor - BATTLE_CURSOR_MONSTER_1;
+  uint8_t monster_idx = 0;
+  switch (battle_cursor) {
+  case BATTLE_CURSOR_MONSTER_1:
+    monster_idx = 0;
+    break;
+  case BATTLE_CURSOR_MONSTER_2:
+    monster_idx = 1;
+    break;
+  case BATTLE_CURSOR_MONSTER_3:
+    monster_idx = 2;
+    break;
+  }
   MonsterInstance *target = get_monster(monster_idx);
   set_player_fight(target);
   battle_state = BATTLE_ROLL_INITIATIVE;
@@ -1031,34 +1067,43 @@ void animate_action_result(void) {
  * Cleans up monsters after an action (handles death, etc.).
  */
 void cleanup_monsters(void) {
+  // TODO This should be in the encounter module
   MonsterInstance *monster = encounter.monsters;
   for (uint8_t pos = 0; pos < 3; pos++, monster++) {
     if (!monster->active)
       continue;
     if (monster->hp == 0) {
       monster->active = false;
+      encounter.xp_reward += calc_monster_exp(
+        player.level,
+        monster->level,
+        monster->exp_tier
+      );
+      erase_monster_tiles(pos);
+      erase_hp_bar(pos);
     }
   }
 }
 
-void update_battle(void) {
-  if (battle_state == BATTLE_INACTIVE)
-    return;
+void battle_rewards(void) {
+  const uint8_t xp = encounter.xp_reward;
+  player.exp += xp;
+  // TODO level up
+  sprintf(rewards_buf, str_battle_victory, xp);
+  text_writer.auto_page = AUTO_PAGE_OFF;
+  text_writer.print(rewards_buf);
+}
 
-  // Update animation timers, etc.
-  if (update_timer(status_effect_timer)) {
-    status_effect_frame ^= 1;
-    reset_timer(status_effect_timer);
+void update_battle(void) NONBANKED {
+  if (battle_state == BATTLE_COMPLETE) {
+    // Important, don't remove
+    return;
   }
 
-  // Update the battle text
-  text_writer.update();
-
-  // TODO should this just always happen every frame?
-  // redraw_player_status_effects();
-  // redraw_monster_status_effects();
-
   switch (battle_state) {
+  case BATTLE_FADE_IN:
+    // Important, keep
+    return;
   case BATTLE_STATE_MENU:
     update_battle_menu();
     break;
@@ -1105,13 +1150,17 @@ void update_battle(void) {
     break;
   case BATTLE_PLAYER_FLED:
     // Flee success message / animation
-    // Re
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
     text_writer.print("GAME OVER");
     break;
   case BATTLE_END_ROUND:
+    if (monsters_slain()) {
+      battle_state = BATTLE_SUCCESS;
+      battle_rewards();
+      return;
+    }
     battle_state = BATTLE_STATE_MENU;
     battle_menu = BATTLE_MENU_MAIN;
     hide_battle_text();
@@ -1119,17 +1168,49 @@ void update_battle(void) {
     break;
   case BATTLE_SUCCESS:
     // Calculate and display rewards
+    if (text_writer.state == TEXT_WRITER_PAGE_WAIT && was_pressed(J_A)) {
+      text_writer.next_page();
+    } else if (text_writer.state == TEXT_WRITER_DONE) {
+      fade_out();
+      toggle_sprites();
+      battle_state = BATTLE_COMPLETE;
+    }
     break;
   case BATTLE_LEVEL_UP:
     // Handle level up messages and logic.
     break;
-  case BATTLE_COMPLETE:
-    // Fade out and return to the world map.
-    battle_state = BATTLE_INACTIVE;
-    break;
   }
+
+  // Update animation timers, etc.
+  if (update_timer(status_effect_timer)) {
+    status_effect_frame ^= 1;
+    reset_timer(status_effect_timer);
+  }
+
+  // TODO should this just always happen every frame?
+  // redraw_player_status_effects();
+  // redraw_monster_status_effects();
 }
 
-void draw_battle(void) {
+void draw_battle(void) NONBANKED {
+  switch (battle_state) {
+  case BATTLE_COMPLETE:
+    if (fade_update()) {
+      // Return to the world map.
+      lcd_off();
+      cleanup_isr();
+      battle_state = BATTLE_INACTIVE;
+      return_from_battle();
+      return;
+    }
+    break;
+  case BATTLE_FADE_IN:
+    if (fade_update()) {
+      battle_state = BATTLE_STATE_MENU;
+      toggle_sprites();
+      move_bkg(0, 0);
+    }
+    break;
+  }
   move_bkg(0, 0);
 }

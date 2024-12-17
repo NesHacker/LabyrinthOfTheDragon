@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "battle.h"
 #include "core.h"
 #include "map.h"
 
@@ -194,21 +195,9 @@ void update_map_positions(void) {
   }
 }
 
-/**
- * Loads an area state and assets and initializes the world map controller.
- * @param a Area to load.
- */
-void load_area(Area *a) {
-  // TODO This is a data loader, refactor into a core data service
 
-  // Initialize area state
-  active_area = a;
-  map_col = a->default_start_column;
-  map_row = a->default_start_row;
-  map_state = MAP_STATE_WAITING;
-  set_map_xy_from_col_row();
-  update_map_positions();
-
+void load_area_graphics(Area *a) {
+  // TODO this is a data loader, refactor into core Area data service
   // Load tilesets and palettes
   VBK_REG = VBK_BANK_0;
 
@@ -217,8 +206,19 @@ void load_area(Area *a) {
   core.load_tileset(a->tileset, VRAM_BG_TILES);
   core.load_object_tiles();
   core.load_bg_palette(a->palettes, 0, 4);
+}
 
-  on_init();
+/**
+ * Loads an area state and assets and initializes the world map controller.
+ * @param a Area to load.
+ */
+void load_area(Area *a) {
+  active_area = a;
+  map_col = a->default_start_column;
+  map_row = a->default_start_row;
+  map_state = MAP_STATE_WAITING;
+  set_map_xy_from_col_row();
+  update_map_positions();
 }
 
 /**
@@ -256,13 +256,23 @@ inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
   *map_attr = data >> 6;
 }
 
+
+/**
+ * Gets the active area map at the given index id.
+ * @param id Id of the map to get.
+ * @return The map with the given id.
+ */
+Map *get_map(uint8_t id) {
+  // TODO This is a data loader, refactor into a core data service
+  return active_area->maps + id;
+}
+
 /**
  * Loads a map in the current area with the given map_id.
  * @param map_id Id of the map to load.
  */
-void load_map(uint8_t map_id) NONBANKED {
+void load_map(Map *map) NONBANKED {
   // TODO This is a data loader, refactor into a core data service
-  Map *map = &active_area->maps[map_id];
   active_map = map;
 
   uint8_t *vram = VRAM_BACKGROUND;
@@ -347,6 +357,15 @@ void check_move(void) {
 }
 
 /**
+ * Stops map movement, turns off sprites, and begins fading the screen out.
+ */
+void map_fade_out(void) {
+  stop_map_move();
+  toggle_sprites();
+  fade_out();
+}
+
+/**
  * Handle state updates when a player lands on an exit tile. Currently the area
  * structure defines a list of exits for all maps, if this function doesn't find
  * an exit at the given position in the current map then nothing happens and the
@@ -366,10 +385,8 @@ bool handle_exit(void) {
     if (x->row != map_row) continue;
 
     active_exit = x;
-    stop_map_move();
-    LCDC_REG ^= LCDCF_OBJON;
+    map_fade_out();
     map_state = MAP_STATE_FADE_OUT;
-    fade_out();
 
     // TODO Add player "exiting" animation based on exit type
     // TODO Handle exits in the same map
@@ -416,16 +433,25 @@ void update_map_move(void) {
   map_col = map_x >> 4;
   map_row = map_y >> 4;
 
+  on_move();
+
   switch (get_tile_attribute()) {
   case MAP_EXIT:
+    if (on_exit()) {
+      return;
+    }
     handle_exit();
     break;
+  case MAP_SPECIAL:
+    if (on_special()) {
+      return;
+    }
+    break;
   default:
-    // Immediately check for d-pad input to allow continuous movement.
-    check_move();
   }
+  // Immediately check for d-pad input to allow continuous movement.
+  check_move();
 }
-
 
 /**
  * Determines if a player is attempting to open a chest and handles the logic
@@ -463,21 +489,79 @@ bool check_action(void) {
   return false;
 }
 
-void init_world_map(void) NONBANKED {
+void set_chest_open_graphics(Chest *chest) {
+  // TODO Decide on a standard position for chest graphics in the general area
+  //      tileset layout, 0x2C will suffice for now.
+  uint8_t *vram = VRAM_BACKGROUND_XY(chest->col * 2, chest->row * 2);
+  set_vram_byte(vram, 0x2C);
+  set_vram_byte(vram + 1, 0x2D);
+  set_vram_byte(vram + 0x20, 0x3C);
+  set_vram_byte(vram + 0x20 + 1, 0x3D);
+}
+
+void start_battle(void) {
+  // TODO "Cool" battle starting animation
+  map_fade_out();
+  map_state = MAP_STATE_START_BATTLE;
+}
+
+// TODO This is very similar "init", I think the only real difference is
+//      that init loads the area and sets the map to map_id 0
+void return_from_battle(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
-  lcd_off();
+
+  text_writer.auto_page = AUTO_PAGE_OFF;
 
   textbox.init();
   core.load_font();
+  text_writer.auto_page = AUTO_PAGE_OFF;
 
   init_hero();
-  load_area(&area0);
-  load_map(0);
+  load_area_graphics(active_area);
+  on_init();
+  load_map(active_map);
+  set_map_xy_from_col_row();
+
+  // TODO It is weird these are decoupled. Is there a reason?
+  update_map_positions();
+  move_bkg(map_scroll_x, map_scroll_y);
+
+  fade_in();
+  map_state = MAP_STATE_FADE_IN;
+  game_state = GAME_STATE_WORLD_MAP;
 
   lcd_on();
 }
 
-void update_world_map(void) {
+void init_world_map(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
+  lcd_off();
+
+  load_area(&area0);
+
+  textbox.init();
+  core.load_font();
+  text_writer.auto_page = AUTO_PAGE_OFF;
+
+  init_hero();
+  load_area_graphics(active_area);
+  on_init();
+  load_map(get_map(0));
+
+  map_state = MAP_STATE_WAITING;
+
+  lcd_on();
+}
+
+void update_world_map(void) NONBANKED {
+  if (
+    map_state == MAP_STATE_START_BATTLE ||
+    map_state == MAP_STATE_INACTIVE
+  ) {
+    // Important, don't remove.
+    return;
+  }
+
   switch (map_state) {
   case MAP_STATE_WAITING:
     if (!check_action()) {
@@ -493,12 +577,23 @@ void update_world_map(void) {
   on_update();
 }
 
-void draw_world_map(void) {
+void draw_world_map(void) NONBANKED {
+  if (map_state == MAP_STATE_INACTIVE)
+    return;
+
   switch (map_state) {
   case MAP_STATE_TEXTBOX:
     textbox.update();
     if (textbox.state == TEXT_BOX_CLOSED) {
       map_state = MAP_STATE_WAITING;
+    }
+    break;
+  case MAP_STATE_START_BATTLE:
+    if (fade_update()) {
+      lcd_off();
+      map_state = MAP_STATE_INACTIVE;
+      init_battle();
+      return;
     }
     break;
   case MAP_STATE_FADE_OUT:
@@ -508,7 +603,7 @@ void draw_world_map(void) {
     break;
   case MAP_STATE_LOAD:
     lcd_off();
-    load_map(active_exit->to_map);
+    load_map(get_map(active_exit->to_map));
     map_col = active_exit->to_col;
     map_row = active_exit->to_row;
     hero_direction = active_exit->heading;
@@ -530,3 +625,4 @@ void draw_world_map(void) {
   }
   on_draw();
 }
+

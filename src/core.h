@@ -157,6 +157,16 @@
 #define VRAM_BATTLE_TILES (void *)0x9300
 
 /**
+ * Toggles sprites on/off.
+ */
+#define toggle_sprites() LCDC_REG ^= LCDCF_OBJON;
+
+/**
+ * Hides the window (but keeps it enabled).
+ */
+#define hide_window() move_win(0, 144)
+
+/**
  * Universal direction type.
  */
 typedef enum Direction {
@@ -291,6 +301,22 @@ extern uint8_t joypad_released;
  * @return `true` If the button was released this frame.
  */
 #define was_released(b) (joypad_released & (b))
+
+/**
+ * Enumeration of all main states for the game.
+ */
+typedef enum GameState {
+  GAME_STATE_TITLE,
+  GAME_STATE_WORLD_MAP,
+  GAME_STATE_BATTLE,
+  GAME_STATE_MAIN_MENU,
+} GameState;
+
+/**
+ * Main state for the game. Determines subsystem controller run during the
+ * core game and rendering loops.
+ */
+extern GameState game_state;
 
 /**
  * Core tileset structure.
@@ -441,6 +467,20 @@ typedef struct Core {
    * @param d Denominator for the fraction.
    */
   const void (*print_fraction)(uint8_t *vram, uint16_t n, uint16_t d);
+  /**
+   * Hides all sprites by moving them to the origin.
+   */
+  const void (*hide_sprites)(void);
+  /**
+   * Fills a rect with the given tiles and attributes.
+   * @param vram Vram location to begin the fill.
+   * @param w Width for the fill.
+   * @param h Height for the fill.
+   * @param tile Tile to fill.
+   * @param attr Attribute to fill.
+   */
+  const void (*fill)(
+    uint8_t *vram, uint8_t w, uint8_t h, uint8_t tile, uint8_t attr);
 } Core;
 
 /**

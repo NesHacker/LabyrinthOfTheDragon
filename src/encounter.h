@@ -109,6 +109,10 @@ typedef struct Encounter {
    * If the player is targeting a monster, this is the index for that monster.
    */
   MonsterInstance *target;
+  /**
+   * Accumulated xp to reward upon finishing battle.
+   */
+  uint16_t xp_reward;
 } Encounter;
 
 /**
@@ -164,12 +168,21 @@ void check_status_effects(void);
 void take_action(void);
 
 /**
+ * @return `true` If all the monsters have been defeated.
+ */
+bool monsters_slain(void);
+
+/**
+ * Resets the encounter so it can be reconfigured for another battle.
+ */
+void reset_encounter(MonsterLayout layout);
+
+/**
  * @return The monster at the given index.
  * @param idx Index for the monster in the battle.
  */
 inline MonsterInstance *get_monster(uint8_t idx) {
   return encounter.monsters + idx;
 }
-
 
 #endif

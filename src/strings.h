@@ -136,6 +136,16 @@ extern const char str_battle_player_hit_vuln[];
 extern const char str_battle_player_hit_crit[];
 
 /**
+ * "Victory! You gain %exp XP!"
+ */
+extern const char str_battle_victory[];
+
+/**
+ * "LEVEL UP! You reach %level!"
+ */
+extern const char str_battle_level_up[];
+
+/**
  * "You attack with your tiny claws..."
  */
 extern const char str_summon_kobold_attack[];

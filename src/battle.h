@@ -167,6 +167,14 @@
  */
 typedef enum BattleState {
   /**
+   * Battle is over/inactive and the update routine should do nothing if called.
+   */
+  BATTLE_INACTIVE,
+  /**
+   * Battle screen is being faded in.
+   */
+  BATTLE_FADE_IN,
+  /**
    * The player is on the main battle menu and choosing an action.
    */
   BATTLE_STATE_MENU,
@@ -226,10 +234,6 @@ typedef enum BattleState {
    * Exits battle mode and send the player back to the world map.
    */
   BATTLE_COMPLETE,
-  /**
-   * Battle is over/inactive and the update routine should do nothing if called.
-   */
-  BATTLE_INACTIVE,
 } BattleState;
 
 /**

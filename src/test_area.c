@@ -1,6 +1,7 @@
 #pragma bank 2
 
 #include "core.h"
+#include "encounter.h"
 #include "map.h"
 
 // TODO Factor me out into a general flame class
@@ -96,7 +97,7 @@ void area0_on_action(void) {
   switch(active_map->id) {
   case MAP_FLOOR1:
     // Sconce
-    if (player_at(6, 5, UP)) {
+    if (player_at_facing(6, 5, UP)) {
       if (!check_flags(TEST_FLAGS, FLAG_SCONCE_LIT)) {
         if (!check_flags(TEST_FLAGS, FLAG_HAS_TORCH)) {
           map_textbox("A sconce adorns\nthe wall\x60\fIts flame long\nextinguished.");
@@ -113,14 +114,14 @@ void area0_on_action(void) {
     }
 
     // Boss Door
-    if (player_at(11, 3, UP)) {
+    if (player_at_facing(11, 3, UP)) {
       map_textbox("Locked tight.\fWhatever's behind\nthis door feels\x60\nOminous.");
     }
 
     break;
   case MAP_FLOOR2:
     // Empty chest
-    if (player_at(3, 10, DOWN)) {
+    if (player_at_facing(3, 10, DOWN)) {
       if (!check_flags(TEST_FLAGS, FLAG_EMPTY_CHEST)) {
         set_flags(TEST_FLAGS, FLAG_EMPTY_CHEST);
         map_textbox("Nothing but dust.\fBest look\nelsewhere\x60");
@@ -130,7 +131,7 @@ void area0_on_action(void) {
     }
 
     // Wall Skull
-    if (player_at(9, 3, UP)) {
+    if (player_at_facing(9, 3, UP)) {
       map_textbox("This skull seems\nout of place.");
     }
     break;
@@ -145,6 +146,22 @@ void area0_on_chest(Chest *chest) {
     map_textbox("Nice!\nYou found a torch.");
     break;
   }
+}
+
+bool area0_on_special(void) {
+  if (active_map->id == MAP_FLOOR1 && player_at(1, 9)) {
+    reset_encounter(MONSTER_LAYOUT_1);
+
+    MonsterInstance *monster = encounter.monsters;
+    kobold_generator(monster, 3, C_TIER);
+    monster->hp = monster->max_hp = 1;
+    monster->id = 'A';
+
+    start_battle();
+
+    return true;
+  }
+  return false;
 }
 
 Chest area0_chests[] = {
@@ -169,4 +186,8 @@ Area area0 = {
   area0_on_action,
   NULL, // before_chest
   area0_on_chest,
+  NULL, // on_enter
+  area0_on_special, // on_special
+  NULL, // on_exit
+  NULL, // on_move
 };

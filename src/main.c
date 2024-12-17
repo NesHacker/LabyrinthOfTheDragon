@@ -5,7 +5,6 @@
 
 #include "battle.h"
 #include "core.h"
-#include "main.h"
 #include "map.h"
 #include "main_menu.h"
 
@@ -13,6 +12,17 @@ uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
 GameState game_state = GAME_STATE_TITLE;
+
+void init_test_encounter(void) {
+  encounter.layout = MONSTER_LAYOUT_2;
+  MonsterInstance *monster = encounter.monsters;
+  kobold_generator(monster, 2, C_TIER);
+  monster->id = 'A';
+  kobold_generator(++monster, 3, B_TIER);
+  monster->id = 'B';
+  monster_deactivate(++monster);
+  init_battle();
+}
 
 /**
  * Initializes the core game engine.
@@ -23,11 +33,11 @@ inline void initialize(void) {
   move_win(7, 144);
 
   // init_main_menu();
-  // init_world_map();
-  init_battle();
+  init_world_map();
+  // init_test_encounter();
 
-  // game_state = GAME_STATE_WORLD_MAP;
-  game_state = GAME_STATE_BATTLE;
+  game_state = GAME_STATE_WORLD_MAP;
+  // game_state = GAME_STATE_BATTLE;
 }
 
 /**
@@ -51,6 +61,11 @@ inline void game_loop(void) {
  * Executes rendering logic that must occur during a VBLANK.
  */
 inline void render(void) {
+  // if (!(LCDC_REG & LCDCF_ON))
+  //   return;
+
+  text_writer.update();
+
   switch (game_state) {
   case GAME_STATE_TITLE:
     draw_main_menu();
@@ -90,7 +105,6 @@ void main(void) {
 
   while (1) {
     update_joypad();
-    text_writer.update();
     game_loop();
     vsync();
     render();

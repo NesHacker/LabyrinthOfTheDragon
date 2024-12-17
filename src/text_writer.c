@@ -37,7 +37,11 @@ void text_writer_print(const char *string) {
 }
 
 void text_writer_next_page(void) {
-  text_writer.state = TEXT_WRITER_CLEAR;
+  const char next = *text_writer.text;
+  if (next == '\0')
+    text_writer.state = TEXT_WRITER_DONE;
+  else
+    text_writer.state = TEXT_WRITER_CLEAR;
 }
 
 void page_wait(void) {
@@ -61,7 +65,7 @@ void page_wait(void) {
 inline void text_end(void) {
   switch (text_writer.auto_page) {
   case AUTO_PAGE_OFF:
-    text_writer.state = TEXT_WRITER_DONE;
+    text_writer.state = TEXT_WRITER_PAGE_WAIT;
     return;
   case AUTO_PAGE_SLOW:
     init_timer(text_writer.timer, AUTO_PAGE_SLOW_FRAMES);
