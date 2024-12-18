@@ -9,6 +9,8 @@
 #include <gbdk/incbin.h>
 #include <stdint.h>
 
+#include "../src/core.h"
+
 const palette_color_t monster_death_colors[] = {
   // Palette 0
   RGB8(255, 255, 255),
@@ -126,5 +128,33 @@ const palette_color_t data_battle_sprite_colors[] = {
   RGB_BLACK,
   RGB_DARKGRAY,
   RGB_WHITE,
+};
+
+const Tilemap monster_layout_1 = {
+  20, 11, 5, tilemap_battle_monster_layouts
+};
+
+const Tilemap monster_layout_2 = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 1
+};
+
+const Tilemap monster_layout_3s = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 2
+};
+
+const Tilemap monster_layout_1m2s = {
+  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 3
+};
+
+const Tilemap battle_menu_tilemap = {
+  20, 7, 5, tilemap_battle_menus
+};
+
+const Tilemap battle_submenu_tilemap = {
+  20, 7, 5, tilemap_battle_menus + 20 * 6 * 2,
+};
+
+const Tilemap battle_textbox_tilemap = {
+  20, 7, 5, tilemap_battle_menus + 20 * 2 * 6 * 2,
 };
 

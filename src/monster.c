@@ -49,9 +49,7 @@ void monster_reset_stats(MonsterInstance *m) {
  * @param type Type of damage dealt.
  */
 void damage_player(uint16_t base_damage, DamageAspect type) {
-  Summon *summon = player.summon;
-
-  if (summon->aspect_immune & type) {
+  if (player.aspect_immune & type) {
     sprintf(battle_post_message, str_battle_monster_hit_immune);
     return;
   }
@@ -62,10 +60,10 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
 
   if (critical) {
     sprintf(battle_post_message, str_battle_monster_hit_crit, damage);
-  } else  if (summon->aspect_resist & type) {
+  } else  if (player.aspect_resist & type) {
     damage >>= 1;
     sprintf(battle_post_message, str_battle_monster_hit_resist, damage);
-  } else if (summon->aspect_vuln & type) {
+  } else if (player.aspect_vuln & type) {
     damage <<= 1;
   } else if (type == DAMAGE_PHYSICAL) {
     sprintf(battle_post_message, str_battle_monster_hit, damage);

@@ -5,6 +5,7 @@
 
 #pragma bank 3
 
+const char str_battle_poison_spray[] = "Noxious gas erupts\n from your palm!";
 const char str_battle_monster_miss[] = "But they miss!";
 const char str_battle_monster_magic_miss[] = "But it has no \neffect!";
 const char str_battle_monster_hit[] = "You take %u \ndamage!";

@@ -16,46 +16,82 @@
 #include "strings.h"
 #include "text_writer.h"
 
-const Tilemap monster_layout_1 = {
-  20, 11, 5, tilemap_battle_monster_layouts
-};
-
-const Tilemap monster_layout_2 = {
-  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 1
-};
-
-const Tilemap monster_layout_3s = {
-  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 2
-};
-
-const Tilemap monster_layout_1m2s = {
-  20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 3
-};
-
-const Tilemap battle_menu_tilemap = {
-  20, 7, 5, tilemap_battle_menus
-};
-
-const Tilemap battle_submenu_tilemap = {
-  20, 7, 5, tilemap_battle_menus + 20 * 7 * 2,
-};
-
-const Tilemap battle_textbox_tilemap = {
-  20, 7, 5, tilemap_battle_menus + 20 * 2 * 7 * 2,
-};
-
+// TODO Move these into a BattleState struct
 BattleState battle_state;
 BattleMenu battle_menu;
-BattleCursor battle_cursor;
-uint8_t battle_num_submenu_items;
 
-Timer status_effect_timer;
-uint8_t status_effect_frame = 0;
-
-BattleAnimation battle_animation;
+// TODO convert these into a single battle_buffer obeject
+/**
+ * Structure containing memory buffers used during battle.
+ */
+typedef struct BattleBuffers {
+  char action[64];
+  char result[64];
+  char rewards[64];
+} BattleBuffers;
 char battle_pre_message[64];
 char battle_post_message[64];
 char rewards_buf[64];
+
+// TODO covert these into a single BattleAnimation state structure
+BattleAnimation battle_animation;
+Timer status_effect_timer;
+uint8_t status_effect_frame = 0;
+
+
+
+/**
+ * Confirms that the player has chosen the default "fight" action and begins the
+ * next round of combat.
+ */
+void confirm_fight(void) {
+  uint8_t monster_idx = 0;
+  switch (battle_menu.screen_cursor) {
+  case BATTLE_CURSOR_MONSTER_1:
+    monster_idx = 0;
+    break;
+  case BATTLE_CURSOR_MONSTER_2:
+    monster_idx = 1;
+    break;
+  case BATTLE_CURSOR_MONSTER_3:
+    monster_idx = 2;
+    break;
+  }
+  MonsterInstance *target = get_monster(monster_idx);
+  set_player_fight(target);
+  battle_state = BATTLE_ROLL_INITIATIVE;
+}
+
+/**
+ * Confirms that the player has chosen an ability action and begins the next
+ * round of combat.
+ */
+void confirm_ability(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
+}
+
+/**
+ * Confirms that the player has chosen to use an item and begins the next round
+ * of combat.
+ */
+void confirm_item(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
+}
+
+/**
+ * Confirms the player has chosen a summon and begins the next round of combat.
+ */
+void confirm_summon(void) {
+  // battle_state = BATTLE_ROLL_INITIATIVE;
+}
+
+/**
+ * Confirms that the player has selected the "flee" action from the main menu
+ * and begins the next round of combat.
+ */
+void confirm_flee(void) {
+}
+
 
 /**
  * Determines the x position for the HP bar based on the given monster position
@@ -115,26 +151,10 @@ uint8_t get_status_effect_x(MonsterPosition pos) {
 }
 
 /**
- * @return `true` If the submenu contains a number of selectable items.
+ * Erases tiles for the monster at the given position in the layout. Used to
+ * remove monster graphics after they die.
+ * @param p Position of the monster.
  */
-inline bool has_submenu_items(void) {
-  return battle_num_submenu_items > 0;
-}
-
-/**
- * Shows the battle text box.
- */
-inline void show_battle_text(void) {
-  move_win(7, 88);
-}
-
-/**
- * Hides the battle textbox.
- */
-inline void hide_battle_text(void) {
-  move_win(0, 144);
-}
-
 void erase_monster_tiles(MonsterPosition p) {
   const uint8_t monster_clear_x[4][3] = {
     { 7, 0xFF, 0xFF },
@@ -367,42 +387,37 @@ void move_cursor_sprites(uint8_t col, uint8_t row) {
  * Moves the battle cursor to the given cursor position.
  * @param c Cursor position to set.
  */
-void move_cursor(BattleCursor c) {
-  battle_cursor = c;
+void move_screen_cursor(BattleScreenCursor c) {
+  battle_menu.screen_cursor = c;
 
-  switch (battle_cursor) {
+  switch (battle_menu.screen_cursor) {
   case BATTLE_CURSOR_MAIN_FIGHT:
-    move_cursor_sprites(0, 12);
-    break;
-  case BATTLE_CURSOR_MAIN_ABILITY:
     move_cursor_sprites(0, 13);
     break;
-  case BATTLE_CURSOR_MAIN_ITEM:
+  case BATTLE_CURSOR_MAIN_ABILITY:
     move_cursor_sprites(0, 14);
     break;
-  case BATTLE_CURSOR_MAIN_MAIN_SUMMON:
+  case BATTLE_CURSOR_MAIN_ITEM:
     move_cursor_sprites(0, 15);
     break;
   case BATTLE_CURSOR_MAIN_FLEE:
     move_cursor_sprites(0, 16);
     break;
   case BATTLE_CURSOR_ITEM_1:
-    move_cursor_sprites(0, 12);
-    break;
-  case BATTLE_CURSOR_ITEM_2:
     move_cursor_sprites(0, 13);
     break;
-  case BATTLE_CURSOR_ITEM_3:
+  case BATTLE_CURSOR_ITEM_2:
     move_cursor_sprites(0, 14);
     break;
-  case BATTLE_CURSOR_ITEM_4:
+  case BATTLE_CURSOR_ITEM_3:
     move_cursor_sprites(0, 15);
     break;
-  case BATTLE_CURSOR_ITEM_5:
+  case BATTLE_CURSOR_ITEM_4:
     move_cursor_sprites(0, 16);
     break;
   case BATTLE_CURSOR_NO_ITEMS:
     hide_cursor();
+    break;
   case BATTLE_CURSOR_MONSTER_1:
     switch (encounter.layout) {
     case MONSTER_LAYOUT_1:
@@ -453,23 +468,6 @@ void move_cursor(BattleCursor c) {
 }
 
 /**
- * LCY interrupt handler for the fight and skill menus. This handler changes the
- * scroll-y position at a specific scanline to display a different part of the
- * background that contains the graphics for these menus.
- */
-void fight_menu_isr(void) {
-  SCY_REG = 0;
-  if (
-    battle_state == BATTLE_STATE_MENU &&
-    battle_menu != BATTLE_MENU_MAIN &&
-    battle_menu != BATTLE_MENU_FIGHT
-  ) {
-    SCY_REG = 56;
-    return;
-  }
-}
-
-/**
  * Initializes graphics and state for the encounter and monsters.
  */
 void battle_init_encounter(void) {
@@ -498,23 +496,30 @@ void battle_init_encounter(void) {
 /**
  * Updates the player's HP fraction.
  */
-inline void update_player_hp(void) {
-  core.print_fraction(VRAM_BACKGROUND_XY(12, 14), player.hp, player.max_hp);
+void update_player_hp(void) {
+  uint8_t *vram = VRAM_BACKGROUND_XY(
+    BATTLE_HP_X,
+    BATTLE_HP_Y
+  );
+  core.print_fraction(vram, player.hp, player.max_hp);
 }
 
 /**
- * Updates the player's SP fraction on the main menu.
+ * Updates the player's MP fraction on the main menu.
  */
-inline void update_player_sp(void) {
-  core.print_fraction(VRAM_BACKGROUND_XY(12, 15), player.sp, player.max_sp);
+void update_player_mp(void) {
+  uint8_t *vram = VRAM_BACKGROUND_XY(
+    BATTLE_MP_X,
+    BATTLE_MP_Y
+  );
+  core.print_fraction(vram, player.sp, player.max_sp);
 }
 
 /**
- * Updates the player's summon name and swaps the tech/magic menu.
+ * Updates the menu and resource to reflect whether or not a player has a
+ * magic or martial class.
  */
-void update_player_summon(void) {
-  player.summon->activate();
-  core.draw_text(VRAM_SUMMON_NAME, player.summon->name, 9);
+void set_magic_or_martial(void) {
   uint8_t menu_icon, resource_icon;
   if (is_magic_class()) {
     menu_icon = MAGIC_ICON;
@@ -527,137 +532,10 @@ void update_player_summon(void) {
   VBK_REG = VBK_TILES;
   for (uint8_t k = 0; k < 4; k++)
     set_vram_byte(vram++, menu_icon + k);
-  vram = VRAM_BACKGROUND_XY(9, MENU_Y + 4);
-  set_vram_byte(vram++, resource_icon);
-  set_vram_byte(vram, resource_icon + 1);
+  vram = VRAM_BACKGROUND_XY(BATTLE_MP_X - 3, BATTLE_MP_Y);
+  set_vram_byte(vram++, resource_icon++);
+  set_vram_byte(vram, resource_icon);
 }
-
-void initialize_battle(void) {
-  lcd_off();
-
-  // Reset the background, window, and sprites
-  core.fill_bg(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
-  core.hide_sprites();
-  hide_window();
-
-  // Load palettes & fonts
-  core.load_bg_palette(data_battle_bg_colors, 0, 8);
-  core.load_sprite_palette(data_battle_sprite_colors, 0, 8);
-  core.load_font();
-  core.load_battle_tiles();
-
-  // Configure the text writer
-  text_writer.set_origin(VRAM_WINDOW, 1, 2);
-  text_writer.set_auto_page(player.message_speed);
-  text_writer.set_size(18, 4);
-
-  // Draw menus and initialize cursor
-  core.draw_tilemap(battle_menu_tilemap, VRAM_BACKGROUND_XY(0, MENU_Y));
-  core.draw_tilemap(battle_submenu_tilemap, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
-  core.draw_tilemap(battle_textbox_tilemap, VRAM_WINDOW_XY(0, 0));
-
-  for (uint8_t s = 0; s < 4; s++) {
-    set_sprite_tile(CURSOR_SPRITE + s, CURSOR_TILE + s);
-    set_sprite_prop(CURSOR_SPRITE + s, CURSOR_ATTR);
-  }
-  move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
-  battle_menu = BATTLE_MENU_MAIN;
-
-  // Initialize the encounter and player graphics
-  battle_init_encounter();
-
-  // Update the player UI
-  update_player_summon();
-  update_player_hp();
-  update_player_sp();
-
-  // Attach an LCY=LY interrupt to handle the menu display.
-  CRITICAL {
-    LYC_REG = 87;
-    STAT_REG = STATF_LYC;
-    add_LCD(fight_menu_isr);
-    add_LCD(nowait_int_handler);
-  }
-  set_interrupts(IE_REG | LCD_IFLAG);
-
-  // Animation & timers
-  init_timer(status_effect_timer, 40);
-
-  // Initiate the fade-in and start battle
-  battle_state = BATTLE_FADE_IN;
-  fade_in();
-  game_state = GAME_STATE_BATTLE;
-
-  lcd_on();
-}
-
-void init_battle(void) NONBANKED {
-  // Switch to the battle ROM bank (has stats tables, etc.)
-  SWITCH_ROM(BATTLE_ROM_BANK);
-  initialize_battle();
-}
-
-void cleanup_isr(void) {
-  CRITICAL {
-    remove_LCD(fight_menu_isr);
-    remove_LCD(nowait_int_handler);
-    STAT_REG = 0;
-  }
-  set_interrupts(IE_REG & ~LCD_IFLAG);
-}
-
-/**
- * Confirms that the player has chosen the default "fight" action and begins the
- * next round of combat.
- */
-void confirm_fight(void) {
-  uint8_t monster_idx = 0;
-  switch (battle_cursor) {
-  case BATTLE_CURSOR_MONSTER_1:
-    monster_idx = 0;
-    break;
-  case BATTLE_CURSOR_MONSTER_2:
-    monster_idx = 1;
-    break;
-  case BATTLE_CURSOR_MONSTER_3:
-    monster_idx = 2;
-    break;
-  }
-  MonsterInstance *target = get_monster(monster_idx);
-  set_player_fight(target);
-  battle_state = BATTLE_ROLL_INITIATIVE;
-}
-
-/**
- * Confirms that the player has chosen an ability action and begins the next
- * round of combat.
- */
-void confirm_ability(void) {
-  // battle_state = BATTLE_ROLL_INITIATIVE;
-}
-
-/**
- * Confirms that the player has chosen to use an item and begins the next round
- * of combat.
- */
-void confirm_item(void) {
-  // battle_state = BATTLE_ROLL_INITIATIVE;
-}
-
-/**
- * Confirms the player has chosen a summon and begins the next round of combat.
- */
-void confirm_summon(void) {
-  // battle_state = BATTLE_ROLL_INITIATIVE;
-}
-
-/**
- * Confirms that the player has selected the "flee" action from the main menu
- * and begins the next round of combat.
- */
-void confirm_flee(void) {
-}
-
 
 /**
  * Attempts to move the cursor to one of the monsters at the given indices.
@@ -669,11 +547,11 @@ void select_monster(uint8_t a, uint8_t b) {
   MonsterInstance *first = encounter.monsters + a;
   MonsterInstance *second = encounter.monsters + b;
   if (first->active) {
-    move_cursor(BATTLE_CURSOR_MONSTER_1 + a);
+    move_screen_cursor(BATTLE_CURSOR_MONSTER_1 + a);
     return;
   }
   if (second->active) {
-    move_cursor(BATTLE_CURSOR_MONSTER_1 + b);
+    move_screen_cursor(BATTLE_CURSOR_MONSTER_1 + b);
     return;
   }
 }
@@ -684,7 +562,7 @@ void select_monster(uint8_t a, uint8_t b) {
 void select_prev_enemy(void) {
   if (encounter.layout == MONSTER_LAYOUT_1)
     return;
-  switch (battle_cursor) {
+  switch (battle_menu.screen_cursor) {
   case BATTLE_CURSOR_MONSTER_1:
     select_monster(2, 1);
     return;
@@ -703,7 +581,7 @@ void select_prev_enemy(void) {
 void select_next_enemy(void) {
   if (encounter.layout == MONSTER_LAYOUT_1)
     return;
-  switch (battle_cursor) {
+  switch (battle_menu.screen_cursor) {
   case BATTLE_CURSOR_MONSTER_1:
     select_monster(1, 2);
     return;
@@ -717,10 +595,10 @@ void select_next_enemy(void) {
 }
 
 /**
- * Draws the "EMPTY..." message in the middle of an empty submenu.
+ * Draws the "EMPTY..." message in the middle of an empty battle_menu.
  */
 inline void draw_menu_empty_text(void) {
-  core.draw_text(VRAM_BACKGROUND_XY(7, 21), str_misc_empty, 6);
+  core.draw_text(VRAM_BACKGROUND_XY(7, 20), str_misc_empty, 6);
 }
 
 /**
@@ -729,7 +607,7 @@ inline void draw_menu_empty_text(void) {
 inline void draw_submenu_heading(void) {
   uint8_t start_tile;
   uint8_t len;
-  switch (battle_menu) {
+  switch (battle_menu.active_menu) {
   case BATTLE_MENU_ABILITY:
     start_tile = is_magic_class() ? MAGIC_ICON : TECH_ICON;
     len = 4;
@@ -751,120 +629,205 @@ inline void draw_submenu_heading(void) {
 }
 
 /**
- * Clears the body of the submenu.
+ * Pre copies the entry text for abilities to a buffer so they can be rendered
+ * quickly.
  */
-inline void clear_submenu_body(void) {
-  uint8_t *vram = VRAM_BACKGROUND_XY(SUBMENU_TEXT_X - 1, SUBMENU_TEXT_Y);
-  for (uint8_t y = 0; y < 5; y++) {
+void copy_ability_text(void) {
+  uint8_t a = 0;
+
+  const char *format = is_magic_class() ?
+    " %s\x18\x19%2u" :
+    " %s\x1A\x1B%2u";
+
+  for (uint8_t k = 0; k < player_num_abilities; k++, a++) {
+    if (!player_abilities[k]->id) {
+      break;
+    }
+    const char *name = player_abilities[k]->name;
+    uint8_t sp = player_abilities[k]->sp_cost;
+    sprintf(battle_menu.ability_text[a], format, name, sp);
+  }
+
+  while (a < MAX_ABILITIES) {
+    for (uint8_t k = 0; k < 18; k++)
+      battle_menu.ability_text[a][k] = (char)FONT_SPACE;
+    a++;
+  }
+}
+
+/**
+ * Draws scroll arrows for the submenu based on its current state.
+ */
+void draw_submenu_scroll_arrows(void) {
+  const uint8_t arrow_tile = 0xFC;
+  const uint8_t border_tile = 0x91;
+
+  if (battle_menu.max_scroll == 0) {
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), border_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), border_tile);
+    return;
+  }
+
+  if (battle_menu.scroll == 0) {
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), border_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), arrow_tile);
+    return;
+  }
+
+  if (battle_menu.scroll < battle_menu.max_scroll) {
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), arrow_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), arrow_tile);
+    return;
+  }
+
+  set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), arrow_tile);
+  set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), border_tile);
+}
+
+/**
+ * Redraws submenu text based on the current subemenu state and content buffers.
+ */
+void redraw_submenu_text(void) {
+  if (
+    battle_menu.active_menu != BATTLE_MENU_ABILITY &&
+    battle_menu.active_menu != BATTLE_MENU_ITEM
+  ) {
+    return;
+  }
+
+  if (battle_menu.active_menu == BATTLE_MENU_ABILITY) {
+    const uint8_t max = battle_menu.entries < 4 ?
+      battle_menu.entries : 4;
+    uint8_t *vram = VRAM_SUBMENU_TEXT;
+    for (uint8_t k = 0; k < max; k++, vram += 0x20) {
+      const uint8_t line = k + battle_menu.scroll;
+      core.draw_text(vram, battle_menu.ability_text[line], 18);
+    }
+  }
+}
+
+/**
+ * Initalizes a submenu for the given entry lines and number of entries.
+ * @param lines Line buffers to draw.
+ * @param entries Total number of entries for the battle_menu.
+ */
+void load_submenu(BattleMenuType menu) {
+  hide_cursor();
+  draw_submenu_heading();
+
+  uint8_t *vram = VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y);
+  for (uint8_t y = 0; y < 4; y++) {
     for (uint8_t x = 0; x < 18; x++)
       set_vram_byte(vram++, FONT_SPACE);
     vram += 14;
   }
-}
 
-/**
- * Resets the battle submenu graphics and state.
- */
-void reset_battle_submenu(void) {
-  battle_num_submenu_items = 0;
-  hide_cursor();
-  draw_submenu_heading();
-  clear_submenu_body();
-}
-
-/**
- * Draws a list of selectable abilities into the battle submenu.
- */
-void load_abilities_menu(void) {
-  Ability *ability = player.summon->ability;
-  if (!ability) {
-    draw_menu_empty_text();
+  if (
+    battle_menu.active_menu != BATTLE_MENU_ABILITY &&
+    battle_menu.active_menu != BATTLE_MENU_ITEM
+  ) {
     return;
   }
 
-  battle_num_submenu_items = 0;
-  uint8_t *vram = VRAM_SUBMENU_TEXT;
-  while (ability && player.level >= ability->level) {
-    core.draw_text(vram, ability->name, 14);
-    uint8_t *cost_tile = ability->sp_cost_tiles;
-    set_vram_byte(vram + 13, *cost_tile++);
-    set_vram_byte(vram + 14, *cost_tile++);
-    set_vram_byte(vram + 15, *cost_tile++);
-    vram += 32;
-    ability = ability->next;
-    battle_num_submenu_items++;
+  uint8_t entries = (menu == BATTLE_MENU_ABILITY) ?
+    player_num_abilities :
+    0;
+
+  battle_menu.active_menu = menu;
+  battle_menu.entries = entries;
+  battle_menu.cursor = 0;
+  battle_menu.scroll = 0;
+  battle_menu.max_scroll = entries <= 4 ? 0 : entries - 4;
+
+  if (battle_menu.entries == 0) {
+    draw_menu_empty_text();
+    move_screen_cursor(BATTLE_CURSOR_NO_ITEMS);
+    return;
   }
 
-  move_cursor(BATTLE_CURSOR_ITEM_1);
+  redraw_submenu_text();
+  draw_submenu_scroll_arrows();
+  draw_submenu_heading();
+  move_screen_cursor(BATTLE_CURSOR_ITEM_1);
 }
 
 /**
- * Draws a list of selectable items into the battle submenu.
+ * Moves the submenu cursor up based on the current submenu state.
  */
-void load_items_menu(void) {
-  // TODO Load items names and state
-  draw_menu_empty_text();
+void submenu_cursor_up(void) {
+  if (battle_menu.entries == 0) {
+    move_screen_cursor(BATTLE_CURSOR_NO_ITEMS);
+    return;
+  }
+
+  if (battle_menu.cursor == 0)
+    return;
+
+  battle_menu.cursor--;
+
+  if (battle_menu.screen_cursor > BATTLE_CURSOR_ITEM_1) {
+    move_screen_cursor(battle_menu.screen_cursor - 1);
+  } else {
+    if (battle_menu.scroll > 0) {
+      battle_menu.scroll--;
+      redraw_submenu_text();
+      draw_submenu_scroll_arrows();
+    }
+  }
 }
 
-/**
- * Draws a list of selectable summons into the battle submenu.
- */
-void load_summons_menu(void) {
-  // TODO Load summons names and state
-  draw_menu_empty_text();
+void submenu_cursor_down(void) {
+  if (battle_menu.entries == 0) {
+    move_screen_cursor(BATTLE_CURSOR_NO_ITEMS);
+    return;
+  }
+
+  if (battle_menu.cursor == battle_menu.entries - 1)
+    return;
+
+  battle_menu.cursor++;
+
+  if (battle_menu.screen_cursor < BATTLE_CURSOR_ITEM_4) {
+    move_screen_cursor(battle_menu.screen_cursor + 1);
+  } else {
+    if (battle_menu.scroll < battle_menu.max_scroll) {
+      battle_menu.scroll++;
+      redraw_submenu_text();
+      draw_submenu_scroll_arrows();
+    }
+  }
 }
 
 /**
  * Opens the given battle menu and updates the battle menu state.
  * @param m Battle menu to open.
  */
-void open_battle_menu(BattleMenu m) {
-  uint8_t prev_menu = battle_menu;
-  battle_menu = m;
-  switch (battle_menu) {
+void open_battle_menu(BattleMenuType m) {
+  uint8_t prev_menu = battle_menu.active_menu;
+  battle_menu.active_menu = m;
+  switch (m) {
   case BATTLE_MENU_MAIN:
-    move_cursor(prev_menu - 1);
+    move_screen_cursor(prev_menu - 1);
     break;
   case BATTLE_MENU_FIGHT:
     MonsterInstance *monster = encounter.monsters;
     for (uint8_t pos = 0; pos < 3; pos++, monster++) {
       if (monster->active) {
-        move_cursor(BATTLE_CURSOR_MONSTER_1 + pos);
+        move_screen_cursor(BATTLE_CURSOR_MONSTER_1 + pos);
         return;
       }
     }
     // We shouldn't reach here unless testing or an error happens
-    battle_menu = BATTLE_MENU_MAIN;
-    move_cursor(prev_menu - 1);
+    battle_menu.active_menu = BATTLE_MENU_MAIN;
+    move_screen_cursor(prev_menu - 1);
     break;
   case BATTLE_MENU_ABILITY:
-    reset_battle_submenu();
-    load_abilities_menu();
+    load_submenu(BATTLE_MENU_ABILITY);
     break;
   case BATTLE_MENU_ITEM:
-    reset_battle_submenu();
-    load_items_menu();
-    break;
-  case BATTLE_MENU_SUMMON:
-    reset_battle_submenu();
-    load_summons_menu();
+    load_submenu(BATTLE_MENU_ITEM);
     break;
   }
-}
-
-/*
- * Moves the battle cursor for submenu item selection according to the current
- * number items available.
- */
-void move_submenu_item_by_dpad(void) {
-  if (!has_submenu_items())
-    return;
-  const uint8_t min = BATTLE_CURSOR_ITEM_1;
-  const uint8_t max = BATTLE_CURSOR_ITEM_1 + battle_num_submenu_items - 1;
-  if (was_pressed(J_UP) && battle_cursor > min)
-    move_cursor(battle_cursor - 1);
-  else if (was_pressed(J_DOWN) && battle_cursor < max)
-    move_cursor(battle_cursor + 1);
 }
 
 /**
@@ -872,14 +835,14 @@ void move_submenu_item_by_dpad(void) {
  * @see `update_battle`
  */
 inline void update_battle_menu(void) {
-  switch (battle_menu) {
+  switch (battle_menu.active_menu) {
   case BATTLE_MENU_MAIN:
-    if (was_pressed(J_UP) && battle_cursor != BATTLE_CURSOR_MAIN_FIGHT)
-      move_cursor(battle_cursor - 1);
-    else if (was_pressed(J_DOWN) && battle_cursor != BATTLE_CURSOR_MAIN_FLEE)
-      move_cursor(battle_cursor + 1);
-    else if (was_pressed(J_A) && battle_cursor != BATTLE_CURSOR_MAIN_FLEE) {
-      open_battle_menu(battle_cursor + 1);
+    if (was_pressed(J_UP) && battle_menu.screen_cursor != BATTLE_CURSOR_MAIN_FIGHT)
+      move_screen_cursor(battle_menu.screen_cursor - 1);
+    else if (was_pressed(J_DOWN) && battle_menu.screen_cursor != BATTLE_CURSOR_MAIN_FLEE)
+      move_screen_cursor(battle_menu.screen_cursor + 1);
+    else if (was_pressed(J_A) && battle_menu.screen_cursor != BATTLE_CURSOR_MAIN_FLEE) {
+      open_battle_menu(battle_menu.screen_cursor + 1);
     } else if (was_pressed(J_A)) {
       confirm_flee();
     }
@@ -898,20 +861,23 @@ inline void update_battle_menu(void) {
     // Select an available tech
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
-    else if (was_pressed(J_A) && has_submenu_items())
+    else if (was_pressed(J_A) && battle_menu.entries > 0)
       confirm_ability();
-    else
-      move_submenu_item_by_dpad();
+    else if (was_pressed(J_UP))
+      submenu_cursor_up();
+    else if (was_pressed(J_DOWN))
+      submenu_cursor_down();
     break;
   case BATTLE_MENU_ITEM:
     // Select an item from the inventory
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
-    break;
-  case BATTLE_MENU_SUMMON:
-    // Select an available summon
-    if (was_pressed(J_B))
-      open_battle_menu(BATTLE_MENU_MAIN);
+    else if (was_pressed(J_A) && battle_menu.entries > 0)
+      confirm_item();
+    else if (was_pressed(J_UP))
+      submenu_cursor_up();
+    else if (was_pressed(J_DOWN))
+      submenu_cursor_down();
     break;
   }
 }
@@ -1099,6 +1065,100 @@ void battle_rewards(void) {
   text_writer.print(rewards_buf);
 }
 
+/**
+ * LCY interrupt handler for the fight and skill menus. This handler changes the
+ * scroll-y position at a specific scanline to display a different part of the
+ * background that contains the graphics for these menus.
+ */
+void fight_menu_isr(void) {
+  SCY_REG = 0;
+  if (
+    battle_state == BATTLE_STATE_MENU &&
+    battle_menu.active_menu != BATTLE_MENU_MAIN &&
+    battle_menu.active_menu != BATTLE_MENU_FIGHT
+  ) {
+    SCY_REG = 48;
+    return;
+  }
+}
+
+
+void initialize_battle(void) {
+  lcd_off();
+
+  // Reset the background, window, and sprites
+  core.fill_bg(BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
+  core.hide_sprites();
+  hide_window();
+
+  // Load palettes & fonts
+  core.load_bg_palette(data_battle_bg_colors, 0, 8);
+  core.load_sprite_palette(data_battle_sprite_colors, 0, 8);
+  core.load_font();
+  core.load_battle_tiles();
+
+  // Configure the text writer
+  text_writer.set_origin(VRAM_WINDOW, 1, 2);
+  text_writer.set_auto_page(player.message_speed);
+  text_writer.set_size(18, 4);
+
+  // Draw menus and initialize cursor
+  core.draw_tilemap(battle_menu_tilemap, VRAM_BACKGROUND_XY(0, MENU_Y));
+  core.draw_tilemap(battle_submenu_tilemap, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
+  core.draw_tilemap(battle_textbox_tilemap, VRAM_WINDOW_XY(0, 0));
+
+  for (uint8_t s = 0; s < 4; s++) {
+    set_sprite_tile(CURSOR_SPRITE + s, CURSOR_TILE + s);
+    set_sprite_prop(CURSOR_SPRITE + s, CURSOR_ATTR);
+  }
+  move_screen_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+  battle_menu.active_menu = BATTLE_MENU_MAIN;
+
+
+  // Initialize the encounter and player graphics
+  battle_init_encounter();
+
+  // Update the player UI
+  set_magic_or_martial();
+  update_player_hp();
+  update_player_mp();
+  copy_ability_text();
+
+  // Attach an LCY=LY interrupt to handle the menu display.
+  CRITICAL {
+    LYC_REG = 87 + 8;
+    STAT_REG = STATF_LYC;
+    add_LCD(fight_menu_isr);
+    add_LCD(nowait_int_handler);
+  }
+  set_interrupts(IE_REG | LCD_IFLAG);
+
+  // Animation & timers
+  init_timer(status_effect_timer, 40);
+
+  // Initiate the fade-in and start battle
+  battle_state = BATTLE_FADE_IN;
+  fade_in();
+  game_state = GAME_STATE_BATTLE;
+
+  lcd_on();
+}
+
+void init_battle(void) NONBANKED {
+  // Switch to the battle ROM bank (has stats tables, etc.)
+  SWITCH_ROM(BATTLE_ROM_BANK);
+  initialize_battle();
+}
+
+void cleanup_isr(void) {
+  CRITICAL {
+    remove_LCD(fight_menu_isr);
+    remove_LCD(nowait_int_handler);
+    STAT_REG = 0;
+  }
+  set_interrupts(IE_REG & ~LCD_IFLAG);
+}
+
 void update_battle(void) NONBANKED {
   if (battle_state == BATTLE_COMPLETE) {
     // Important, don't remove
@@ -1167,9 +1227,9 @@ void update_battle(void) NONBANKED {
       return;
     }
     battle_state = BATTLE_STATE_MENU;
-    battle_menu = BATTLE_MENU_MAIN;
+    battle_menu.active_menu = BATTLE_MENU_MAIN;
     hide_battle_text();
-    move_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+    move_screen_cursor(BATTLE_CURSOR_MAIN_FIGHT);
     break;
   case BATTLE_SUCCESS:
     if (!was_pressed(J_A))

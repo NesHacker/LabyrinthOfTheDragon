@@ -1,5 +1,6 @@
 #pragma bank 3
 
+#include <stdio.h>
 #include "encounter.h"
 
 /**
@@ -20,8 +21,7 @@ void roll_initiative(void) {
   encounter.order[4] = TURN_END;
 
   // Roll for the player
-  uint8_t player_agl = get_agl(player.level, player.summon->agl_tier);
-  rolls[0] = d32() + player_agl + 1;
+  rolls[0] = d32() + player.agl + 1;
 
   // Roll for the monsters that currently live
   MonsterInstance *mon = encounter.monsters;
@@ -94,13 +94,13 @@ void check_status_effects(void) {
 inline void player_turn(void) {
   switch (encounter.player_action) {
   case PLAYER_ACTION_FIGHT:
-    player.summon->base_attack(encounter.target);
+    player_base_attack();
     break;
   case PLAYER_ACTION_FLEE:
+    player_flee();
     break;
   case PLAYER_ACTION_ABILITY:
-    break;
-  case PLAYER_ACTION_SUMMON:
+    encounter.player_ability->execute();
     break;
   case PLAYER_ACTION_ITEM:
     break;
@@ -132,11 +132,6 @@ void set_player_ability(Ability *a, MonsterInstance *target) {
   encounter.target = target;
 }
 
-void set_player_summon(Summon *summon) {
-  encounter.player_action = PLAYER_ACTION_SUMMON;
-  encounter.summon = summon;
-}
-
 void set_player_flee(void) {
   encounter.player_action = PLAYER_ACTION_FLEE;
 }
@@ -159,7 +154,6 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.turn_index = 0;
   encounter.round_complete = 0;
   encounter.player_action = PLAYER_ACTION_FIGHT;
-  encounter.summon = NULL;
   encounter.player_ability = NULL;
   encounter.target = NULL;
   encounter.xp_reward = 0;
@@ -167,6 +161,64 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   MonsterInstance *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++)
     monster_deactivate(monster++);
+}
+
+void damage_monster(uint16_t base_damage, DamageAspect type) {
+  MonsterInstance *monster = encounter.target;
+
+  if (!monster)
+    return;
+
+  if (monster->aspect_immune & type) {
+    sprintf(battle_post_message, str_battle_player_hit_immune);
+    return;
+  }
+
+  uint8_t roll = d16();
+  uint16_t damage = calc_damage(roll, base_damage);
+  bool critical = roll >= 12;
+
+  if (critical) {
+    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
+  } else if (monster->aspect_resist & type) {
+    damage >>= 1;
+    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
+  } else if (monster->aspect_vuln & type) {
+    damage <<= 1;
+  } else {
+    sprintf(battle_post_message, str_battle_player_hit, damage);
+  }
+
+  if (monster->hp < damage)
+    monster->target_hp = 0;
+  else
+    monster->target_hp -= damage;
+}
+
+void damage_all_monster(uint16_t base_damage, DamageAspect type) {
+  uint8_t roll = d16();
+  uint16_t damage = calc_damage(roll, base_damage);
+
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    if (!monster->active)
+      continue;
+
+    if (monster->aspect_immune & type)
+      continue;
+
+    uint16_t d = damage;
+    if (monster->aspect_resist & type) {
+      d = damage >> 1;
+    } else if (monster->aspect_vuln & type) {
+      d = damage << 1;
+    }
+
+    if (monster->target_hp < d)
+      monster->target_hp = 0;
+    else
+      monster->target_hp -= d;
+  }
 }
 
 Encounter encounter = {

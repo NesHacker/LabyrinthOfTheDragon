@@ -50,7 +50,6 @@ typedef enum PlayerAction {
   PLAYER_ACTION_FIGHT,
   PLAYER_ACTION_ABILITY,
   PLAYER_ACTION_ITEM,
-  PLAYER_ACTION_SUMMON,
   PLAYER_ACTION_FLEE
 } PlayerAction;
 
@@ -98,10 +97,6 @@ typedef struct Encounter {
    */
   PlayerAction player_action;
   /**
-   * If the player took the "summon action", this is the summon they chose.
-   */
-  Summon *summon;
-  /**
    * If the player used an ability, this is the ability they chose.
    */
   Ability *player_ability;
@@ -135,16 +130,11 @@ void set_player_fight(MonsterInstance *target);
 void set_player_ability(Ability *a, MonsterInstance *target);
 
 /**
- * Sets the player's next action to changing the equipped summon.
- * @param summon New summon to equip.
- */
-void set_player_summon(Summon *summon);
-
-/**
  * Sets the player's next action to fleeing.
  */
 void set_player_flee(void);
 
+// TODO items bbe
 // void set_player_item(Item *item);
 
 /**
@@ -176,6 +166,20 @@ bool monsters_slain(void);
  * Resets the encounter so it can be reconfigured for another battle.
  */
 void reset_encounter(MonsterLayout layout);
+
+/**
+ * Applies damage to the target monster. Takes immunities, etc. into account and
+ * handles battle result messages.
+ * @param base_damage Base damage for the attack.
+ * @param type Aspect for the damage.
+ */
+void damage_monster(uint16_t base_damage, DamageAspect type);
+
+/**
+ * Applies damage to all active monsters in the encounter. Takes immmunities,
+ * etc. into account. Does **NOT** handle battle result messages.
+ */
+void damage_all_monster(uint16_t base_damage, DamageAspect type);
 
 /**
  * @return The monster at the given index.

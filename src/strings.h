@@ -51,14 +51,44 @@ extern const char str_misc_light[];
 extern const char str_misc_dark[];
 
 /**
- * "Kobold"
+ * "Poison Spray "
  */
-extern const char str_misc_kobold[];
+extern const char str_ability_druid_poison_spray[];
 
 /**
- * "Wilbur"
+ * "Cure Wounds  "
  */
-extern const char str_misc_wilbur[];
+extern const char str_ability_druid_cure_wounds[];
+
+/**
+ * "Bark Skin    "
+ */
+extern const char str_ability_druid_bark_skin[];
+
+/**
+ * "Call Lit.    "
+ */
+extern const char str_ability_druid_call_ligtning[];
+
+/**
+ * "Heal         "
+ */
+extern const char str_ability_druid_heal[];
+
+/**
+ * "Insect Plague"
+ */
+extern const char str_ability_druid_insect_plague[];
+
+/**
+ * "Regenerate   "
+ */
+extern const char str_ability_druid_regen[];
+
+/**
+ * "Noxious gas erupts from your palm!"
+ */
+extern const char str_battle_poison_spray[];
 
 /**
  * "But they miss!"

@@ -11,26 +11,292 @@
 #include "tables.h"
 #include "strings.h"
 
+Player player = { "", CLASS_DRUID };
 
-Player player = {
-  CLASS_DRUID,
+const Ability *class_abilities[6];
+const Ability *player_abilities[6];
+uint8_t player_num_abilities = 0;
+
+const Ability null_ability = { 0 };
+
+void update_stats(
+  PowerTier hp,
+  PowerTier sp,
+  PowerTier atk,
+  PowerTier def,
+  PowerTier matk,
+  PowerTier mdef,
+  PowerTier agl
+) {
+  player.max_hp = get_player_hp(player.level, hp);
+  player.max_sp = get_player_sp(player.level, sp);
+  player.atk_base = get_player_atk(player.level, atk);
+  player.def_base = get_player_def(player.level, def);
+  player.matk_base = get_player_atk(player.level, matk);
+  player.mdef_base = get_player_def(player.level, mdef);
+  player.agl_base = get_agl(player.level, agl);
+}
+
+//------------------------------------------------------------------------------
+// Class: Druid
+//------------------------------------------------------------------------------
+
+void druid_update_stats(void) {
+  update_stats(
+    B_TIER,
+    B_TIER,
+    C_TIER,
+    B_TIER,
+    B_TIER,
+    A_TIER,
+    B_TIER
+  );
+}
+
+void druid_base_attack(void) {
+  sprintf(battle_pre_message, str_battle_poison_spray);
+
+  MonsterInstance *target = encounter.target;
+  if (!roll_attack(player.matk, target->mdef)) {
+    sprintf(battle_post_message, str_battle_player_miss);
+    return;
+  }
+
+  PowerTier damage_tier;
+  if (player.level < 35)
+    damage_tier = C_TIER;
+  else if (player.level < 75)
+    damage_tier = B_TIER;
+  else
+    damage_tier = A_TIER;
+
+  const uint16_t base_dmg = get_player_damage(player.level, damage_tier);
+  damage_monster(base_dmg, DAMAGE_MAGICAL);
+}
+
+void druid_cure_wounds(void) {
+}
+
+void druid_bark_skin(void) {
+}
+
+void druid_call_lightning(void) {
+}
+
+void druid_heal(void) {
+}
+
+void druid_insect_plague(void) {
+}
+
+void druid_regen(void) {
+}
+
+const Ability druid0 = {
+  1, str_ability_druid_cure_wounds,
+  TARGET_SELF, 4, druid_cure_wounds,
 };
 
-void init_player(void) {
+const Ability druid1 = {
+  2, str_ability_druid_bark_skin,
+  TARGET_SELF, 12, druid_bark_skin,
+};
+
+const Ability druid2 = {
+  3, str_ability_druid_call_ligtning,
+  TARGET_SINGLE, 18, druid_call_lightning,
+};
+
+const Ability druid3 = {
+   4, str_ability_druid_heal,
+   TARGET_SELF, 20, druid_heal,
+};
+
+const Ability druid4 = {
+   5, str_ability_druid_insect_plague,
+   TARGET_ALL, 45, druid_insect_plague,
+};
+
+const Ability druid5 = {
+   6, str_ability_druid_regen,
+   TARGET_SELF, 30, druid_regen
+};
+
+
+//------------------------------------------------------------------------------
+// Class: Fighter
+//------------------------------------------------------------------------------
+
+void fighter_update_stats(void) {
+  update_stats(
+    A_TIER,
+    C_TIER,
+    B_TIER,
+    A_TIER,
+    C_TIER,
+    B_TIER,
+    B_TIER
+  );
+}
+
+void fighter_base_attack(void) {
+  // Sword
+}
+
+const Ability fighter0 = { 1 };
+const Ability fighter1 = { 2 };
+const Ability fighter2 = { 3 };
+const Ability fighter3 = { 4 };
+const Ability fighter4 = { 5 };
+const Ability fighter5 = { 6 };
+
+//------------------------------------------------------------------------------
+// Class: Monk
+//------------------------------------------------------------------------------
+
+void monk_update_stats(void) {
+  update_stats(
+    B_TIER,
+    B_TIER,
+    B_TIER,
+    B_TIER,
+    C_TIER,
+    B_TIER,
+    A_TIER
+  );
+}
+
+void monk_base_attack(void) {
+  // Fist
+}
+
+const Ability monk0 = { 1 };
+const Ability monk1 = { 2 };
+const Ability monk2 = { 3 };
+const Ability monk3 = { 4 };
+const Ability monk4 = { 5 };
+const Ability monk5 = { 6 };
+
+//------------------------------------------------------------------------------
+// Class: Sorcerer
+//------------------------------------------------------------------------------
+
+void sorcerer_update_stats(void) {
+  update_stats(
+    C_TIER,
+    A_TIER,
+    C_TIER,
+    C_TIER,
+    A_TIER,
+    B_TIER,
+    A_TIER
+  );
+}
+
+void sorcerer_base_attack(void) {
+  // Fist
+}
+
+const Ability sorcerer0 = { 1 };
+const Ability sorcerer1 = { 2 };
+const Ability sorcerer2 = { 3 };
+const Ability sorcerer3 = { 4 };
+const Ability sorcerer4 = { 5 };
+const Ability sorcerer5 = { 6 };
+
+//------------------------------------------------------------------------------
+// Common functions
+//------------------------------------------------------------------------------
+
+/**
+ * Updates a player's stats based on their current class and level.
+ */
+void update_player_stats(void) {
+  switch (player.player_class) {
+  case CLASS_DRUID:
+    druid_update_stats();
+    break;
+  case CLASS_FIGHTER:
+    fighter_update_stats();
+    break;
+  case CLASS_MONK:
+    monk_update_stats();
+    break;
+  case CLASS_SORCERER:
+    sorcerer_update_stats();
+    break;
+  }
+}
+
+void set_class_abilities(void) {
+  switch (player.player_class) {
+  case CLASS_DRUID:
+    class_abilities[0] = &druid0;
+    class_abilities[1] = &druid1;
+    class_abilities[2] = &druid2;
+    class_abilities[3] = &druid3;
+    class_abilities[4] = &druid4;
+    class_abilities[5] = &druid5;
+    break;
+  case CLASS_FIGHTER:
+    class_abilities[0] = &fighter0;
+    class_abilities[1] = &fighter1;
+    class_abilities[2] = &fighter2;
+    class_abilities[3] = &fighter3;
+    class_abilities[4] = &fighter4;
+    class_abilities[5] = &fighter5;
+    break;
+  case CLASS_MONK:
+    class_abilities[0] = &monk0;
+    class_abilities[1] = &monk1;
+    class_abilities[2] = &monk2;
+    class_abilities[3] = &monk3;
+    class_abilities[4] = &monk4;
+    class_abilities[5] = &monk5;
+    break;
+  case CLASS_SORCERER:
+    class_abilities[0] = &sorcerer0;
+    class_abilities[1] = &sorcerer1;
+    class_abilities[2] = &sorcerer2;
+    class_abilities[3] = &sorcerer3;
+    class_abilities[4] = &sorcerer4;
+    class_abilities[5] = &sorcerer5;
+    break;
+  }
+}
+
+void set_player_abilities(void) {
+  uint8_t flags = player.ability_flags;
+  player_num_abilities = 0;
+
+  for (uint8_t k = 0; k < MAX_ABILITIES; k++, flags >>= 1) {
+    player_abilities[player_num_abilities] = &null_ability;
+    if (flags & 1)
+      player_abilities[player_num_abilities++] = class_abilities[k];
+  }
+}
+
+void init_player(PlayerClass player_class) {
+  player.player_class = player_class;
+  set_class_abilities();
+
+  // player.ability_flags = ABILITY_0 | ABILITY_3 | ABILITY_5;
+  player.ability_flags = 0b00111111;
+  set_player_abilities();
+
+  player.level = NEW_CHARACTER_LEVEL;
+  player.exp = get_exp(player.level);
+  player.next_level_exp = get_exp(player.level + 1);
+  update_player_stats();
+
+  player.hp = player.max_hp;
+  player.sp = player.max_sp;
+  reset_player_stats();
+
+  // TODO Move these assignments into the character creator
+  sprintf(player.name, "Hero");
   player.message_speed = AUTO_PAGE_MED;
 
-  player.level = 10;
-  player.exp = get_exp(10) + 23;
-  player.next_level_exp = get_exp(11);
-
-  player.hp = player.target_hp = player.max_hp = get_player_hp(10, B_TIER);
-  player.sp = player.max_sp = get_player_sp(10, A_TIER);
-  player.atk = player.atk_base = get_player_atk(10, C_TIER);
-  player.def = player.def_base = get_player_def(10, B_TIER);
-  player.matk = player.matk_base = get_player_atk(10, A_TIER);
-  player.mdef = player.mdef_base = get_player_def(17, B_TIER);
-  player.summon = &summon_kobold;
-  player.default_summon = &summon_kobold;
 }
 
 void reset_player_stats(void) {
@@ -41,157 +307,29 @@ void reset_player_stats(void) {
   player.target_hp = player.hp;
 }
 
-/**
- * Applies damage to a monster taking vulnerabilities, immunites, and
- * resistances into account.
- * @param monster The monster to damage.
- * @param base_damage Base damage for the damage roll.
- * @param type The damage type.
- */
-void damage_monster(
-  MonsterInstance *monster,
-  uint16_t base_damage,
-  DamageAspect type
-) {
-  if (monster->aspect_immune & type) {
-    sprintf(battle_post_message, str_battle_player_hit_immune);
-    return;
-  }
-
-  uint8_t roll = d16();
-  uint16_t damage = calc_damage(roll, base_damage);
-  bool critical = roll >= 12;
-
-  if (critical) {
-    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
-  } else  if (monster->aspect_resist & type) {
-    damage >>= 1;
-    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
-  } else if (monster->aspect_vuln & type) {
-    damage <<= 1;
-  } else {
-    sprintf(battle_post_message, str_battle_player_hit, damage);
-  }
-
-  if (monster->hp < damage)
-    monster->target_hp = 0;
-  else
-    monster->target_hp -= damage;
+void grant_ability(AbilityFlag flag) {
+  player.ability_flags |= flag;
+  set_player_abilities();
 }
 
-//------------------------------------------------------------------------------
-// Summon 1 - Wilbur the Kobold
-//------------------------------------------------------------------------------
-
-/**
- * Activation method for the kobold.
- * @see `Summon.activate`
- */
-void kobold_activate(void) {
+void player_base_attack(void) {
   switch (player.player_class) {
   case CLASS_DRUID:
-    summon_kobold.ability = &kobold_vine_whip;
+    druid_base_attack();
     break;
-  // case CLASS_FIGHTER:
-  //   break;
-  // case CLASS_MONK:
-  //   break;
-  // case CLASS_SORCERER:
-  //   break;
+  case CLASS_FIGHTER:
+    fighter_base_attack();
+    break;
+  case CLASS_MONK:
+    monk_base_attack();
+    break;
+  case CLASS_SORCERER:
+    sorcerer_base_attack();
+    break;
   }
 }
 
-/**
- * Base attack ability execution function for the kobold.
- * @param target Monster instance target for the attack.
- */
-void kobold_base_attack(MonsterInstance *target) {
-  const char *msg = is_magic_class() ?
-    str_summon_kobold_magic_attack :
-    str_summon_kobold_attack;
-  sprintf(battle_pre_message, msg);
-
-  const uint8_t atk = is_magic_class() ? player.matk : player.atk;
-  if (!roll_attack(atk, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
-    return;
-  }
-
-  const uint8_t def = is_magic_class() ? target->mdef : target->def;
-  const uint8_t level = level_offset(player.level, -2);
-  const uint16_t base_dmg = get_player_damage(level, B_TIER);
-  damage_monster(target, base_dmg, DAMAGE_PHYSICAL);
+void player_flee(void) {
+  // TODO Implement me
 }
 
-Summon summon_kobold = {
-  1,
-  str_misc_kobold,
-  str_misc_wilbur,
-  B_TIER,
-  EMPTY_BITFIELD,
-  DAMAGE_EARTH,
-  DAMAGE_LIGHT,
-  EMPTY_BITFIELD,
-  kobold_activate,
-  kobold_base_attack,
-};
-
-void execute_kobold_vine_whip(void) {
-}
-
-Ability kobold_vine_whip = {
-  str_summon_vine_whip,
-  CLASS_DRUID,
-  C_TIER,
-  3,
-  TARGET_SINGLE,
-  2,
-  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(2) },
-  execute_kobold_vine_whip,
-  &kobold_mend // next
-};
-
-void execute_kobold_mend(void) {
-}
-
-Ability kobold_mend = {
-  str_summon_mend,
-  CLASS_DRUID,
-  C_TIER,
-  5,
-  TARGET_SELF,
-  5,
-  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(5) },
-  execute_kobold_mend,
-  &kobold_summon_ants,
-};
-
-void execute_kobold_summon_ants(void) {
-}
-
-Ability kobold_summon_ants = {
-  str_summon_summon_ants,
-  CLASS_DRUID,
-  B_TIER,
-  9,
-  TARGET_SINGLE,
-  9,
-  { FONT_SPACE, FONT_SPACE, FONT_DIGIT(9) },
-  execute_kobold_summon_ants,
-  &kobold_dirty_fang,
-};
-
-void execute_kobold_dirty_fang(void) {
-}
-
-Ability kobold_dirty_fang = {
-  str_summon_dirty_fang,
-  CLASS_DRUID,
-  B_TIER,
-  14,
-  TARGET_SINGLE,
-  12,
-  { FONT_SPACE, FONT_DIGIT(1), FONT_DIGIT(2) },
-  execute_kobold_dirty_fang,
-  NULL
-};

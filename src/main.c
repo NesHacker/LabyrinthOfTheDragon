@@ -29,7 +29,7 @@ void init_test_encounter(void) {
  */
 inline void initialize(void) {
   initarand(RANDOM_SEED);
-  init_player();
+  init_player(CLASS_DRUID);
   move_win(7, 144);
 
   // init_main_menu();

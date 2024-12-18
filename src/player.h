@@ -8,19 +8,18 @@
 #include "tables.h"
 #include "text_writer.h"
 
-/*
-  TODO Implement player saves
-
-  Should be pretty easy,
-
-  uint8_t *cart_ram = (void *)(0xA000 + save_offset);
-  // calculate checksum over all player data
-  // store checksum at beginning then memcopy the entire player model
-*/
+/**
+ * Maximum number of abilities a player can acquire.
+ */
+#define MAX_ABILITIES 6
 
 /**
- * Enumeration of all classes in the game. This is primarily used to determine
- * the overworld graphics and the summon abilities available to a player.
+ * Level to set for new characters.
+ */
+#define NEW_CHARACTER_LEVEL 5
+
+/**
+ * Enumeration of all classes in the game. Decides stat tiers, abilities, etc.
  */
 typedef enum PlayerClass {
   CLASS_DRUID,
@@ -28,6 +27,18 @@ typedef enum PlayerClass {
   CLASS_MONK,
   CLASS_SORCERER,
 } PlayerClass;
+
+/**
+ * Flags that determine if a player has a given ability.
+ */
+typedef enum AbilityFlag {
+  ABILITY_0 = FLAG(0),
+  ABILITY_1 = FLAG(1),
+  ABILITY_2 = FLAG(2),
+  ABILITY_3 = FLAG(3),
+  ABILITY_4 = FLAG(4),
+  ABILITY_5 = FLAG(5),
+} AbilityFlag;
 
 /**
  * Enumeration of all targeting types for abilities.
@@ -47,27 +58,18 @@ typedef enum TargetType {
   TARGET_ALL,
 } TargetType;
 
-
 /**
  * Defines an ability that can be used by the player or a monster.
  */
 typedef struct Ability {
   /**
+   * Non zero id for the ability.
+   */
+  uint8_t id;
+  /**
    * Ability's in game name.
    */
   const char *name;
-  /**
-   * Player class to which the ability belongs.
-   */
-  PlayerClass player_class;
-  /**
-   * Cosmetic power tier for the ability.
-   */
-  PowerTier tier;
-  /**
-   * Unlock level for the ability.
-   */
-  uint8_t level;
   /**
    * Taegeting mode for the ability.
    */
@@ -77,95 +79,28 @@ typedef struct Ability {
    */
   uint8_t sp_cost;
   /**
-   * SP cost display tiles.
-   */
-  const uint8_t sp_cost_tiles[3];
-  /**
    * Callback to execute the ability in battle mode.
    */
   void (*execute)(void);
-  /**
-   * Pointer to the next ability in an ability list.
-   */
-  struct Ability *next;
 } Ability;
-
-/**
- * Defines a summon that the player can possess and fight as.
- */
-typedef struct Summon {
-  /**
-   * Unique id for the summon.
-   */
-  uint8_t id;
-  /**
-   * Name of the summon.
-   */
-  const char *name;
-  /**
-   * Boss / summon character name.
-   */
-  const char *npc_name;
-  /**
-   * Agility power tier.
-   */
-  PowerTier agl_tier;
-  /**
-   * Aspected damage immunity bitfield. Each bit corresponds to a different
-   * immunity.
-   * @see `DamageAspect`
-   */
-  uint8_t aspect_immune;
-  /**
-   * Aspected damage resistances bitfield. Eeach bit corresponds to a different
-   * resistance.
-   * @see `DamageAspect`
-   */
-  uint8_t aspect_resist;
-  /**
-   * Aspected damage vulnerability bitfield. Each bit represents a different
-   * vulnerability.
-   * @see `DamageAspect`
-   */
-  uint8_t aspect_vuln;
-  /**
-   * Debuff immunity. Each bit corresponds to a different immunity.
-   * @see `StatusEffectImmunity`
-   */
-  uint8_t debuff_immune;
-  /**
-   * Initialization function called when the player set the summon as active.
-   */
-  void (*activate)(void);
-  /**
-   * Base attack method to be executed when selected during battle.
-   * @param target The monster instance the attack is targeting.
-   */
-  void (*base_attack)(MonsterInstance *target);
-  /**
-   * Pointer to a linked list of abilities for the summon. For the most part
-   * this list is static but is initialized once a player's class has been
-   * determined (new game, loading save, etc.).
-   *
-   * Keeping this as a linked list to allow for ability growth without having
-   * to redefine a table of class associated summon abilities (read: it's
-   * easier for me to code xD).
-   */
-  Ability *ability;
-} Summon;
 
 /**
  * Data representation of the player.
  */
 typedef struct Player {
   /**
+   * Player's name.
+   */
+  char name[8];
+  /**
    * The player's class.
    */
   PlayerClass player_class;
   /**
-   * Configurable message speed for battle messages.
+   * Flags that denote if the player has access to a special ability. These are
+   * defined for each class.
    */
-  AutoPageSpeed message_speed;
+  uint8_t ability_flags;
   /**
    * Current experience level.
    */
@@ -178,6 +113,10 @@ typedef struct Player {
    * How many points are required for the player to reach the next level.
    */
   uint16_t next_level_exp;
+  /**
+   * Auto page message speed for battle messages.
+   */
+  AutoPageSpeed message_speed;
   /**
    * Current HP (health points).
    */
@@ -233,17 +172,49 @@ typedef struct Player {
    */
   uint8_t mdef;
   /**
-   * Summon currently active in battle.
+   * Base agility.
    */
-  Summon *summon;
+  uint8_t agl_base;
   /**
-   * Summon to activate by default prior to battle.
+   * Current agility. Via status effects, etc.
    */
-  Summon *default_summon;
+  uint8_t agl;
+  /**
+   * Aspected damage immunity bitfield. Each bit corresponds to a different
+   * immunity.
+   * @see `DamageAspect`
+   */
+  uint8_t aspect_immune;
+  /**
+   * Aspected damage resistances bitfield. Eeach bit corresponds to a different
+   * resistance.
+   * @see `DamageAspect`
+   */
+  uint8_t aspect_resist;
+  /**
+   * Aspected damage vulnerability bitfield. Each bit represents a different
+   * vulnerability.
+   * @see `DamageAspect`
+   */
+  uint8_t aspect_vuln;
+  /**
+   * Debuff immunity. Each bit corresponds to a different immunity.
+   * @see `StatusEffectImmunity`
+   */
+  uint8_t debuff_immune;
+  /**
+   * Whether or not the player has found the torch.
+   */
+  bool has_torch;
+  /**
+   * Gauge that represents how long the torch can stay lit.
+   */
+  uint8_t torch_gauge;
+  /**
+   * Number of magic keys the player currently posesses.
+   */
+  uint8_t magic_keys;
 } Player;
-
-
-// Externs, prototypes, inlines, etc.
 
 /**
  * The global player object. Used by various systems (e.g. world map, battle,
@@ -251,8 +222,36 @@ typedef struct Player {
  */
 extern Player player;
 
-// TODO Temporary, remove when adding save system, etc.
-void init_player(void);
+/**
+ * All abilities for the current player class.
+ */
+extern const Ability *class_abilities[6];
+
+/**
+ * Abilities the player currently has access to.
+ */
+extern const Ability *player_abilities[6];
+
+/**
+ * Number of abilities the player has access to.
+ */
+extern uint8_t player_num_abilities;
+
+/**
+ * Used to denote an empty or null ability in ability lists.
+ */
+extern const Ability null_ability;
+
+/**
+ * Initializes a new player with the given class.
+ */
+void init_player(PlayerClass player_class);
+
+/**
+ * Grants the player a new ability.
+ * @param flag The flag for the ability.
+ */
+void grant_ability(AbilityFlag flag);
 
 /**
  * Resets the players current stats back to their base values.
@@ -260,30 +259,24 @@ void init_player(void);
 void reset_player_stats(void);
 
 /**
- * Wilbur the Kobold. Defines all properties and methods for the
- * summon.
+ * Sets class abilities based on the current player class.
  */
-extern Summon summon_kobold;
+void set_class_abilities(void);
 
 /**
- * "Vine Whip" kobold druid ability.
+ * Sets player abilities based on current ability flags.
  */
-extern Ability kobold_vine_whip;
+void set_player_abilities(void);
 
 /**
- * "Mend" kobold druid ability.
+ * Performs a basic attack against the the targeted monster.
  */
-extern Ability kobold_mend;
+void player_base_attack(void);
 
 /**
- * "Summon Ants" kobold druid ability.
+ * Performs a flee action for the player.
  */
-extern Ability kobold_summon_ants;
-
-/**
- * "Dirty Fang" kobold druid ability.
- */
-extern Ability kobold_dirty_fang;
+void player_flee(void);
 
 /**
  * @return `true` if the player has a magic combat class.
@@ -298,6 +291,13 @@ inline bool is_magic_class(void) {
  */
 inline bool is_martial_class(void) {
   return !is_magic_class();
+}
+
+/**
+ * @return `true` if the player has leveled up.
+ */
+inline bool has_leveled(void) {
+  return player.next_level_exp >= player.exp;
 }
 
 #endif

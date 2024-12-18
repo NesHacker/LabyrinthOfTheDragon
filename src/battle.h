@@ -11,9 +11,8 @@
 #include "player.h"
 #include "tables.h"
 
-// -----------------------------------------------------------------------------
-// Constants & Macros
-// -----------------------------------------------------------------------------
+// TODO This belongs in the items module (once it exists)
+#define MAX_ITEMS 8
 
 /**
  * First sprite id for the cursor icon.
@@ -101,6 +100,26 @@
 #define SP_ICON_RIGHT 0x9B
 
 /**
+ * Column where the tiles for the player's HP should be drawn.
+ */
+#define BATTLE_HP_X 12
+
+/**
+ * Row where the tiles for the player's HP should be drawn.
+ */
+#define BATTLE_HP_Y MENU_Y + 1
+
+/**
+ * Column where the tiles for the player's MP should be drawn.
+ */
+#define BATTLE_MP_X 12
+
+/**
+ * Row where the tiles for the player's MP should be drawn.
+ */
+#define BATTLE_MP_Y MENU_Y + 2
+
+/**
  * ROM bank in which most data and routines related to battle are stored. This
  * bank must be loaded in order for the battle system to properly function.
  * @see load_battle_bank()
@@ -110,7 +129,7 @@
 /**
  * Denotes the starting row in the background where the menu graphics begin.
  */
-#define MENU_Y 11
+#define MENU_Y 12
 
 /**
  * Denotes the starting row in the background where the submenu graphics begin.
@@ -120,12 +139,12 @@
 /**
  * Row where submenu body text begins.
  */
-#define SUBMENU_TEXT_Y 19
+#define SUBMENU_TEXT_Y SUBMENU_Y + 1
 
 /**
  * Column where submenu body text begins.
  */
-#define SUBMENU_TEXT_X 2
+#define SUBMENU_TEXT_X 1
 
 /**
  * Tile for the HP bar graphics's left cap.
@@ -157,10 +176,6 @@
  * VRAM address for the starting tile of submenu text in the background.
  */
 #define VRAM_SUBMENU_TEXT VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y)
-
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
 
 /**
  * Main state enumeration for the battle system.
@@ -239,33 +254,30 @@ typedef enum BattleState {
 /**
  * Enumeration battle menus that can be displayed at the bottom of the screen.
  */
-typedef enum BattleMenu {
+typedef enum BattleMenuType {
   BATTLE_MENU_MAIN,
   BATTLE_MENU_FIGHT,
   BATTLE_MENU_ABILITY,
   BATTLE_MENU_ITEM,
-  BATTLE_MENU_SUMMON,
-} BattleMenu;
+} BattleMenuType;
 
 /**
- * Cursor position enumeration for various battle menus.
+ * Enumeration of all screen positions for the cursor sprite on the battle menu.
  */
-typedef enum BattleCursor {
+typedef enum BattleScreenCursor {
   BATTLE_CURSOR_MAIN_FIGHT,
   BATTLE_CURSOR_MAIN_ABILITY,
   BATTLE_CURSOR_MAIN_ITEM,
-  BATTLE_CURSOR_MAIN_MAIN_SUMMON,
   BATTLE_CURSOR_MAIN_FLEE,
+  BATTLE_CURSOR_NO_ITEMS,
   BATTLE_CURSOR_ITEM_1,
   BATTLE_CURSOR_ITEM_2,
   BATTLE_CURSOR_ITEM_3,
   BATTLE_CURSOR_ITEM_4,
-  BATTLE_CURSOR_ITEM_5,
-  BATTLE_CURSOR_NO_ITEMS,
   BATTLE_CURSOR_MONSTER_1,
   BATTLE_CURSOR_MONSTER_2,
   BATTLE_CURSOR_MONSTER_3,
-} BattleCursor;
+} BattleScreenCursor;
 
 /**
  * Enumeration of the three major layouts for the battle menu at the bottom of
@@ -302,9 +314,19 @@ typedef enum BattleAnimation {
   BATTLE_ANIMATION_PAUSE,
 } BattleAnimation;
 
-// -----------------------------------------------------------------------------
-// Externs & Prototypes
-// -----------------------------------------------------------------------------
+/**
+ * Contains state associated with the battle menu.
+ */
+typedef struct BattleMenu {
+  BattleMenuType active_menu;
+  BattleScreenCursor screen_cursor;
+  uint8_t entries;
+  uint8_t cursor;
+  uint8_t scroll;
+  uint8_t max_scroll;
+  char ability_text[MAX_ABILITIES][18];
+  char item_text[MAX_ITEMS][18];
+} BattleMenu;
 
 /**
  * Default palettes for the battle system.
@@ -327,22 +349,6 @@ extern const palette_color_t monster_death_colors[];
 extern BattleState battle_state;
 
 /**
- * Which menu is currently open on the battle system.
- */
-extern BattleMenu battle_menu;
-
-/**
- * Cursor state for battle system menus.
- */
-extern BattleCursor battle_cursor;
-
-/**
- * Number of selectable submenu items. General limit value for the abilities,
- * items, and summons submenus.
- */
-extern uint8_t battle_num_submenu_items;
-
-/**
  * Message to show prior to an action animation.
  * Ex: The kobold attacks with a stone axe...
  */
@@ -358,6 +364,11 @@ extern char battle_post_message[64];
  * Animation to play prior to the results of a player or monster action.
  */
 extern BattleAnimation battle_action_effect;
+
+/**
+ * Battle menu state.
+ */
+extern BattleMenu battle_menu;
 
 /**
  * Initializes the battle system.
@@ -379,11 +390,23 @@ void update_battle(void);
  */
 void draw_battle(void);
 
-// External data
+/**
+ * Shows the battle text box.
+ */
+inline void show_battle_text(void) {
+  move_win(7, 88);
+}
+
+/**
+ * Hides the battle textbox.
+ */
+inline void hide_battle_text(void) {
+  move_win(0, 144);
+}
+
 
 extern const palette_color_t data_battle_bg_colors[];
 extern const palette_color_t data_battle_sprite_colors[];
-
 extern const Tilemap monster_layout_1;
 extern const Tilemap monster_layout_2;
 extern const Tilemap monster_layout_3s;
@@ -391,6 +414,5 @@ extern const Tilemap monster_layout_1m2s;
 extern const Tilemap battle_menu_tilemap;
 extern const Tilemap battle_submenu_tilemap;
 extern const Tilemap battle_textbox_tilemap;
-
 
 #endif

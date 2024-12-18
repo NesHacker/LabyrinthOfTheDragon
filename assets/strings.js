@@ -34,14 +34,23 @@ addNamespace('misc', 0, {
   'fire': 'fire',
   'light': 'light',
   'dark': 'dark',
-  'kobold': 'Kobold',
-  'wilbur': 'Wilbur',
 })
+
+addNamespace('ability', 0, {
+  'druid_poison_spray':  'Poison Spray ',
+  'druid_cure_wounds':   'Cure Wounds  ',
+  'druid_bark_skin':     'Bark Skin    ',
+  'druid_call_ligtning': 'Call Lit.    ',
+  'druid_heal':          'Heal         ',
+  'druid_insect_plague': 'Insect Plague',
+  'druid_regen':         'Regenerate   ',
+});
 
 /**
  * General battle strings
  */
 addNamespace('battle', 3, {
+  'poison_spray': 'Noxious gas erupts from your palm!',
   'monster_miss': 'But they miss!',
   'monster_magic_miss': 'But it has no effect!',
   'monster_hit': 'You take %damage damage!',
