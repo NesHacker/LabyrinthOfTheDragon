@@ -81,27 +81,12 @@ addNamespace('battle', 3, {
 })
 
 /**
- * Summon replated strings.
- */
-addNamespace('summon', 3, {
-  // Summon 1 - Wilbur the Kobold
-  'kobold_attack': 'You attack with your tiny claws...',
-  'kobold_magic_attack': 'You fling a ball of acid...',
-  'vine_whip': 'Vine Whip',
-  'mend': ':regen:Mend',
-  'summon_ants': ':defdown:Summon Ants',
-  'dirty_fang': ':poison:Drity Fang',
-  'dirty_fang_attack': 'You rush forward, fangs bared!',
-  'dirty_fang_hit_poison': 'Your bite deals %damage damage and poison them!',
-  'dirty_fang_hit_no_poison': 'Your filthy kobold bite deals %damage damage!',
-  // Summon 2 - Beholder
-  'beholder': 'Beholder',
-});
-
-/**
  * Monster specific battle strings
  */
 addNamespace('monster', 3, {
+  'dummy_pre': 'Dummy %c just stands there...',
+  'dummy_post': 'Sad and wishing for it all to end.',
+  'dummy_post_heal': "I will never die...",
   'kobold_axe': 'Kobold %c raises a tiny axe...',
   'kobold_fire': 'Kobold %c spits a glob of fire...',
   'kobold_dazed': 'Kobold %c looks dazed...',

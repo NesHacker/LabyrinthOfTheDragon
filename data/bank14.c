@@ -8,3 +8,4 @@
 
 INCBIN(tile_kobold, "res/tiles/kobold.bin")
 INCBIN(tile_beholder, "res/tiles/beholder.bin")
+INCBIN(tile_dummy, "res/tiles/dummy.bin")
