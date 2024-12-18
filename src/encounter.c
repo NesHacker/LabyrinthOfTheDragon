@@ -121,6 +121,12 @@ void take_action(void) {
     player_turn();
   else
     monster_turn();
+
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++) {
+    if (monster->target_hp != monster->hp)
+      monster->hp_delta = monster->target_hp - monster->hp;
+  }
 }
 
 void set_player_fight(MonsterInstance *target) {
@@ -160,9 +166,21 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.target = NULL;
   encounter.xp_reward = 0;
 
+  for (uint8_t eff = 0; eff < STATUS_EFFECTS; eff++) {
+    encounter.player_status_effects[eff].active = false;
+    encounter.player_status_effects[eff].duration = 0;
+    encounter.player_status_effects[eff].tier = C_TIER;
+  }
+
   MonsterInstance *monster = encounter.monsters;
-  for (uint8_t k = 0; k < 3; k++)
+  for (uint8_t k = 0; k < 3; k++) {
+    for (uint8_t eff = 0; eff < STATUS_EFFECTS; eff++) {
+      monster->status_effects[eff].active = false;
+      monster->status_effects[eff].duration = 0;
+      monster->status_effects[eff].tier = C_TIER;
+    }
     monster_deactivate(monster++);
+  }
 }
 
 void damage_monster(uint16_t base_damage, DamageAspect type) {
@@ -191,7 +209,7 @@ void damage_monster(uint16_t base_damage, DamageAspect type) {
     sprintf(battle_post_message, str_battle_player_hit, damage);
   }
 
-  if (monster->hp < damage)
+  if (monster->target_hp < damage)
     monster->target_hp = 0;
   else
     monster->target_hp -= damage;

@@ -41,6 +41,7 @@ void monster_reset_stats(MonsterInstance *m) {
   m->matk = m->matk_base;
   m->mdef = m->mdef_base;
   m->target_hp = m->hp;
+  m->hp_delta = 0;
 }
 
 /**
@@ -78,6 +79,56 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
     player.target_hp -= damage;
 }
 
+
+// -----------------------------------------------------------------------------
+// Monster 255 - Test Dummy
+// -----------------------------------------------------------------------------
+// Just stands there, regens all health every turn.
+// -----------------------------------------------------------------------------
+const Tileset test_dummy_tileset = { MONSTER_TILES, 14, tile_dummy };
+const Monster MONSTER_DUMMY = { 255, "DUMMY", &test_dummy_tileset };
+
+const palette_color_t DUMMY_COLORS[4] = {
+  RGB_WHITE,
+  RGB8(210, 0, 150),
+  RGB_DARKBLUE,
+  RGB8(24, 0, 24),
+};
+
+void dummy_take_turn(MonsterInstance *dummy) {
+  sprintf(battle_pre_message, str_monster_dummy_pre, dummy->id);
+  if (dummy->parameter) {
+    dummy->target_hp = dummy->max_hp;
+    sprintf(battle_post_message, str_monster_dummy_post_heal);
+  } else {
+    sprintf(battle_post_message, str_monster_dummy_post);
+  }
+}
+
+void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible) {
+  monster_init_instance(m, &MONSTER_DUMMY);
+
+  PowerTier tier = S_TIER;
+
+  m->palette = DUMMY_COLORS;
+  m->exp_tier = tier;
+  m->level = level;
+
+  m->max_hp = get_monster_hp(level, tier);
+  m->hp = m->max_hp;
+
+  m->atk_base = get_monster_atk(level, tier);
+  m->def_base = get_monster_def(level, tier);
+  m->matk_base = get_monster_atk(level, tier);
+  m->mdef_base = get_monster_def(level, tier);
+  m->agl_base = get_agl(1, C_TIER);
+
+  m->take_turn = dummy_take_turn;
+  m->parameter = invincible;
+
+  monster_reset_stats(m);
+
+}
 
 // -----------------------------------------------------------------------------
 // Monster 1 - Kobold

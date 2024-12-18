@@ -23,5 +23,6 @@ INCBIN_EXTERN(map_example_0)
 INCBIN_EXTERN(map_example_1)
 INCBIN_EXTERN(tile_kobold)
 INCBIN_EXTERN(tile_beholder)
+INCBIN_EXTERN(tile_dummy)
 
 #endif

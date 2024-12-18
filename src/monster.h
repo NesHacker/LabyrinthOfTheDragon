@@ -62,17 +62,21 @@ typedef struct MonsterInstance {
    */
   PowerTier exp_tier;
   /**
-   * Current HP (health points).
-   */
-  uint16_t hp;
-  /**
    * Maximum HP (health points).
    */
   uint16_t max_hp;
   /**
+   * Current HP (health points).
+   */
+  uint16_t hp;
+  /**
    * Target HP after taking damage (used for animations).
    */
   uint16_t target_hp;
+  /**
+   * Delta to use when animating HP changes.
+   */
+  int16_t hp_delta;
   /**
    * Base physical attack score.
    */
@@ -134,6 +138,10 @@ typedef struct MonsterInstance {
    */
   uint8_t debuff_immune;
   /**
+   * Status effect instances for all 16 effects.
+   */
+  StatusEffectInstance status_effects[16];
+  /**
    * Parameter used when generating this monster instance. Can be used to alter
    * behaviors in the `take_turn` handler.
    */
@@ -144,22 +152,6 @@ typedef struct MonsterInstance {
    */
   void (*take_turn)(struct MonsterInstance *m);
 } MonsterInstance;
-
-/**
- * Monster 1 - The Kobold.
- */
-extern const Monster MONSTER_KOBOLD;
-
-/**
- * Basic kobold generator.
- * @param level Level for the kobold to generate.
- */
-void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier);
-
-/**
- * Monster 2 - The Beholder.
- */
-extern const Monster MONSTER_BEHOLDER;
 
 /**
  * Initializes a monster instance for a monster generator.
@@ -180,5 +172,20 @@ void monster_reset_stats(MonsterInstance *m);
 inline void monster_deactivate(MonsterInstance *m) {
   m->active = false;
 }
+
+/**
+ * Generates a test dummy monster.
+ * @param m Monster instance to populate.
+ * @param level Level for the dummy.
+ * @param invincible Whether or not the dummy is invincible.
+ */
+void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible);
+
+/**
+ * Basic kobold generator.
+ * @param level Level for the kobold to generate.
+ */
+void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier);
+
 
 #endif

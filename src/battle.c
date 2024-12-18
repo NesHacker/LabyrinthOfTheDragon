@@ -245,7 +245,7 @@ void erase_hp_bar(MonsterPosition pos) {
  * @param hp Curent HP for the monster.
  * @param max Max HP for the monster.
  */
-void draw_hp_bar(MonsterPosition pos, uint8_t hp, uint8_t max) {
+void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
   // Determine the x, y position for the bar
   const uint8_t x = get_hp_bar_x(pos);
   const uint8_t y = 9;
@@ -253,8 +253,10 @@ void draw_hp_bar(MonsterPosition pos, uint8_t hp, uint8_t max) {
   uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
 
   // Calculate the number of pips based on the ratio of HP to Max HP
-  uint16_t k = (40 * hp) / max;
-  uint8_t p = (uint8_t)k;
+  uint32_t k = 40;
+  k *= hp;
+  k /= max;
+  uint8_t p = k;
 
   // Update the attributes based on HP percentage
   // If p <= 13, then HP <= (1/3) * max, so set critical palette
@@ -957,24 +959,25 @@ typedef enum AnimationState {
 AnimationState animation_state = ANIMATION_PREAMBLE;
 Timer effect_delay_timer;
 
-inline uint8_t tween_hp(uint16_t hp, uint16_t target) {
-  uint16_t delta;
-  if (hp < target) {
-    delta = (target - hp) >> ANIMATION_HP_DELTA_FACTOR;
+inline uint16_t tween_hp(uint16_t hp, uint16_t target, int16_t delta) {
+  if (hp == target)
+    return target;
+
+  if (delta < 0) {
+    delta = (-delta) >> ANIMATION_HP_DELTA_FACTOR;
     if (delta == 0)
       delta = 1;
-    hp += delta;
-    if (hp > target)
-      hp = target;
-  } else if (hp > target) {
-    delta = (hp - target) >> ANIMATION_HP_DELTA_FACTOR;
-    if (delta == 0)
-      delta = 1;
-    hp -= delta;
-    if (hp < target)
-      hp = target;
+    if (hp < target + delta)
+      return target;
+    return hp - delta;
   }
-  return hp;
+
+  delta >>= ANIMATION_HP_DELTA_FACTOR;
+  if (delta == 0)
+    delta = 1;
+  if (hp + delta > target)
+    return target;
+  return hp + delta;
 }
 
 inline bool animate_monster_hp_bars(void) {
@@ -986,7 +989,7 @@ inline bool animate_monster_hp_bars(void) {
     if (monster->hp == monster->target_hp)
       continue;
     updated = true;
-    monster->hp = tween_hp(monster->hp, monster->target_hp);
+    monster->hp = tween_hp(monster->hp, monster->target_hp, monster->hp_delta);
     draw_hp_bar(pos, monster->hp, monster->max_hp);
   }
   return updated;

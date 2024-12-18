@@ -108,6 +108,10 @@ typedef struct Encounter {
    * Accumulated xp to reward upon finishing battle.
    */
   uint16_t xp_reward;
+  /**
+   * Player status effects instances.
+   */
+  StatusEffectInstance player_status_effects[16];
 } Encounter;
 
 /**

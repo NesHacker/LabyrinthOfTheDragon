@@ -12,9 +12,15 @@
 #include "strings.h"
 
 /**
- * Empty bitfield constant for use with aspect and effect immunities, etc.
+ * Enumeration of the four primary power tiers used when calculating game
+ * statistics.
  */
-#define EMPTY_BITFIELD 0
+typedef enum PowerTier {
+  C_TIER,
+  B_TIER,
+  A_TIER,
+  S_TIER,
+} PowerTier;
 
 /**
  * Core damage types for the game. Aspects color damage allowing for the player
@@ -56,13 +62,15 @@ inline const char *damage_aspect_name(DamageAspect type) {
   }
 }
 
-
+/**
+ * Number of status effects supported by the game.
+ */
+#define STATUS_EFFECTS 16
 
 /**
  * Enumeration of all status effects (buffs & debuffs) in the game.
  */
 typedef enum StatusEffect {
-  // Debuffs (Effects 0-7)
   DEBUFF_BLIND,
   DEBUFF_SCARED,
   DEBUFF_PARALZYED,
@@ -71,7 +79,6 @@ typedef enum StatusEffect {
   DEBUFF_AGL_DOWN,
   DEBUFF_ATK_DOWN,
   DEBUFF_DEF_DOWN,
-  // Buffs (Effects 8-15)
   BUFF_UNUSED_0,
   BUFF_UNUSED_1,
   BUFF_UNUSED_2,
@@ -97,15 +104,14 @@ typedef enum StatusEffectImmunity {
 } StatusEffectImmunity;
 
 /**
- * Enumeration of the four primary power tiers used when calculating game
- * statistics.
+ * Status effect instance entry. These are used to track status effects during
+ * encounters.
  */
-typedef enum PowerTier {
-  C_TIER,
-  B_TIER,
-  A_TIER,
-  S_TIER,
-} PowerTier;
+typedef struct StatusEffectInstance {
+  bool active;
+  uint8_t duration;
+  PowerTier tier;
+} StatusEffectInstance;
 
 /**
  * Used to determine hit chance based on the difference between the attacker's

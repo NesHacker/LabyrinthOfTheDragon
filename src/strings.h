@@ -226,54 +226,19 @@ extern const char str_battle_victory_no_xp[];
 extern const char str_battle_level_up[];
 
 /**
- * "You attack with your tiny claws..."
+ * "Dummy %c just stands there..."
  */
-extern const char str_summon_kobold_attack[];
+extern const char str_monster_dummy_pre[];
 
 /**
- * "You fling a ball of acid..."
+ * "Sad and wishing for it all to end."
  */
-extern const char str_summon_kobold_magic_attack[];
+extern const char str_monster_dummy_post[];
 
 /**
- * "Vine Whip"
+ * "I will never die..."
  */
-extern const char str_summon_vine_whip[];
-
-/**
- * ":regen:Mend"
- */
-extern const char str_summon_mend[];
-
-/**
- * ":defdown:Summon Ants"
- */
-extern const char str_summon_summon_ants[];
-
-/**
- * ":poison:Drity Fang"
- */
-extern const char str_summon_dirty_fang[];
-
-/**
- * "You rush forward, fangs bared!"
- */
-extern const char str_summon_dirty_fang_attack[];
-
-/**
- * "Your bite deals %damage damage and poison them!"
- */
-extern const char str_summon_dirty_fang_hit_poison[];
-
-/**
- * "Your filthy kobold bite deals %damage damage!"
- */
-extern const char str_summon_dirty_fang_hit_no_poison[];
-
-/**
- * "Beholder"
- */
-extern const char str_summon_beholder[];
+extern const char str_monster_dummy_post_heal[];
 
 /**
  * "Kobold %c raises a tiny axe..."
