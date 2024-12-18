@@ -38,6 +38,7 @@ typedef enum AbilityFlag {
   ABILITY_3 = FLAG(3),
   ABILITY_4 = FLAG(4),
   ABILITY_5 = FLAG(5),
+  ABILITY_ALL = 0b00111111,
 } AbilityFlag;
 
 /**
@@ -128,7 +129,7 @@ typedef struct Player {
   /**
    * Target HP set by the last action in combat.
    */
-  uint8_t target_hp;
+  uint16_t target_hp;
   /**
    * Current SP (skill points) for martial classes and MP (magic points) for
    * magic classes.

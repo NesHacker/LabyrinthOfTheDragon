@@ -703,6 +703,12 @@ void redraw_submenu_text(void) {
       const uint8_t line = k + battle_menu.scroll;
       core.draw_text(vram, battle_menu.ability_text[line], 18);
     }
+    if (max >= 4)
+      return;
+    for (uint8_t j = 0; j < 4 - max; j++, vram += 32 - 18) {
+      for (uint8_t x = 0; x < 18; x++, vram++)
+        set_vram_byte(vram, FONT_SPACE);
+    }
   }
 }
 
@@ -712,16 +718,6 @@ void redraw_submenu_text(void) {
  * @param entries Total number of entries for the battle_menu.
  */
 void load_submenu(BattleMenuType menu) {
-  hide_cursor();
-  draw_submenu_heading();
-
-  uint8_t *vram = VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y);
-  for (uint8_t y = 0; y < 4; y++) {
-    for (uint8_t x = 0; x < 18; x++)
-      set_vram_byte(vram++, FONT_SPACE);
-    vram += 14;
-  }
-
   if (
     battle_menu.active_menu != BATTLE_MENU_ABILITY &&
     battle_menu.active_menu != BATTLE_MENU_ITEM
@@ -739,16 +735,24 @@ void load_submenu(BattleMenuType menu) {
   battle_menu.scroll = 0;
   battle_menu.max_scroll = entries <= 4 ? 0 : entries - 4;
 
+  draw_submenu_heading();
+  draw_submenu_scroll_arrows();
+
   if (battle_menu.entries == 0) {
+    hide_cursor();
+    uint8_t *vram = VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y);
+    for (uint8_t y = 0; y < 4; y++) {
+      for (uint8_t x = 0; x < 18; x++)
+        set_vram_byte(vram++, FONT_SPACE);
+      vram += 14;
+    }
     draw_menu_empty_text();
     move_screen_cursor(BATTLE_CURSOR_NO_ITEMS);
     return;
+  } else {
+    redraw_submenu_text();
+    move_screen_cursor(BATTLE_CURSOR_ITEM_1);
   }
-
-  redraw_submenu_text();
-  draw_submenu_scroll_arrows();
-  draw_submenu_heading();
-  move_screen_cursor(BATTLE_CURSOR_ITEM_1);
 }
 
 /**
@@ -1033,7 +1037,6 @@ void animate_action_result(void) {
  * Cleans up monsters after an action (handles death, etc.).
  */
 void cleanup_monsters(void) {
-  // TODO This should be in the encounter module
   MonsterInstance *monster = encounter.monsters;
   for (uint8_t pos = 0; pos < 3; pos++, monster++) {
     if (!monster->active)
@@ -1051,6 +1054,7 @@ void cleanup_monsters(void) {
 }
 
 void battle_rewards(void) {
+  // TODO level up
   const uint16_t xp = encounter.xp_reward;
   player.exp += xp;
 
@@ -1060,7 +1064,6 @@ void battle_rewards(void) {
     sprintf(rewards_buf, str_battle_victory, xp);
   }
 
-  // TODO level up
   text_writer.auto_page = AUTO_PAGE_OFF;
   text_writer.print(rewards_buf);
 }

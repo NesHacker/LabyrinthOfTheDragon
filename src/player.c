@@ -281,10 +281,10 @@ void init_player(PlayerClass player_class) {
   set_class_abilities();
 
   // player.ability_flags = ABILITY_0 | ABILITY_3 | ABILITY_5;
-  player.ability_flags = 0b00111111;
+  player.ability_flags = ABILITY_ALL;
   set_player_abilities();
 
-  player.level = NEW_CHARACTER_LEVEL;
+  player.level = NEW_CHARACTER_LEVEL + 64;
   player.exp = get_exp(player.level);
   player.next_level_exp = get_exp(player.level + 1);
   update_player_stats();

@@ -177,7 +177,7 @@ void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
 
 void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
   char buf[10];
-  sprintf(buf, " %3u/%u", n, d);
+  sprintf(buf, "%u/%u", n, d);
   draw_text(vram, buf, 7);
 }
 
