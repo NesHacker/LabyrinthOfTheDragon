@@ -50,7 +50,7 @@ addNamespace('ability', 0, {
  * General battle strings
  */
 addNamespace('battle', 3, {
-  'poison_spray': 'Noxious gas erupts from your palm!',
+  'poison_spray': 'Poison gas erupts from your palm!',
   'monster_miss': 'But they miss!',
   'monster_magic_miss': 'But it has no effect!',
   'monster_hit': 'You take %damage damage!',

@@ -86,7 +86,7 @@ extern const char str_ability_druid_insect_plague[];
 extern const char str_ability_druid_regen[];
 
 /**
- * "Noxious gas erupts from your palm!"
+ * "Poison gas erupts from your palm!"
  */
 extern const char str_battle_poison_spray[];
 

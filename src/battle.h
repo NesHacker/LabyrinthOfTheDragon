@@ -394,7 +394,7 @@ void draw_battle(void);
  * Shows the battle text box.
  */
 inline void show_battle_text(void) {
-  move_win(7, 88);
+  move_win(7, 96);
 }
 
 /**

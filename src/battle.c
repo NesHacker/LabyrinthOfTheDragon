@@ -1098,7 +1098,7 @@ void initialize_battle(void) {
   core.load_battle_tiles();
 
   // Configure the text writer
-  text_writer.set_origin(VRAM_WINDOW, 1, 2);
+  text_writer.set_origin(VRAM_WINDOW, 1, 1);
   text_writer.set_auto_page(player.message_speed);
   text_writer.set_size(18, 4);
 
