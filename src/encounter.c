@@ -127,31 +127,26 @@ void update_player_status_effects(void) {
 
     switch (k) {
     case DEBUFF_BLIND:
-      player.atk = blind_atk(player.atk_base);
+      player.atk = blind_atk(player.atk_base, effect->tier);
       break;
     case DEBUFF_AGL_DOWN:
+      player.agl = agl_down(player.agl_base, effect->tier);
       break;
     case DEBUFF_ATK_DOWN:
+      player.atk = atk_down(player.atk_base, effect->tier);
       break;
     case DEBUFF_DEF_DOWN:
+      player.def = def_down(player.def_base, effect->tier);
       break;
     case BUFF_AGL_UP:
+      player.agl = agl_up(player.agl_base, effect->tier);
       break;
     case BUFF_ATK_UP:
+      player.atk = atk_up(player.atk_base, effect->tier);
       break;
     case BUFF_DEF_UP:
+      player.def = def_up(player.def_base, effect->tier);
       break;
-
-    case BUFF_HASTE:
-      // TODO handle this in player ability functions too!
-      break;
-
-    // Handled in the turn function
-    case DEBUFF_SCARED: break;
-    case DEBUFF_PARALZYED: break;
-    case DEBUFF_POISONED: break;
-    case DEBUFF_CONFUSED: break;
-    case BUFF_REGEN: break;
     }
   }
 }
@@ -165,24 +160,29 @@ void update_monster_status_effects(MonsterInstance *monster) {
 
     switch (k) {
     case DEBUFF_BLIND:
-      monster->atk = blind_atk(monster->atk);
+      monster->atk = blind_atk(monster->atk, effect->tier);
       break;
     case DEBUFF_AGL_DOWN:
+      monster->agl = agl_down(monster->agl_base, effect->tier);
       break;
     case DEBUFF_ATK_DOWN:
+      monster->atk = atk_down(monster->atk_base, effect->tier);
       break;
     case DEBUFF_DEF_DOWN:
+      monster->def = def_down(monster->def_base, effect->tier);
       break;
     case BUFF_AGL_UP:
+      monster->agl = agl_up(monster->agl_base, effect->tier);
       break;
     case BUFF_ATK_UP:
+      monster->atk = atk_up(monster->atk_base, effect->tier);
       break;
     case BUFF_DEF_UP:
+      monster->def = def_up(monster->def_base, effect->tier);
       break;
 
-    case BUFF_HASTE:
-      // TODO handle this in the monster attack function too!
-      break;
+    // TODO handle this in the monster attack function too!
+    case BUFF_HASTE: break;
 
     // Handled in the turn function
     case DEBUFF_SCARED: break;
@@ -216,6 +216,13 @@ void check_status_effects(void) {
 }
 
 inline void player_turn(void) {
+    // // Handled in the turn function
+    // case DEBUFF_SCARED: break;
+    // case DEBUFF_PARALZYED: break;
+    // case DEBUFF_POISONED: break;
+    // case DEBUFF_CONFUSED: break;
+    // case BUFF_REGEN: break;
+
   switch (encounter.player_action) {
   case PLAYER_ACTION_FIGHT:
     player_base_attack();
@@ -239,6 +246,14 @@ inline void monster_turn(void) {
 
   if (!monster->active)
     return;
+
+
+    // // Handled in the turn function
+    // case DEBUFF_SCARED: break;
+    // case DEBUFF_PARALZYED: break;
+    // case DEBUFF_POISONED: break;
+    // case DEBUFF_CONFUSED: break;
+    // case BUFF_REGEN: break;
 
   // // Check "scared" debuff
   // StatusEffectInstance *effect;

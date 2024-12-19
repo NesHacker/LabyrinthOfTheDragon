@@ -383,14 +383,6 @@ inline bool is_debuff_immmune(uint8_t immune, StatusEffect effect) {
 }
 
 /**
- * Calculates resulting atk for a blind monster or player given their base atk.
- */
-inline uint8_t blind_atk(uint8_t base_atk) {
-  const uint8_t mod = 16;
-  return base_atk < mod ? 0 : base_atk - mod;
-}
-
-/**
  * Caluclates if a scared entity flees or not.
  * @param tier Tier of the scared debuff.
  * @return `
@@ -428,5 +420,54 @@ inline StatusEffectInstance *get_effect(
 ) {
   return effects_list + effect;
 }
+
+/**
+ * @return Modified attack given "Blink debuff".
+ * @param base_atk Base attack.
+ * @param tier Power tier of the debuff.
+ */
+uint8_t blind_atk(uint8_t base_atk, PowerTier tier) BANKED;
+
+/**
+ * @return Modified agility given "AGL down" debuff.
+ * @param base_agl Base Agility.
+ * @param tier Power tier of the debuff.
+ */
+uint8_t agl_down(uint8_t base_agl, PowerTier tier) BANKED;
+
+/**
+ * @return Modified attack given the "ATK Down debuff".
+ * @param base Base atk.
+ * @param tier Power tier for the debuff.
+ */
+uint8_t atk_down(uint8_t base, PowerTier tier) BANKED;
+
+/**
+ * @return Modified attack given the "DEF Down debuff".
+ * @param base Base def.
+ * @param tier Power tier for the debuff.
+ */
+uint8_t def_down(uint8_t base, PowerTier tier) BANKED;
+
+/**
+ * @return Modified agility given "AGL up" debuff.
+ * @param base_agl Base Agility.
+ * @param tier Power tier of the debuff.
+ */
+uint8_t agl_up(uint8_t base_agl, PowerTier tier) BANKED;
+
+/**
+ * @return Modified attack given the "ATK up debuff".
+ * @param base Base atk.
+ * @param tier Power tier for the debuff.
+ */
+uint8_t atk_up(uint8_t base, PowerTier tier) BANKED;
+
+/**
+ * @return Modified attack given the "DEF up debuff".
+ * @param base Base def.
+ * @param tier Power tier for the debuff.
+ */
+uint8_t def_up(uint8_t base, PowerTier tier) BANKED;
 
 #endif

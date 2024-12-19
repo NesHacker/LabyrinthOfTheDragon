@@ -7,22 +7,13 @@
 #include "core.h"
 #include "map.h"
 #include "main_menu.h"
+#include "stats.h"
+#include "test.h"
 
 uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
 GameState game_state = GAME_STATE_TITLE;
-
-void init_test_encounter(void) {
-  encounter.layout = MONSTER_LAYOUT_2;
-  MonsterInstance *monster = encounter.monsters;
-  kobold_generator(monster, 2, C_TIER);
-  monster->id = 'A';
-  kobold_generator(++monster, 3, B_TIER);
-  monster->id = 'B';
-  monster_deactivate(++monster);
-  init_battle();
-}
 
 /**
  * Initializes the core game engine.
@@ -40,6 +31,9 @@ inline void initialize(void) {
 
   game_state = GAME_STATE_WORLD_MAP;
   // game_state = GAME_STATE_BATTLE;
+
+  // test_stats();
+  // game_state = 0xFF;
 }
 
 /**
