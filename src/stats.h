@@ -68,7 +68,7 @@ inline const char *damage_aspect_name(DamageAspect type) {
 typedef enum StatusEffect {
   DEBUFF_BLIND,
   DEBUFF_SCARED,
-  DEBUFF_PARALZYED,
+  DEBUFF_PARALYZED,
   DEBUFF_POISONED,
   DEBUFF_CONFUSED,
   DEBUFF_AGL_DOWN,
@@ -84,6 +84,34 @@ typedef enum StatusEffect {
   BUFF_DEF_UP,
   NO_STATUS_EFFECT = 0xFF
 } StatusEffect;
+
+/**
+ * Flag bitmask for each buff.
+ */
+typedef enum BuffFlag {
+  FLAG_BUFF_UNUSED_0 = FLAG(0),
+  FLAG_BUFF_UNUSED_1 = FLAG(1),
+  FLAG_BUFF_UNUSED_2 = FLAG(2),
+  FLAG_BUFF_HASTE = FLAG(3),
+  FLAG_BUFF_REGEN = FLAG(4),
+  FLAG_BUFF_AGL_UP = FLAG(5),
+  FLAG_BUFF_ATK_UP = FLAG(6),
+  FLAG_BUFF_DEF_UP = FLAG(7),
+} BuffFlag;
+
+/**
+ * Flag bitmask for each debuff.
+ */
+typedef enum DebuffFlag {
+  FLAG_DEBUFF_BLIND = FLAG(0),
+  FLAG_DEBUFF_SCARED = FLAG(1),
+  FLAG_DEBUFF_PARALYZED = FLAG(2),
+  FLAG_DEBUFF_POISONED = FLAG(3),
+  FLAG_DEBUFF_CONFUSED = FLAG(4),
+  FLAG_DEBUFF_AGL_DOWN = FLAG(5),
+  FLAG_DEBUFF_ATK_DOWN = FLAG(6),
+  FLAG_DEBUFF_DEF_DOWN = FLAG(7),
+} DebuffFlag;
 
 /**
  * Number of status effects supported by the game.
@@ -135,6 +163,7 @@ typedef struct StatusEffectInstance {
   bool active;
   bool update;
   StatusEffect effect;
+  uint8_t flag;
   uint8_t duration;
   PowerTier tier;
 } StatusEffectInstance;

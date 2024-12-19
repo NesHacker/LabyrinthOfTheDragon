@@ -125,11 +125,19 @@ void monster_reset_stats(MonsterInstance *m) NONBANKED {
 }
 
 void update_player_status_effects(void) {
+  player.buffs = 0;
+  player.debuffs = 0;
+
   StatusEffectInstance *effect = encounter.player_status_effects;
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
     update_effect_duration(effect);
     if (!effect->active)
       continue;
+
+    if (effect->effect < 8)
+      player.debuffs |= effect->flag;
+    else
+      player.buffs |= effect->flag;
 
     switch (k) {
     case DEBUFF_BLIND:
@@ -168,12 +176,21 @@ void update_player_status_effects(void) {
 
 void update_monster_status_effects(MonsterInstance *monster) {
   StatusEffectInstance *effect = monster->status_effects;
+
+  monster->buffs = 0;
+  monster->debuffs = 0;
+
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
     update_effect_duration(effect);
     if (!effect->active)
       continue;
 
-    switch (k) {
+    if (effect->effect < 8)
+      monster->debuffs |= effect->flag;
+    else
+      monster->buffs |= effect->flag;
+
+    switch (effect->effect) {
     case DEBUFF_BLIND:
       monster->atk = blind_atk(monster->atk, effect->tier);
       break;
@@ -444,6 +461,7 @@ void ability_placeholder(void) {
 StatusEffectResult apply_status_effect(
   StatusEffectInstance *list,
   StatusEffect effect,
+  uint8_t flag,
   PowerTier tier,
   uint8_t duration,
   uint8_t immune
@@ -461,6 +479,7 @@ StatusEffectResult apply_status_effect(
     if (is_debuff(effect) && is_debuff_immmune(immune, effect))
       return STATUS_RESULT_IMMUNE;
     e->effect = effect;
+    e->flag = flag;
     e->active = true;
     e->update = true;
     e->tier = tier;

@@ -142,6 +142,14 @@ typedef struct MonsterInstance {
    */
   StatusEffectInstance status_effects[MAX_ACTIVE_EFFECTS];
   /**
+   * Active debuff bitfield.
+   */
+  uint8_t debuffs;
+  /**
+   * Active buff bitfield.
+   */
+  uint8_t buffs;
+  /**
    * Whether or not the monster can flee (set this for elites, bosses, etc.).
    */
   bool can_flee;

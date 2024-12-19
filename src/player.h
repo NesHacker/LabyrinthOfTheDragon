@@ -205,6 +205,14 @@ typedef struct Player {
    */
   uint8_t debuff_immune;
   /**
+   * Active debuff bitfield.
+   */
+  uint8_t debuffs;
+  /**
+   * Active buff bitfield.
+   */
+  uint8_t buffs;
+  /**
    * Whether or not the player has found the torch.
    */
   bool has_torch;
