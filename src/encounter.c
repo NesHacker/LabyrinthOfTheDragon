@@ -21,12 +21,11 @@ void roll_initiative(void) {
 
   // Roll for the monsters that currently live
   MonsterInstance *mon = encounter.monsters;
-  for (uint8_t m = 1; m < 4; m++) {
+  for (uint8_t m = 1; m < 4; m++, mon++) {
     if (mon->active) {
       encounter.order[m] = TURN_PLAYER + m;
       rolls[m] = d32() + 1 + mon->agl;
     }
-    mon++;
   }
 
   // When's the last time you wrote a bespoke bubble sort? ;)
@@ -255,32 +254,14 @@ inline void monster_turn(void) {
   if (!monster->active)
     return;
 
-
-    // // Handled in the turn function
-    // case DEBUFF_SCARED: break;
-    // case DEBUFF_PARALZYED: break;
-    // case DEBUFF_POISONED: break;
-    // case DEBUFF_CONFUSED: break;
-    // case BUFF_REGEN: break;
-
-  // // Check "scared" debuff
-  // StatusEffectInstance *effect;
-  // effect = get_effect(monster->status_effects, DEBUFF_SCARED);
-  // if (effect->active) {
-  //   if (
-  //     monster->can_flee &&
-  //     calc_scared_flee(effect->tier) &&
-  //     monster_flee(monster)
-  //   ) {
-  //     return;
-  //   }
-
-  //   if (calc_scared_frozen(effect->tier)) {
-  //     return;
-  //   }
-  // }
-
   monster->take_turn(monster);
+
+  // // Handled in the turn function
+  // case DEBUFF_SCARED: break;
+  // case DEBUFF_PARALZYED: break;
+  // case DEBUFF_POISONED: break;
+  // case DEBUFF_CONFUSED: break;
+  // case BUFF_REGEN: break;
 }
 
 void take_action(void) {

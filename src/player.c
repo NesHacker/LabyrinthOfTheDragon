@@ -257,7 +257,16 @@ void test_class_ability0(void) {
 }
 
 void test_class_ability1(void) {
-  ability_placeholder();
+  sprintf(battle_pre_message, "Debuffing all\x60");
+  sprintf(battle_post_message, "Take that!");
+
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    StatusEffectInstance *effects = monster->status_effects;
+    for (uint8_t e = 0; e < 4; e++) {
+      apply_status_effect(effects, e, C_TIER, e + 1, monster->debuff_immune);
+    }
+  }
 }
 
 void test_class_ability2(void) {
@@ -281,7 +290,7 @@ const Ability test_class0 = {
 };
 
 const Ability test_class1 = {
-  2, "Test 2", TARGET_SELF, 0, test_class_ability1
+  2, "Debuff All", TARGET_SELF, 0, test_class_ability1
 };
 
 const Ability test_class2 = {
@@ -436,6 +445,9 @@ void player_base_attack(void) {
     break;
   case CLASS_SORCERER:
     sorcerer_base_attack();
+    break;
+  case CLASS_TEST:
+    test_class_base_attack();
     break;
   }
 }
