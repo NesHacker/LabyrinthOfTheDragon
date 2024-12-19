@@ -45,6 +45,7 @@ void update_textbox(void) {
     }
     break;
   case TEXT_BOX_OPEN:
+    text_writer.update();
     if (!was_pressed(J_A))
       return;
     if (text_writer.state == TEXT_WRITER_PAGE_WAIT)
