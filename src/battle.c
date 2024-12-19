@@ -1238,13 +1238,8 @@ void update_battle(void) NONBANKED {
       battle_state = BATTLE_END_ROUND;
     } else {
       check_status_effects();
-      battle_state = BATTLE_STATUS_EFFECT_UPDATE;
+      battle_state = BATTLE_TAKE_ACTION;
     }
-    break;
-  case BATTLE_STATUS_EFFECT_UPDATE:
-    // TODO This might be fixed now, try again!
-    // update_status_effects_ui();
-    battle_state = BATTLE_TAKE_ACTION;
     break;
   case BATTLE_TAKE_ACTION:
     take_action();
