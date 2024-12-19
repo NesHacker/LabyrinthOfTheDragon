@@ -19,25 +19,30 @@
 // TODO Move these into a BattleState struct
 BattleState battle_state;
 BattleMenu battle_menu;
+uint8_t status_effect_x[3] = { 7, 7, 7 };
+
+// /**
+//  * Structure containing memory buffers used during battle.
+//  */
+// typedef struct BattleBuffers {
+//   char action[64];
+//   char result[64];
+//   char rewards[64];
+//   bool no_result;
+// } BattleBuffers;
 
 // TODO convert these into a single battle_buffer obeject
-/**
- * Structure containing memory buffers used during battle.
- */
-typedef struct BattleBuffers {
-  char action[64];
-  char result[64];
-  char rewards[64];
-} BattleBuffers;
 char battle_pre_message[64];
 char battle_post_message[64];
 char rewards_buf[64];
 
 // TODO covert these into a single BattleAnimation state structure
 BattleAnimation battle_animation;
-Timer status_effect_timer;
-uint8_t status_effect_frame = 0;
 
+// TODO Was gonna animate these but my drawing routine is too slow, don't have
+// the time for a deep optiization dive :(
+// Timer status_effect_timer;
+const uint8_t status_effect_frame = 1;
 
 /**
  * Finds the monster currently selected by the screen cursor.
@@ -130,31 +135,6 @@ uint8_t get_hp_bar_x(MonsterPosition pos) {
 }
 
 /**
- * Determines the starting x position for a monster's status effect tiles.
- * @param pos Monster position.
- * @return The starting x position for the status effects.
- */
-uint8_t get_status_effect_x(MonsterPosition pos) {
-  switch (encounter.layout) {
-  case MONSTER_LAYOUT_1: return 7;
-  case MONSTER_LAYOUT_2: return (pos == MONSTER_POSITION1) ? 3 : 12;
-  case MONSTER_LAYOUT_3S:
-    switch (pos) {
-    case MONSTER_POSITION1: return 1;
-    case MONSTER_POSITION2: return 7;
-    case MONSTER_POSITION3: return 13;
-    }
-  case MONSTER_LAYOUT_1M_2S:
-    switch (pos) {
-    case MONSTER_POSITION1: return 1;
-    case MONSTER_POSITION2: return 8;
-    case MONSTER_POSITION3: return 14;
-    }
-  }
-  return 7;
-}
-
-/**
  * Erases tiles for the monster at the given position in the layout. Used to
  * remove monster graphics after they die.
  * @param p Position of the monster.
@@ -171,7 +151,7 @@ void erase_monster_tiles(MonsterPosition p) {
   uint8_t x = monster_clear_x[encounter.layout][p];
   if (x == 0xFF) return;
   uint8_t *vram = VRAM_BACKGROUND_XY(x, 1);
-  core.fill(vram, 7, 7, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
+  core.fill(vram, 7, 8, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
 }
 
 /**
@@ -297,72 +277,91 @@ void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
 }
 
 /**
- * Removes status effect graphics for a monster on the screen.
- * @param pos Position of the monster.
+ * Determines the starting x position for a monster's status effect tiles.
+ * @param pos Monster position.
+ * @return The starting x position for the status effects.
  */
-void remove_status_effects(MonsterPosition pos) {
-  const uint8_t x = get_status_effect_x(pos);
-  const uint8_t y = 8;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
-  for (uint8_t k = 0; k < 5; k++, vram++) {
-    VBK_REG = VBK_TILES;
-    set_vram_byte(vram, BATTLE_CLEAR_TILE);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
+uint8_t get_status_effect_x(MonsterPosition pos) {
+  switch (encounter.layout) {
+  case MONSTER_LAYOUT_1:
+    return 7;
+  case MONSTER_LAYOUT_2:
+    switch (pos) {
+    case MONSTER_POSITION1: return 3;
+    case MONSTER_POSITION2: return 12;
+    case MONSTER_POSITION3: return 12;
+    }
+  case MONSTER_LAYOUT_3S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
+    }
+  case MONSTER_LAYOUT_1M_2S:
+    switch (pos) {
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 8;
+    case MONSTER_POSITION3: return 14;
+    }
   }
-}
-
-/**
- * Draws the icon for a status effect at the given position for a monster on the
- * screen.
- * @param e Status effect to draw.
- * @param m Position of the monster with the effect.
- * @param p Position index.
- */
-void draw_monster_status_effect_icon(
-  StatusEffect e,
-  MonsterPosition m,
-  uint8_t p
-) {
-  uint8_t tile = ((uint8_t)e * 2) + 0x60 + status_effect_frame;
-  uint8_t attr = e < 8 ? DEBUFF_ATTRIBUTE : BUFF_ATTRIBUTE;
-  const uint8_t x = get_status_effect_x(m);
-  const uint8_t y = 8;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x + p, y);
-  VBK_REG = VBK_TILES;
-  set_vram_byte(vram, tile);
-  VBK_REG = VBK_ATTRIBUTES;
-  set_vram_byte(vram, attr);
-}
-
-/**
- * Draws the icon for a player status effect at the given position.
- */
-void draw_player_status_effect_icon(StatusEffect e, uint8_t p) {
-  uint8_t tile = ((uint8_t)e * 2) + 0x60 + status_effect_frame;
-  const uint8_t x = 10 + p;
-  const uint8_t y = 13;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
-  VBK_REG = VBK_TILES;
-  set_vram_byte(vram, tile);
+  return 7;
 }
 
 /**
  * Redraws all status effects for the player.
  */
 void redraw_player_status_effects(void) {
-  // TODO Implement me
-  // draw_player_status_effect_icon(BUFF_ATK_UP, 0);
-  // draw_player_status_effect_icon(DEBUFF_PARALZYED, 1);
+  uint8_t *vram = VRAM_BACKGROUND_XY(12, 15);
+  StatusEffectInstance *effect = encounter.player_status_effects;
+  uint8_t p = 0;
+
+  VBK_REG = VBK_TILES;
+
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    if (!effect->active)
+      continue;
+    set_vram_byte(vram++, 0x60 + effect->effect);
+    p++;
+  }
+
+  for (uint8_t k = p; k < MAX_ACTIVE_EFFECTS; k++)
+    set_vram_byte(vram++, FONT_SPACE);
 }
 
 /**
- * Draws status effects for all monsters and the player.
+ * Redraw status effects for all monsters.
  */
 void redraw_monster_status_effects(void) {
-  // TODO Implement me
-  // draw_monster_status_effect_icon(BUFF_DEF_UP, MONSTER_POSITION1, 0);
-  // draw_monster_status_effect_icon(DEBUFF_POISONED, MONSTER_POSITION1, 1);
+  MonsterInstance *monster = encounter.monsters;
+  const uint8_t frame_offset = 0x60;
+
+  for (uint8_t m = MONSTER_POSITION1; m <= MONSTER_POSITION3; m++, monster++) {
+    if (!monster->active)
+      continue;
+
+    uint8_t p = 0;
+    uint8_t *vram = VRAM_BACKGROUND_XY(status_effect_x[m], 10);
+
+    StatusEffectInstance *effect = monster->status_effects;
+    for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+      if (!effect->active)
+        continue;
+      const uint8_t e = effect->effect;
+      uint8_t tile = frame_offset + e;
+      uint8_t attr = e < 8 ? DEBUFF_ATTRIBUTE : BUFF_ATTRIBUTE;
+      VBK_REG = VBK_TILES;
+      set_vram_byte(vram, tile);
+      VBK_REG = VBK_ATTRIBUTES;
+      set_vram_byte(vram++, attr);
+      p++;
+    }
+    for (uint8_t k = p; k < MAX_ACTIVE_EFFECTS; k++) {
+      VBK_REG = VBK_TILES;
+      set_vram_byte(vram, BATTLE_CLEAR_TILE);
+      VBK_REG = VBK_ATTRIBUTES;
+      set_vram_byte(vram++, BATTLE_CLEAR_ATTR);
+    }
+  }
 }
 
 /**
@@ -1094,6 +1093,14 @@ void animate_action_result(void) {
 }
 
 /**
+ * Checks for status effect changes and updates UI accordingly.
+ */
+inline void update_staus_effects_ui(void) {
+  redraw_player_status_effects();
+  redraw_monster_status_effects();
+}
+
+/**
  * Cleans up monsters after an action (handles death, etc.).
  */
 void cleanup_monsters(void) {
@@ -1165,6 +1172,11 @@ void initialize_battle(void) {
   text_writer.set_auto_page(player.message_speed);
   text_writer.set_size(18, 4);
 
+  // Memoize some stuff for fast rendering
+  status_effect_x[0] = get_status_effect_x(MONSTER_POSITION1);
+  status_effect_x[1] = get_status_effect_x(MONSTER_POSITION2);
+  status_effect_x[2] = get_status_effect_x(MONSTER_POSITION3);
+
   // Draw menus and initialize cursor
   core.draw_tilemap(battle_menu_tilemap, VRAM_BACKGROUND_XY(0, MENU_Y));
   core.draw_tilemap(battle_submenu_tilemap, VRAM_BACKGROUND_XY(0, SUBMENU_Y));
@@ -1195,9 +1207,6 @@ void initialize_battle(void) {
     add_LCD(nowait_int_handler);
   }
   set_interrupts(IE_REG | LCD_IFLAG);
-
-  // Animation & timers
-  init_timer(status_effect_timer, 40);
 
   // Initiate the fade-in and start battle
   battle_state = BATTLE_FADE_IN;
@@ -1248,10 +1257,13 @@ void update_battle(void) NONBANKED {
       battle_state = BATTLE_END_ROUND;
     } else {
       check_status_effects();
-      battle_state = BATTLE_UPDATE_STATUS_EFFECTS;
+      battle_state = BATTLE_STATUS_EFFECT_UPDATE;
     }
     break;
-  case BATTLE_UPDATE_STATUS_EFFECTS:
+  case BATTLE_STATUS_EFFECT_UPDATE:
+    // TODO I don't know why this causes issues if called here.
+    //      No time to figure it out now.
+    // update_staus_effects_ui();
     battle_state = BATTLE_TAKE_ACTION;
     break;
   case BATTLE_TAKE_ACTION:
@@ -1261,12 +1273,14 @@ void update_battle(void) NONBANKED {
     battle_state = BATTLE_ANIMATE;
     break;
   case BATTLE_ANIMATE:
+    text_writer.update();
     animate_action_result();
     if (animation_state == ANIMATION_COMPLETE) {
       battle_state = BATTLE_ACTION_CLEANUP;
     }
     break;
   case BATTLE_ACTION_CLEANUP:
+    update_staus_effects_ui();
     cleanup_monsters();
     if (player.target_hp == 0) {
       battle_state = BATTLE_PLAYER_DIED;
@@ -1277,7 +1291,7 @@ void update_battle(void) NONBANKED {
     }
     break;
   case BATTLE_PLAYER_FLED:
-    // Flee success message / animation
+    // Flee success animation
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
@@ -1291,6 +1305,7 @@ void update_battle(void) NONBANKED {
     }
     battle_state = BATTLE_STATE_MENU;
     battle_menu.active_menu = BATTLE_MENU_MAIN;
+    update_player_mp();
     hide_battle_text();
     move_screen_cursor(BATTLE_CURSOR_MAIN_FIGHT);
     break;
@@ -1309,14 +1324,6 @@ void update_battle(void) NONBANKED {
     // Handle level up messages and logic.
     break;
   }
-
-  // Update animation timers, etc.
-  if (update_timer(status_effect_timer)) {
-    status_effect_frame ^= 1;
-    reset_timer(status_effect_timer);
-  }
-  // redraw_player_status_effects();
-  // redraw_monster_status_effects();
 }
 
 void draw_battle(void) NONBANKED {

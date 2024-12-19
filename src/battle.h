@@ -210,7 +210,7 @@ typedef enum BattleState {
   /**
    * A status effect message is being displayed.
    */
-  BATTLE_STATUS_EFFECT_MESSAGE,
+  BATTLE_STATUS_EFFECT_UPDATE,
   /**
    * The player/monster's action is executed to set battle results state.
    */

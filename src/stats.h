@@ -63,11 +63,6 @@ inline const char *damage_aspect_name(DamageAspect type) {
 }
 
 /**
- * Number of status effects supported by the game.
- */
-#define STATUS_EFFECTS 16
-
-/**
  * Enumeration of all status effects (buffs & debuffs) in the game.
  */
 typedef enum StatusEffect {
@@ -87,7 +82,26 @@ typedef enum StatusEffect {
   BUFF_AGL_UP,
   BUFF_ATK_UP,
   BUFF_DEF_UP,
+  NO_STATUS_EFFECT = 0xFF
 } StatusEffect;
+
+/**
+ * Number of status effects supported by the game.
+ */
+#define MAX_ACTIVE_EFFECTS 4
+
+
+/**
+ * Denotes that a status effect never ends.
+ */
+#define EFFECT_DURATION_PERPETUAL 0xFF
+
+/**
+ * @return `true` if the given status effect is a debuff.
+ */
+inline bool is_debuff(StatusEffect effect) {
+  return effect <= DEBUFF_DEF_DOWN;
+}
 
 /**
  * Denotes a status effect immunity for the player or a monster.
@@ -104,11 +118,23 @@ typedef enum StatusEffectImmunity {
 } StatusEffectImmunity;
 
 /**
+ * Denotes a possible result when attempting to apply a status effect.
+ */
+typedef enum StatusEffectResult {
+  STATUS_RESULT_SUCCESS,
+  STATUS_RESULT_DUPLICATE,
+  STATUS_RESULT_IMMUNE,
+  STATUS_RESULT_MAX,
+} StatusEffectResult;
+
+/**
  * Status effect instance entry. These are used to track status effects during
  * encounters.
  */
 typedef struct StatusEffectInstance {
   bool active;
+  bool update;
+  StatusEffect effect;
   uint8_t duration;
   PowerTier tier;
 } StatusEffectInstance;
@@ -345,6 +371,62 @@ inline bool is_critical(uint8_t d16_roll) {
  */
 inline bool is_fumble(uint8_t d16_roll) {
   return d16_roll <= 1;
+}
+
+/**
+ * @return `true` If immune to the given effect.
+ * @param immune Immunity bitfield.
+ * @param effec Status effect to check.
+ */
+inline bool is_debuff_immmune(uint8_t immune, StatusEffect effect) {
+  return immune & FLAG(effect);
+}
+
+/**
+ * Calculates resulting atk for a blind monster or player given their base atk.
+ */
+inline uint8_t blind_atk(uint8_t base_atk) {
+  const uint8_t mod = 16;
+  return base_atk < mod ? 0 : base_atk - mod;
+}
+
+/**
+ * Caluclates if a scared entity flees or not.
+ * @param tier Tier of the scared debuff.
+ * @return `
+ */
+inline bool calc_scared_flee(PowerTier tier) {
+  switch (tier) {
+  case C_TIER: return d256() < 26;
+  case B_TIER: return d256() < 46;
+  case A_TIER: return d256() < 64;
+  default: return d256() < 90;
+  }
+}
+
+/**
+ * Calculates if a scared entity is frozen in fear.
+ * @param tier Power tier of the scared debuff.
+ */
+inline bool calc_scared_frozen(PowerTier tier) {
+  switch (tier) {
+  case C_TIER: return d256() < 128;
+  case B_TIER: return d256() < 154;
+  case A_TIER: return d256() < 180;
+  default: return d256() < 218;
+  }
+}
+
+/**
+ * @return A specific status effect from the given list.
+ * @param effects_list Pointer to a list of status effects.
+ * @param effect The effect to get.
+ */
+inline StatusEffectInstance *get_effect(
+  StatusEffectInstance *effects_list,
+  StatusEffect effect
+) {
+  return effects_list + effect;
 }
 
 #endif

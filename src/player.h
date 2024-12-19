@@ -255,11 +255,6 @@ void init_player(PlayerClass player_class);
 void grant_ability(AbilityFlag flag);
 
 /**
- * Resets the players current stats back to their base values.
- */
-void reset_player_stats(void);
-
-/**
  * Sets class abilities based on the current player class.
  */
 void set_class_abilities(void);
@@ -273,11 +268,6 @@ void set_player_abilities(void);
  * Performs a basic attack against the the targeted monster.
  */
 void player_base_attack(void);
-
-/**
- * Performs a flee action for the player.
- */
-void player_flee(void);
 
 /**
  * @return `true` if the player has a magic combat class.

@@ -31,17 +31,8 @@ void monster_init_instance(MonsterInstance *i, Monster *m) {
   i->aspect_resist = 0;
   i->aspect_vuln = 0;
   i->debuff_immune = 0;
+  i->can_flee = true;
   i->parameter = 0;
-}
-
-void monster_reset_stats(MonsterInstance *m) {
-  m->agl = m->agl_base;
-  m->atk = m->atk_base;
-  m->def = m->def_base;
-  m->matk = m->matk_base;
-  m->mdef = m->mdef_base;
-  m->target_hp = m->hp;
-  m->hp_delta = 0;
 }
 
 /**
@@ -86,7 +77,7 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
 // Just stands there, regens all health every turn.
 // -----------------------------------------------------------------------------
 const Tileset test_dummy_tileset = { MONSTER_TILES, 14, tile_dummy };
-const Monster MONSTER_DUMMY = { 255, "DUMMY", &test_dummy_tileset };
+const Monster MONSTER_DUMMY = { 255, "Dummy", &test_dummy_tileset };
 
 const palette_color_t DUMMY_COLORS[4] = {
   RGB_WHITE,
@@ -134,7 +125,7 @@ void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible) {
 // Monster 1 - Kobold
 // -----------------------------------------------------------------------------
 const Tileset kobold_tileset = { MONSTER_TILES, 14, tile_kobold };
-const Monster MONSTER_KOBOLD = { 1, "KOBOLD", &kobold_tileset };
+const Monster MONSTER_KOBOLD = { 1, "Kobold", &kobold_tileset };
 
 const palette_color_t MONSTER_KOBOLD_PALETTES[16] = {
   // C-Tier

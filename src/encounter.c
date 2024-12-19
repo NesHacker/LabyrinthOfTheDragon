@@ -3,10 +3,6 @@
 #include <stdio.h>
 #include "encounter.h"
 
-/**
- * Rolls initiative for all active entities in the fight and sets the turn
- * order for actions.
- */
 void roll_initiative(void) {
   uint8_t rolls[5] = { 0, 0, 0, 0, 0 };
 
@@ -73,20 +69,148 @@ void next_turn(void) {
   } while (encounter.turn_index < 5);
 }
 
+/**
+ * Resets the update flags for a set of status effects.
+ * @param effect Pointer the list of effects.
+ */
+inline void reset_effects_flags(StatusEffectInstance *effect) {
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++)
+    effect->update = false;
+}
+
+/**
+ * Updates a status effect duration and determines if it is still active.
+ * @param effect Status effect to update.
+ */
+inline void update_effect_duration(StatusEffectInstance *effect) {
+  if (!effect->active)
+    return;
+
+  // Perpetual effects never end.
+  if (effect->duration == EFFECT_DURATION_PERPETUAL)
+    return;
+
+  if (effect->duration == 0) {
+    effect->active = false;
+    effect->update = true;
+  }
+
+  effect->duration--;
+}
+
+void reset_player_stats(void) NONBANKED {
+  player.atk = player.atk_base;
+  player.def = player.def_base;
+  player.matk = player.matk_base;
+  player.mdef = player.mdef_base;
+  player.target_hp = player.hp;
+  reset_effects_flags(encounter.player_status_effects);
+}
+
+void monster_reset_stats(MonsterInstance *m) NONBANKED {
+  m->agl = m->agl_base;
+  m->atk = m->atk_base;
+  m->def = m->def_base;
+  m->matk = m->matk_base;
+  m->mdef = m->mdef_base;
+  m->target_hp = m->hp;
+  m->hp_delta = 0;
+  reset_effects_flags(m->status_effects);
+}
+
+void update_player_status_effects(void) {
+  StatusEffectInstance *effect = encounter.player_status_effects;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    update_effect_duration(effect);
+    if (!effect->active)
+      continue;
+
+    switch (k) {
+    case DEBUFF_BLIND:
+      player.atk = blind_atk(player.atk_base);
+      break;
+    case DEBUFF_AGL_DOWN:
+      break;
+    case DEBUFF_ATK_DOWN:
+      break;
+    case DEBUFF_DEF_DOWN:
+      break;
+    case BUFF_AGL_UP:
+      break;
+    case BUFF_ATK_UP:
+      break;
+    case BUFF_DEF_UP:
+      break;
+
+    case BUFF_HASTE:
+      // TODO handle this in player ability functions too!
+      break;
+
+    // Handled in the turn function
+    case DEBUFF_SCARED: break;
+    case DEBUFF_PARALZYED: break;
+    case DEBUFF_POISONED: break;
+    case DEBUFF_CONFUSED: break;
+    case BUFF_REGEN: break;
+    }
+  }
+}
+
+void update_monster_status_effects(MonsterInstance *monster) {
+  StatusEffectInstance *effect = monster->status_effects;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    update_effect_duration(effect);
+    if (!effect->active)
+      continue;
+
+    switch (k) {
+    case DEBUFF_BLIND:
+      monster->atk = blind_atk(monster->atk);
+      break;
+    case DEBUFF_AGL_DOWN:
+      break;
+    case DEBUFF_ATK_DOWN:
+      break;
+    case DEBUFF_DEF_DOWN:
+      break;
+    case BUFF_AGL_UP:
+      break;
+    case BUFF_ATK_UP:
+      break;
+    case BUFF_DEF_UP:
+      break;
+
+    case BUFF_HASTE:
+      // TODO handle this in the monster attack function too!
+      break;
+
+    // Handled in the turn function
+    case DEBUFF_SCARED: break;
+    case DEBUFF_PARALZYED: break;
+    case DEBUFF_POISONED: break;
+    case DEBUFF_CONFUSED: break;
+    case BUFF_REGEN: break;
+    }
+  }
+}
+
 void check_status_effects(void) {
-  // TODO Update status effects & execute rendering callbacks
   switch (encounter.turn) {
   case TURN_PLAYER:
     reset_player_stats();
+    update_player_status_effects();
     break;
   case TURN_MONSTER1:
     monster_reset_stats(encounter.monsters);
+    update_monster_status_effects(encounter.monsters);
     break;
   case TURN_MONSTER2:
     monster_reset_stats(encounter.monsters + 1);
+    update_monster_status_effects(encounter.monsters + 1);
     break;
   case TURN_MONSTER3:
     monster_reset_stats(encounter.monsters + 2);
+    update_monster_status_effects(encounter.monsters + 2);
     break;
   }
 }
@@ -112,8 +236,28 @@ inline void player_turn(void) {
 inline void monster_turn(void) {
   const uint8_t offset = encounter.turn - TURN_MONSTER1;
   MonsterInstance *monster = encounter.monsters + offset;
-  if (monster->active)
-    monster->take_turn(monster);
+
+  if (!monster->active)
+    return;
+
+  // // Check "scared" debuff
+  // StatusEffectInstance *effect;
+  // effect = get_effect(monster->status_effects, DEBUFF_SCARED);
+  // if (effect->active) {
+  //   if (
+  //     monster->can_flee &&
+  //     calc_scared_flee(effect->tier) &&
+  //     monster_flee(monster)
+  //   ) {
+  //     return;
+  //   }
+
+  //   if (calc_scared_frozen(effect->tier)) {
+  //     return;
+  //   }
+  // }
+
+  monster->take_turn(monster);
 }
 
 void take_action(void) {
@@ -153,6 +297,20 @@ bool monsters_slain(void) {
   return true;
 }
 
+/**
+ * Resets a list of status effects.
+ * @param effect List of status effects to reset.
+ */
+inline void reset_status_effects(StatusEffectInstance *effect) {
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    effect->active = false;
+    effect->update = false;
+    effect->duration = 0;
+    effect->tier = C_TIER;
+    effect->effect = NO_STATUS_EFFECT;
+  }
+}
+
 void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.layout = layout;
   for (uint8_t k = 0; k < 5; k++) {
@@ -165,21 +323,12 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.player_ability = NULL;
   encounter.target = NULL;
   encounter.xp_reward = 0;
-
-  for (uint8_t eff = 0; eff < STATUS_EFFECTS; eff++) {
-    encounter.player_status_effects[eff].active = false;
-    encounter.player_status_effects[eff].duration = 0;
-    encounter.player_status_effects[eff].tier = C_TIER;
-  }
+  reset_status_effects(encounter.player_status_effects);
 
   MonsterInstance *monster = encounter.monsters;
-  for (uint8_t k = 0; k < 3; k++) {
-    for (uint8_t eff = 0; eff < STATUS_EFFECTS; eff++) {
-      monster->status_effects[eff].active = false;
-      monster->status_effects[eff].duration = 0;
-      monster->status_effects[eff].tier = C_TIER;
-    }
-    monster_deactivate(monster++);
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    reset_status_effects(monster->status_effects);
+    monster_deactivate(monster);
   }
 }
 
@@ -244,6 +393,46 @@ void damage_all_monster(uint16_t base_damage, DamageAspect type) {
 void ability_placeholder(void) {
   sprintf(battle_pre_message, "You try a thing.");
   sprintf(battle_post_message, "It doesn't work.");
+}
+
+StatusEffectResult apply_status_effect(
+  StatusEffectInstance *list,
+  StatusEffect effect,
+  PowerTier tier,
+  uint8_t duration,
+  uint8_t immune
+) {
+  StatusEffectInstance *e = list;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
+    if (e->active && e->effect == effect)
+      return STATUS_RESULT_DUPLICATE;
+  }
+
+  e = list;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
+    if (e->active)
+      continue;
+    if (is_debuff(effect) && is_debuff_immmune(immune, effect))
+      return STATUS_RESULT_IMMUNE;
+    e->effect = effect;
+    e->active = true;
+    e->update = true;
+    e->tier = tier;
+    e->duration = duration;
+    return STATUS_RESULT_SUCCESS;
+  }
+
+  return STATUS_RESULT_MAX;
+}
+
+bool player_flee(void) {
+  // TODO Implement me
+  return false;
+}
+
+bool monster_flee(MonsterInstance *monster) {
+  // TODO Implement me
+  return false;
 }
 
 Encounter encounter = {

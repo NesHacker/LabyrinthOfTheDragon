@@ -109,9 +109,9 @@ typedef struct Encounter {
    */
   uint16_t xp_reward;
   /**
-   * Player status effects instances.
+   * Active player status effects.
    */
-  StatusEffectInstance player_status_effects[16];
+  StatusEffectInstance player_status_effects[MAX_ACTIVE_EFFECTS];
 } Encounter;
 
 /**
@@ -208,5 +208,57 @@ inline void heal_player(uint16_t hp) {
  * Handles battle system calls for an ability that has yet to be implemented.
  */
 void ability_placeholder(void);
+
+/**
+ * Resets player combat stats and flags at the start of each round.
+ */
+void reset_player_stats(void) NONBANKED;
+
+/**
+ * Resets a monster's combat stats and flags at the start of each round.
+ * @param m Monster instance to reset.
+ */
+void monster_reset_stats(MonsterInstance *m) NONBANKED;
+
+/**
+ * Handles status effect updates for the player.
+ */
+void update_player_status_effects(void);
+
+/**
+ * Handles status effect updates for a monster.
+ * @param monster Monster for which to handle the effects.
+ */
+void update_monster_status_effects(MonsterInstance *monster);
+
+/**
+ * Applies a status effect and adds it to the given list.
+ * @param list Effects lists.
+ * @param effect Status effect to apply.
+ * @param tier Power tier for the effect (potency, basically).
+ * @param duration Duration for the effect (0 means endless).
+ * @param immune Debuff immunities for the entity.
+ * @return The result of the status effect application.
+ */
+StatusEffectResult apply_status_effect(
+  StatusEffectInstance *list,
+  StatusEffect effect,
+  PowerTier tier,
+  uint8_t duration,
+  uint8_t immune
+);
+
+/**
+ * Handles the player "flee" action.
+ * @return Whether or not the player could flee.
+ */
+bool player_flee(void);
+
+/**
+ * Handle the "flee" action for a monster.
+ * @param monster Monster who is trying to flee.
+ * @return Whether or not the monster could flee.
+ */
+bool monster_flee(MonsterInstance *monster);
 
 #endif

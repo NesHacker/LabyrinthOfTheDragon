@@ -317,14 +317,6 @@ void init_player(PlayerClass player_class) {
 
 }
 
-void reset_player_stats(void) {
-  player.atk = player.atk_base;
-  player.def = player.def_base;
-  player.matk = player.matk_base;
-  player.mdef = player.mdef_base;
-  player.target_hp = player.hp;
-}
-
 void grant_ability(AbilityFlag flag) {
   player.ability_flags |= flag;
   set_player_abilities();
@@ -345,8 +337,4 @@ void player_base_attack(void) {
     sorcerer_base_attack();
     break;
   }
-}
-
-void player_flee(void) {
-  // TODO Implement me
 }

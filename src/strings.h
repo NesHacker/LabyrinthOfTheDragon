@@ -101,7 +101,7 @@ extern const char str_battle_cure_wounds[];
 extern const char str_battle_bark_skin[];
 
 /**
- * "Bolts of lightings fall!"
+ * "Bolts of lighting fall!"
  */
 extern const char str_battle_lightning[];
 
@@ -159,6 +159,16 @@ extern const char str_battle_monster_hit_vuln[];
  * "CRITICAL HIT! You take %damage damage!"
  */
 extern const char str_battle_monster_hit_crit[];
+
+/**
+ * "%monster %c flees screaming!"
+ */
+extern const char str_battle_monster_scared_flee[];
+
+/**
+ * "%monster %c shivers in fear..."
+ */
+extern const char str_battle_monster_scared_frozen[];
 
 /**
  * "But you miss!"

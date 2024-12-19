@@ -138,9 +138,13 @@ typedef struct MonsterInstance {
    */
   uint8_t debuff_immune;
   /**
-   * Status effect instances for all 16 effects.
+   * Active status effects. Monsters can only have four effects active at once.
    */
-  StatusEffectInstance status_effects[16];
+  StatusEffectInstance status_effects[MAX_ACTIVE_EFFECTS];
+  /**
+   * Whether or not the monster can flee (set this for elites, bosses, etc.).
+   */
+  bool can_flee;
   /**
    * Parameter used when generating this monster instance. Can be used to alter
    * behaviors in the `take_turn` handler.
@@ -159,12 +163,6 @@ typedef struct MonsterInstance {
  * @param m Base monster for the instance.
  */
 void monster_init_instance(MonsterInstance *i, Monster *m);
-
-/**
- * Resets base stats at the start of each round of combat.
- * @param m Monster instance to reset.
- */
-void monster_reset_stats(MonsterInstance *m);
 
 /**
  * Deactivates a monster instance and removes it from combat.

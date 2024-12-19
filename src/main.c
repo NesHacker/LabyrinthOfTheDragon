@@ -28,6 +28,8 @@ void init_test_encounter(void) {
  * Initializes the core game engine.
  */
 inline void initialize(void) {
+  ENABLE_RAM;
+
   initarand(RANDOM_SEED);
   init_player(CLASS_DRUID);
   move_win(7, 144);
@@ -63,8 +65,6 @@ inline void game_loop(void) {
 inline void render(void) {
   // if (!(LCDC_REG & LCDCF_ON))
   //   return;
-
-  text_writer.update();
 
   switch (game_state) {
   case GAME_STATE_TITLE:

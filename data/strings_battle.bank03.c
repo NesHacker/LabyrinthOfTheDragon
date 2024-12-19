@@ -8,7 +8,7 @@
 const char str_battle_poison_spray[] = "Poison gas erupts \nfrom your palm!";
 const char str_battle_cure_wounds[] = "You're enveloped \nin blue light\x60";
 const char str_battle_bark_skin[] = "Your skin grows \nhard as wood.";
-const char str_battle_lightning[] = "Bolts of lightings\n fall!";
+const char str_battle_lightning[] = "Bolts of lighting \nfall!";
 const char str_battle_heal[] = "Radiant blue light\n falls upon you\x60";
 const char str_battle_insect_plague[] = "Locusts swarm your\n enemies!";
 const char str_battle_regen[] = "You surge with \nvitality!";
@@ -20,6 +20,8 @@ const char str_battle_monster_hit_immune[] = "But you're \ncompletely \nimmune!"
 const char str_battle_monster_hit_resist[] = "You resist, only \n%u damage";
 const char str_battle_monster_hit_vuln[] = "It's SUPER BAD! \n%u damage!";
 const char str_battle_monster_hit_crit[] = "CRITICAL HIT! You \ntake %u damage!";
+const char str_battle_monster_scared_flee[] = "%s %c flees \nscreaming!";
+const char str_battle_monster_scared_frozen[] = "%s %c \nshivers in fear\x60";
 const char str_battle_player_miss[] = "But you miss!";
 const char str_battle_player_magic_miss[] = "But it has no \neffect!";
 const char str_battle_player_hit[] = "You deal %u \ndamage!";
