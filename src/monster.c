@@ -75,8 +75,6 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
 // -----------------------------------------------------------------------------
 // Monster 255 - Test Dummy
 // -----------------------------------------------------------------------------
-// Just stands there, regens all health every turn.
-// -----------------------------------------------------------------------------
 const Tileset test_dummy_tileset = { MONSTER_TILES, 14, tile_dummy };
 const Monster MONSTER_DUMMY = { 255, "Dummy", &test_dummy_tileset };
 
@@ -98,6 +96,16 @@ void dummy_take_turn(MonsterInstance *dummy) {
   case DUMMY_COWARD:
     monster_flee(dummy);
     break;
+  case DUMMY_AGGRESSIVE:
+    sprintf(battle_pre_message, str_battle_monster_attack,
+      dummy->monster->name, dummy->id);
+    if (roll_attack(dummy->atk, player.def)) {
+      const uint16_t base = get_monster_dmg(dummy->level, dummy->exp_tier);
+      damage_player(base, DAMAGE_PHYSICAL);
+    } else {
+      sprintf(battle_post_message, str_battle_monster_miss);
+    }
+    break;
   default:
     sprintf(battle_post_message, str_monster_dummy_post);
     break;
@@ -107,7 +115,7 @@ void dummy_take_turn(MonsterInstance *dummy) {
 void dummy_generator(MonsterInstance *m, uint8_t level, TestDummyType type) {
   monster_init_instance(m, &MONSTER_DUMMY);
 
-  PowerTier tier = S_TIER;
+  PowerTier tier = C_TIER;
 
   m->palette = DUMMY_COLORS;
   m->exp_tier = tier;

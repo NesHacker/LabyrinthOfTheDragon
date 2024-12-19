@@ -190,6 +190,7 @@ typedef enum TestDummyType {
   DUMMY_NORMAL,
   DUMMY_INVINCIBLE,
   DUMMY_COWARD,
+  DUMMY_AGGRESSIVE,
 } TestDummyType;
 
 /**
