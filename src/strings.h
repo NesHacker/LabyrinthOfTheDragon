@@ -121,6 +121,11 @@ extern const char str_battle_insect_plague[];
 extern const char str_battle_regen[];
 
 /**
+ * "%monster %c attacks!"
+ */
+extern const char str_battle_monster_attack[];
+
+/**
  * "But they miss!"
  */
 extern const char str_battle_monster_miss[];
