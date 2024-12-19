@@ -167,6 +167,11 @@
 #define VRAM_SUBMENU_TEXT VRAM_BACKGROUND_XY(SUBMENU_TEXT_X, SUBMENU_TEXT_Y)
 
 /**
+ * Number of frames to delay after fleeing.
+ */
+#define FLEE_DELAY_FRAMES 40
+
+/**
  * Main state enumeration for the battle system.
  */
 typedef enum BattleState {

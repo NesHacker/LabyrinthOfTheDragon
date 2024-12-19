@@ -104,6 +104,7 @@ void reset_player_stats(void) NONBANKED {
   player.mdef = player.mdef_base;
   player.target_hp = player.hp;
   reset_effects_flags(encounter.player_status_effects);
+  encounter.player_fled = false;
 }
 
 void monster_reset_stats(MonsterInstance *m) NONBANKED {
@@ -114,6 +115,7 @@ void monster_reset_stats(MonsterInstance *m) NONBANKED {
   m->mdef = m->mdef_base;
   m->target_hp = m->hp;
   m->hp_delta = 0;
+  m->fled = false;
   reset_effects_flags(m->status_effects);
 }
 
@@ -445,14 +447,27 @@ StatusEffectResult apply_status_effect(
   return STATUS_RESULT_MAX;
 }
 
-bool player_flee(void) {
-  // TODO Implement me
-  return false;
+void player_flee(void) {
+  sprintf(battle_pre_message, str_battle_player_flee_attempt);
+
+  uint8_t max_def_agl = 0;
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    if (!monster->active)
+      continue;
+    if (max_def_agl < monster->agl)
+      max_def_agl = monster->agl;
+  }
+
+  encounter.player_fled = roll_flee(player.agl, max_def_agl);
+  if (encounter.player_fled)
+    sprintf(battle_post_message, str_battle_player_flee_success);
+  else
+    sprintf(battle_post_message, str_battle_player_flee_failure);
 }
 
-bool monster_flee(MonsterInstance *monster) {
+void monster_flee(MonsterInstance *monster) {
   // TODO Implement me
-  return false;
 }
 
 Encounter encounter = {

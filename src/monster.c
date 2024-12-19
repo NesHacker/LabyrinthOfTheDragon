@@ -32,6 +32,7 @@ void monster_init_instance(MonsterInstance *i, Monster *m) {
   i->aspect_vuln = 0;
   i->debuff_immune = 0;
   i->can_flee = true;
+  i->fled = false;
   i->parameter = 0;
 }
 

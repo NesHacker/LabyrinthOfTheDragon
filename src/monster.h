@@ -146,6 +146,10 @@ typedef struct MonsterInstance {
    */
   bool can_flee;
   /**
+   * Set to `true` if the monster has successfully fled.
+   */
+  bool fled;
+  /**
    * Parameter used when generating this monster instance. Can be used to alter
    * behaviors in the `take_turn` handler.
    */

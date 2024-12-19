@@ -226,6 +226,21 @@ extern const char str_battle_player_heal_fumble[];
 extern const char str_battle_player_miss_all[];
 
 /**
+ * "You attempt to flee..."
+ */
+extern const char str_battle_player_flee_attempt[];
+
+/**
+ * "And get away!"
+ */
+extern const char str_battle_player_flee_success[];
+
+/**
+ * "But are blocked!"
+ */
+extern const char str_battle_player_flee_failure[];
+
+/**
  * "Victory! You gain %exp XP!"
  */
 extern const char str_battle_victory[];

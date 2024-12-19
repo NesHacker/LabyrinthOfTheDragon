@@ -98,8 +98,8 @@ void confirm_item(void) {
  * and begins the next round of combat.
  */
 void confirm_flee(void) {
-  // set_player_flee();
-  // battle_state = BATTLE_ROLL_INITIATIVE;
+  set_player_flee();
+  battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -1216,6 +1216,19 @@ void init_battle(void) NONBANKED {
   initialize_battle();
 }
 
+/**
+ * Leaves battle and returns to the map system.
+ */
+void leave_battle(void) {
+  if (encounter.is_test) {
+    battle_state = BATTLE_INACTIVE;
+    return;
+  }
+  fade_out();
+  toggle_sprites();
+  battle_state = BATTLE_COMPLETE;
+}
+
 void cleanup_isr(void) {
   CRITICAL {
     remove_LCD(fight_menu_isr);
@@ -1274,6 +1287,11 @@ void update_battle(void) NONBANKED {
     }
     break;
   case BATTLE_ACTION_CLEANUP:
+    if (encounter.player_fled) {
+      battle_state = BATTLE_PLAYER_FLED;
+      init_timer(effect_delay_timer, FLEE_DELAY_FRAMES);
+      return;
+    }
     update_staus_effects_ui();
     cleanup_monsters();
     if (player.target_hp == 0) {
@@ -1285,7 +1303,8 @@ void update_battle(void) NONBANKED {
     }
     break;
   case BATTLE_PLAYER_FLED:
-    // Flee success animation
+    if (was_pressed(J_A) || update_timer(effect_delay_timer))
+      leave_battle();
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
@@ -1306,17 +1325,10 @@ void update_battle(void) NONBANKED {
   case BATTLE_SUCCESS:
     if (!was_pressed(J_A))
       break;
-    if (text_writer.state == TEXT_WRITER_PAGE_WAIT) {
+    if (text_writer.state == TEXT_WRITER_PAGE_WAIT)
       text_writer.next_page();
-    } else if (text_writer.state == TEXT_WRITER_DONE) {
-      if (encounter.is_test) {
-        battle_state = BATTLE_INACTIVE;
-        return;
-      }
-      fade_out();
-      toggle_sprites();
-      battle_state = BATTLE_COMPLETE;
-    }
+    else if (text_writer.state == TEXT_WRITER_DONE)
+      leave_battle();
     break;
   case BATTLE_LEVEL_UP:
     // Handle level up messages and logic.

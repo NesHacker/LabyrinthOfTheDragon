@@ -2,6 +2,7 @@
 
 #include "battle.h"
 #include "core.h"
+#include "map.h"
 #include "stats.h"
 
 uint8_t *_test = (void *)0xA000;
@@ -59,9 +60,7 @@ void test_stats(void) {
   TEST(def_up(base, S_TIER), 41);
 }
 
-void test_combat_general(MonsterLayout layout) {
-  init_test_player(20);
-
+void test_setup_encounter(MonsterLayout layout) {
   reset_encounter(layout);
 
   MonsterInstance *monster = encounter.monsters;
@@ -87,6 +86,25 @@ void test_combat_general(MonsterLayout layout) {
     monster->id = 'C';
     break;
   }
+}
 
+void test_combat_general(MonsterLayout layout) {
+  init_test_player(20);
+  test_setup_encounter(layout);
   test_battle_init();
+}
+
+void test_flee(void) {
+  init_test_player(20);
+  init_world_map();
+  game_state = GAME_STATE_WORLD_MAP;
+
+  // update_world_map();
+  // draw_world_map();
+
+  // test_combat_general(MONSTER_LAYOUT_1);
+  // start_battle();
+
+  // toggle_sprites();
+  // init_battle();
 }

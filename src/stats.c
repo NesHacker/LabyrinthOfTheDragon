@@ -92,9 +92,19 @@ uint16_t calc_monster_exp(uint8_t level, PowerTier tier) BANKED {
   return (multipler * exp) >> 4;
 }
 
+// TODO Move these out into tables?
 const uint8_t blind_mod[4] = { 8, 12, 16, 22 };
 const uint8_t agl_mod[4] = { 2, 4, 8, 12 };
 const uint16_t atk_def_mod[4] = { 1, 2, 4, 6 };
+
+bool roll_flee(uint8_t agl, uint8_t block_agl) BANKED {
+  // TODO Flesh this out with a table
+  if (block_agl > agl + 10)
+    return false;
+  if (agl > block_agl + 10)
+    return true;
+  return rand() < 128;
+}
 
 uint8_t blind_atk(uint8_t base_atk, PowerTier tier) BANKED {
   const uint8_t mod = blind_mod[tier];

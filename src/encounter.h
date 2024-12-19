@@ -113,6 +113,10 @@ typedef struct Encounter {
    */
   StatusEffectInstance player_status_effects[MAX_ACTIVE_EFFECTS];
   /**
+   * Set to `true` if the player successfully fled from combat.
+   */
+  bool player_fled;
+  /**
    * Used to denote that this encounter is being used during testing. The battle
    * system will not return to the map after the battle is complete.
    */
@@ -267,13 +271,13 @@ StatusEffectResult apply_status_effect(
  * Handles the player "flee" action.
  * @return Whether or not the player could flee.
  */
-bool player_flee(void);
+void player_flee(void);
 
 /**
  * Handle the "flee" action for a monster.
  * @param monster Monster who is trying to flee.
  * @return Whether or not the monster could flee.
  */
-bool monster_flee(MonsterInstance *monster);
+void monster_flee(MonsterInstance *monster);
 
 #endif

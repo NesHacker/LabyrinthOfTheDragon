@@ -298,6 +298,13 @@ uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED;
 uint16_t calc_monster_exp(uint8_t level, PowerTier tier) BANKED;
 
 /**
+ * Rolls to see if a flee attempt is successful, given opposing agilities.
+ * @param agl Agility of the entity attempting to flee.
+ * @param block_agility Agility of the blocker, attempting to stop the flee.
+ */
+bool roll_flee(uint8_t agl, uint8_t block_agl) BANKED;
+
+/**
  * @return A random d2 roll.
  */
 inline uint8_t d2(void) {
