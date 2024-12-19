@@ -310,6 +310,7 @@ typedef enum GameState {
   GAME_STATE_WORLD_MAP,
   GAME_STATE_BATTLE,
   GAME_STATE_MAIN_MENU,
+  GAME_STATE_TEST = 0xFF,
 } GameState;
 
 /**

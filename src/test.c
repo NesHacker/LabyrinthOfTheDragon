@@ -1,4 +1,6 @@
 #include <stdint.h>
+
+#include "battle.h"
 #include "core.h"
 #include "stats.h"
 
@@ -13,6 +15,7 @@ void reset_test(void) {
 }
 
 void test_stats(void) {
+  game_state = GAME_STATE_TEST;
   reset_test();
 
   uint8_t base = 30;
@@ -49,4 +52,19 @@ void test_stats(void) {
   TEST(def_up(base, A_TIER), 37);
   TEST(def_up(base, S_TIER), 41);
 }
+
+void test_combat_general(void) {
+  reset_encounter(MONSTER_LAYOUT_2);
+  encounter.is_test = true;
+
+  MonsterInstance *monster = encounter.monsters;
+  dummy_generator(monster, player.level, true);
+  monster->id = 'A';
+  dummy_generator(++monster, player.level, true);
+  monster->id = 'B';
+
+  toggle_sprites();
+  init_battle();
+}
+
 

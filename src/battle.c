@@ -1315,6 +1315,10 @@ void update_battle(void) NONBANKED {
     if (text_writer.state == TEXT_WRITER_PAGE_WAIT) {
       text_writer.next_page();
     } else if (text_writer.state == TEXT_WRITER_DONE) {
+      if (encounter.is_test) {
+        battle_state = BATTLE_INACTIVE;
+        return;
+      }
       fade_out();
       toggle_sprites();
       battle_state = BATTLE_COMPLETE;

@@ -112,6 +112,11 @@ typedef struct Encounter {
    * Active player status effects.
    */
   StatusEffectInstance player_status_effects[MAX_ACTIVE_EFFECTS];
+  /**
+   * Used to denote that this encounter is being used during testing. The battle
+   * system will not return to the map after the battle is complete.
+   */
+  bool is_test;
 } Encounter;
 
 /**

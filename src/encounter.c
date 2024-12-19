@@ -336,6 +336,7 @@ inline void reset_status_effects(StatusEffectInstance *effect) {
 
 void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.layout = layout;
+  encounter.is_test = false;
   for (uint8_t k = 0; k < 5; k++) {
     encounter.order[k] = TURN_END;
   }

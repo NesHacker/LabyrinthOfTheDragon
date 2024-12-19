@@ -15,25 +15,25 @@ uint8_t joypad_pressed;
 uint8_t joypad_released;
 GameState game_state = GAME_STATE_TITLE;
 
+
+/**
+ * Initializes the normal game. Abstracted out of `initialize` to make it easy
+ * to switch between tests and the actual game while handling common setup.
+ */
+void initialize_game(void) {
+  init_world_map();
+  game_state = GAME_STATE_WORLD_MAP;
+}
+
 /**
  * Initializes the core game engine.
  */
 inline void initialize(void) {
   ENABLE_RAM;
-
   initarand(RANDOM_SEED);
   init_player(CLASS_DRUID);
-  move_win(7, 144);
-
-  // init_main_menu();
-  init_world_map();
-  // init_test_encounter();
-
-  game_state = GAME_STATE_WORLD_MAP;
-  // game_state = GAME_STATE_BATTLE;
-
-  // test_stats();
-  // game_state = 0xFF;
+  hide_window();
+  initialize_game();
 }
 
 /**
@@ -50,6 +50,8 @@ inline void game_loop(void) {
   case GAME_STATE_BATTLE:
     update_battle();
     break;
+  case GAME_STATE_TEST:
+    return;
   }
 }
 
@@ -57,9 +59,6 @@ inline void game_loop(void) {
  * Executes rendering logic that must occur during a VBLANK.
  */
 inline void render(void) {
-  // if (!(LCDC_REG & LCDCF_ON))
-  //   return;
-
   switch (game_state) {
   case GAME_STATE_TITLE:
     draw_main_menu();
@@ -70,6 +69,8 @@ inline void render(void) {
   case GAME_STATE_BATTLE:
     draw_battle();
     break;
+  case GAME_STATE_TEST:
+    return;
   }
 }
 
