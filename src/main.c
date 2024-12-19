@@ -10,17 +10,17 @@
 #include "stats.h"
 #include "test.h"
 
+GameState game_state = GAME_STATE_TITLE;
 uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
-GameState game_state = GAME_STATE_TITLE;
-
 
 /**
  * Initializes the normal game. Abstracted out of `initialize` to make it easy
  * to switch between tests and the actual game while handling common setup.
  */
 void initialize_game(void) {
+  init_player(CLASS_DRUID);
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
@@ -31,9 +31,9 @@ void initialize_game(void) {
 inline void initialize(void) {
   ENABLE_RAM;
   initarand(RANDOM_SEED);
-  init_player(CLASS_DRUID);
   hide_window();
-  initialize_game();
+  // initialize_game();
+  test_combat_general();
 }
 
 /**

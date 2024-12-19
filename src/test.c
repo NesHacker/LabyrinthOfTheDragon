@@ -54,7 +54,9 @@ void test_stats(void) {
 }
 
 void test_combat_general(void) {
-  reset_encounter(MONSTER_LAYOUT_2);
+  init_test_player(20);
+
+  reset_encounter(MONSTER_LAYOUT_3S);
   encounter.is_test = true;
 
   MonsterInstance *monster = encounter.monsters;
@@ -62,6 +64,8 @@ void test_combat_general(void) {
   monster->id = 'A';
   dummy_generator(++monster, player.level, true);
   monster->id = 'B';
+  dummy_generator(++monster, player.level, true);
+  monster->id = 'C';
 
   toggle_sprites();
   init_battle();

@@ -26,6 +26,7 @@ typedef enum PlayerClass {
   CLASS_FIGHTER,
   CLASS_MONK,
   CLASS_SORCERER,
+  CLASS_TEST = 0xFF,
 } PlayerClass;
 
 /**
@@ -249,6 +250,12 @@ extern const Ability null_ability;
 void init_player(PlayerClass player_class);
 
 /**
+ * Initializes the player using the test class.
+ * @param level Level for the test player.
+ */
+void init_test_player(uint8_t level);
+
+/**
  * Grants the player a new ability.
  * @param flag The flag for the ability.
  */
@@ -268,6 +275,16 @@ void set_player_abilities(void);
  * Performs a basic attack against the the targeted monster.
  */
 void player_base_attack(void);
+
+/**
+ * Full heals the player, setting HP and SP to their max values.
+ */
+void full_heal_player(void);
+
+/**
+ * Sets the player's level to a specific value.
+ */
+void set_player_level(uint8_t level);
 
 /**
  * @return `true` if the player has a magic combat class.

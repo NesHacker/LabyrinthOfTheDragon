@@ -223,6 +223,76 @@ const Ability sorcerer4 = { 5 };
 const Ability sorcerer5 = { 6 };
 
 //------------------------------------------------------------------------------
+// Class: Test Class
+//------------------------------------------------------------------------------
+// Use this to test various combat abilities without modifying the core classes.
+//------------------------------------------------------------------------------
+
+void test_class_update_stats(void) {
+  update_stats(
+    S_TIER,
+    S_TIER,
+    S_TIER,
+    S_TIER,
+    S_TIER,
+    S_TIER,
+    S_TIER
+  );
+}
+
+void test_class_base_attack(void) {
+  ability_placeholder();
+}
+
+void test_class_ability0(void) {
+  ability_placeholder();
+}
+
+void test_class_ability1(void) {
+  ability_placeholder();
+}
+
+void test_class_ability2(void) {
+  ability_placeholder();
+}
+
+void test_class_ability3(void) {
+  ability_placeholder();
+}
+
+void test_class_ability4(void) {
+  ability_placeholder();
+}
+
+void test_class_ability5(void) {
+  ability_placeholder();
+}
+
+const Ability test_class0 = {
+  1, "Test 1", TARGET_SELF, 0, test_class_ability0
+};
+
+const Ability test_class1 = {
+  2, "Test 2", TARGET_SELF, 0, test_class_ability1
+};
+
+const Ability test_class2 = {
+  3, "Test 3", TARGET_SELF, 0, test_class_ability2
+};
+
+const Ability test_class3 = {
+  4, "Test 4", TARGET_SELF, 0, test_class_ability3
+};
+
+const Ability test_class4 = {
+  5, "Test 5", TARGET_SELF, 0, test_class_ability4
+};
+
+const Ability test_class5 = {
+  6, "Test 6", TARGET_SELF, 0, test_class_ability5
+};
+
+//------------------------------------------------------------------------------
 // Common functions
 //------------------------------------------------------------------------------
 
@@ -242,6 +312,9 @@ void update_player_stats(void) {
     break;
   case CLASS_SORCERER:
     sorcerer_update_stats();
+    break;
+  case CLASS_TEST:
+    test_class_update_stats();
     break;
   }
 }
@@ -280,6 +353,14 @@ void set_class_abilities(void) {
     class_abilities[4] = &sorcerer4;
     class_abilities[5] = &sorcerer5;
     break;
+  case CLASS_TEST:
+    class_abilities[0] = &test_class0;
+    class_abilities[1] = &test_class1;
+    class_abilities[2] = &test_class2;
+    class_abilities[3] = &test_class3;
+    class_abilities[4] = &test_class4;
+    class_abilities[5] = &test_class5;
+    break;
   }
 }
 
@@ -297,18 +378,9 @@ void set_player_abilities(void) {
 void init_player(PlayerClass player_class) {
   player.player_class = player_class;
   set_class_abilities();
-
-  // player.ability_flags = ABILITY_0 | ABILITY_3 | ABILITY_5;
-  player.ability_flags = ABILITY_ALL;
-  set_player_abilities();
-
-  player.level = NEW_CHARACTER_LEVEL + 64;
-  player.exp = get_exp(player.level);
-  player.next_level_exp = get_exp(player.level + 1);
-  update_player_stats();
-
-  player.hp = player.max_hp;
-  player.sp = player.max_sp;
+  player.ability_flags = 0;
+  grant_ability(ABILITY_0);
+  set_player_level(1);
   reset_player_stats();
 
   // TODO Move these assignments into the character creator
@@ -317,9 +389,30 @@ void init_player(PlayerClass player_class) {
 
 }
 
+void init_test_player(uint8_t level) {
+  init_player(CLASS_TEST);
+  grant_ability(ABILITY_ALL);
+  set_player_level(level);
+  sprintf(player.name, "Tester");
+  player.message_speed = AUTO_PAGE_FAST;
+}
+
 void grant_ability(AbilityFlag flag) {
   player.ability_flags |= flag;
   set_player_abilities();
+}
+
+void full_heal_player(void) {
+  player.hp = player.max_hp;
+  player.sp = player.max_sp;
+}
+
+void set_player_level(uint8_t level) {
+  player.level = level;
+  player.exp = get_exp(player.level);
+  player.next_level_exp = get_exp(player.level + 1);
+  update_player_stats();
+  full_heal_player();
 }
 
 void player_base_attack(void) {
