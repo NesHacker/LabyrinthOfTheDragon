@@ -242,14 +242,19 @@ void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
  * @return The starting x position for the status effects.
  */
 uint8_t get_status_effect_x(MonsterPosition pos) {
+  const uint8_t offscreen = 0x17;
+
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
-    return 7;
+    switch (pos) {
+    case MONSTER_POSITION1: return 7;
+    default: return offscreen;
+    }
   case MONSTER_LAYOUT_2:
     switch (pos) {
     case MONSTER_POSITION1: return 3;
     case MONSTER_POSITION2: return 12;
-    case MONSTER_POSITION3: return 12;
+    default: return offscreen;
     }
   case MONSTER_LAYOUT_3S:
     switch (pos) {
@@ -264,7 +269,7 @@ uint8_t get_status_effect_x(MonsterPosition pos) {
     case MONSTER_POSITION3: return 14;
     }
   }
-  return 7;
+  return offscreen;
 }
 
 /**
@@ -296,20 +301,22 @@ void redraw_monster_status_effects(void) {
   const uint8_t frame_offset = 0x60;
 
   for (uint8_t m = MONSTER_POSITION1; m <= MONSTER_POSITION3; m++, monster++) {
-    uint8_t p = 0;
     uint8_t *vram = VRAM_BACKGROUND_XY(status_effect_x[m], 10);
+    uint8_t *clear_vram = vram;
 
-    if (!monster->active) {
-      for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++) {
-        VBK_REG = VBK_TILES;
-        set_vram_byte(vram, BATTLE_CLEAR_TILE);
-        VBK_REG = VBK_ATTRIBUTES;
-        set_vram_byte(vram++, BATTLE_CLEAR_ATTR);
-      }
-      continue;
+    for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++) {
+      VBK_REG = VBK_TILES;
+      set_vram_byte(clear_vram, BATTLE_CLEAR_TILE);
+      VBK_REG = VBK_ATTRIBUTES;
+      set_vram_byte(clear_vram++, BATTLE_CLEAR_ATTR);
     }
 
+    if (!monster->active)
+      continue;
+
     StatusEffectInstance *effect = monster->status_effects;
+    uint8_t p = 0;
+
     for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
       if (!effect->active)
         continue;
@@ -321,12 +328,6 @@ void redraw_monster_status_effects(void) {
       VBK_REG = VBK_ATTRIBUTES;
       set_vram_byte(vram++, attr);
       p++;
-    }
-    for (uint8_t k = p; k < MAX_ACTIVE_EFFECTS; k++) {
-      VBK_REG = VBK_TILES;
-      set_vram_byte(vram, BATTLE_CLEAR_TILE);
-      VBK_REG = VBK_ATTRIBUTES;
-      set_vram_byte(vram++, BATTLE_CLEAR_ATTR);
     }
   }
 }
