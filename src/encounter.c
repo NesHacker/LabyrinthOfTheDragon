@@ -3,16 +3,19 @@
 #include <stdio.h>
 #include "encounter.h"
 
+void before_round(void) {
+  encounter.round_complete = false;
+  encounter.player_died = false;
+  encounter.player_fled = false;
+  player.target_hp = player.hp;
+}
+
 void roll_initiative(void) {
   uint8_t rolls[5] = { 0, 0, 0, 0, 0 };
 
   // Reset the turn order
   encounter.turn_index = 0;
   encounter.turn = TURN_PLAYER;
-  encounter.round_complete = false;
-
-  encounter.player_died = false;
-  encounter.player_fled = false;
 
   encounter.order[0] = TURN_PLAYER;
   encounter.order[1] = TURN_END;

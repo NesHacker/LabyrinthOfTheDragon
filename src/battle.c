@@ -1226,6 +1226,7 @@ void update_battle(void) NONBANKED {
     update_battle_menu();
     break;
   case BATTLE_ROLL_INITIATIVE:
+    before_round();
     roll_initiative();
     hide_cursor();
     text_writer.clear();

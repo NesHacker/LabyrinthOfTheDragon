@@ -160,6 +160,11 @@ void set_player_flee(void);
 // void set_player_item(Item *item);
 
 /**
+ * Called before each round of combat to initialize the encounter state.
+ */
+void before_round(void);
+
+/**
  * Rolls initiative for the current combat round.
  */
 void roll_initiative(void);
