@@ -57,6 +57,7 @@ addNamespace('battle', 3, {
   'heal': 'Radiant blue light falls upon you...',
   'insect_plague': 'Locusts swarm your enemies!',
   'regen': 'You surge with vitality!',
+  'monster_attack': '%monster %c attacks!',
   'monster_miss': 'But they miss!',
   'monster_magic_miss': 'But it has no effect!',
   'monster_hit': 'You take %damage damage!',

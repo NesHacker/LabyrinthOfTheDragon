@@ -12,6 +12,7 @@ const char str_battle_lightning[] = "Bolts of lighting \nfall!";
 const char str_battle_heal[] = "Radiant blue light\n falls upon you\x60";
 const char str_battle_insect_plague[] = "Locusts swarm your\n enemies!";
 const char str_battle_regen[] = "You surge with \nvitality!";
+const char str_battle_monster_attack[] = "%s %c \nattacks!";
 const char str_battle_monster_miss[] = "But they miss!";
 const char str_battle_monster_magic_miss[] = "But it has no \neffect!";
 const char str_battle_monster_hit[] = "You take %u \ndamage!";
