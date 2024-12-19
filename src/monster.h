@@ -171,9 +171,18 @@ void monster_init_instance(MonsterInstance *i, Monster *m);
 /**
  * Deactivates a monster instance and removes it from combat.
  */
-inline void monster_deactivate(MonsterInstance *m) {
-  m->active = false;
+inline void monster_deactivate(MonsterInstance *monster) {
+  monster->active = false;
 }
+
+/**
+ * General options for Test Dummy monsters.
+ */
+typedef enum TestDummyType {
+  DUMMY_NORMAL,
+  DUMMY_INVINCIBLE,
+  DUMMY_COWARD,
+} TestDummyType;
 
 /**
  * Generates a test dummy monster.
@@ -181,7 +190,7 @@ inline void monster_deactivate(MonsterInstance *m) {
  * @param level Level for the dummy.
  * @param invincible Whether or not the dummy is invincible.
  */
-void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible);
+void dummy_generator(MonsterInstance *m, uint8_t level, TestDummyType type);
 
 /**
  * Basic kobold generator.

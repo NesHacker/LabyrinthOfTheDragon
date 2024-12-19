@@ -303,6 +303,11 @@ extern uint8_t joypad_released;
 #define was_released(b) (joypad_released & (b))
 
 /**
+ * General use blank palette (all RGB_WHITE).
+ */
+extern const palette_color_t blank_palette[4];
+
+/**
  * Enumeration of all main states for the game.
  */
 typedef enum GameState {

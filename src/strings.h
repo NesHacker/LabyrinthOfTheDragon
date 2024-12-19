@@ -161,9 +161,19 @@ extern const char str_battle_monster_hit_vuln[];
 extern const char str_battle_monster_hit_crit[];
 
 /**
- * "%monster %c flees screaming!"
+ * "%monster %c makes a run for it..."
  */
-extern const char str_battle_monster_scared_flee[];
+extern const char str_battle_monster_flee[];
+
+/**
+ * "But they cannot get away!"
+ */
+extern const char str_battle_monster_flee_failure[];
+
+/**
+ * "And they get away!"
+ */
+extern const char str_battle_monster_flee_success[];
 
 /**
  * "%monster %c shivers in fear..."

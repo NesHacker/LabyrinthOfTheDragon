@@ -232,6 +232,14 @@ typedef enum BattleState {
    */
   BATTLE_END_ROUND,
   /**
+   * Calculates rewards state and sets the message.
+   */
+  BATTLE_REWARDS,
+  /**
+   * The battle system is performing UI updates based on the current state.
+   */
+  BATTLE_UI_UPDATE,
+  /**
    * Battle is over and successful, calulates & displays rewards, etc.
    */
   BATTLE_SUCCESS,

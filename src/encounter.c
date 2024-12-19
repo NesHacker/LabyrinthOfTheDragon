@@ -10,6 +10,10 @@ void roll_initiative(void) {
   encounter.turn_index = 0;
   encounter.turn = TURN_PLAYER;
   encounter.round_complete = false;
+
+  encounter.player_died = false;
+  encounter.player_fled = false;
+
   encounter.order[0] = TURN_PLAYER;
   encounter.order[1] = TURN_END;
   encounter.order[2] = TURN_END;
@@ -105,6 +109,7 @@ void reset_player_stats(void) NONBANKED {
   player.target_hp = player.hp;
   reset_effects_flags(encounter.player_status_effects);
   encounter.player_fled = false;
+  encounter.player_died = false;
 }
 
 void monster_reset_stats(MonsterInstance *m) NONBANKED {
@@ -279,6 +284,34 @@ void take_action(void) {
   }
 }
 
+void after_action(void) {
+  player.hp = player.target_hp;
+
+  if (player.target_hp == 0 || player.hp == 0) {
+    encounter.player_died = true;
+  }
+
+  bool monster_active = false;
+  MonsterInstance *monster = encounter.monsters;
+  for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+    if (!monster->active)
+      continue;
+    if (monster->fled) {
+      monster->active = false;
+    } else if (monster->hp == 0) {
+      encounter.xp_reward += calc_monster_exp(
+        monster->level,
+        monster->exp_tier
+      );
+      monster->active = false;
+    } else {
+      monster_active = true;
+    }
+  }
+
+  encounter.victory = !encounter.player_died && !monster_active;
+}
+
 void set_player_fight(MonsterInstance *target) {
   encounter.player_action = PLAYER_ACTION_FIGHT;
   encounter.target = target;
@@ -292,15 +325,6 @@ void set_player_ability(const Ability *a, MonsterInstance *target) {
 
 void set_player_flee(void) {
   encounter.player_action = PLAYER_ACTION_FLEE;
-}
-
-bool monsters_slain(void) {
-  MonsterInstance *monster = encounter.monsters;
-  for (uint8_t k = 0; k < 3; k++) {
-    if (monster->active)
-      return false;
-  }
-  return true;
 }
 
 /**
@@ -467,7 +491,20 @@ void player_flee(void) {
 }
 
 void monster_flee(MonsterInstance *monster) {
-  // TODO Implement me
+  sprintf(
+    battle_pre_message,
+    str_battle_monster_flee,
+    monster->monster->name,
+    monster->id
+  );
+
+  if (roll_flee(monster->agl, player.agl)) {
+    sprintf(battle_post_message, str_battle_monster_flee_success);
+    monster->fled = true;
+  } else {
+    sprintf(battle_post_message, str_battle_monster_flee_failure);
+    monster->fled = false;
+  }
 }
 
 Encounter encounter = {

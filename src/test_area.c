@@ -159,9 +159,13 @@ bool area0_on_special(void) {
     // monster->id = 'B';
 
 
-    reset_encounter(MONSTER_LAYOUT_1);
-    dummy_generator(monster, player.level, true);
+    reset_encounter(MONSTER_LAYOUT_3S);
+    dummy_generator(monster, player.level, DUMMY_COWARD);
     monster->id = 'Z';
+    dummy_generator(++monster, player.level, DUMMY_COWARD);
+    monster->id = '7';
+    dummy_generator(++monster, player.level, DUMMY_COWARD);
+    monster->id = 'w';
 
 
     start_battle();

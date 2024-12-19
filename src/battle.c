@@ -135,26 +135,6 @@ uint8_t get_hp_bar_x(MonsterPosition pos) {
 }
 
 /**
- * Erases tiles for the monster at the given position in the layout. Used to
- * remove monster graphics after they die.
- * @param p Position of the monster.
- */
-void erase_monster_tiles(MonsterPosition p) {
-  const uint8_t monster_clear_x[4][3] = {
-    { 7, 0xFF, 0xFF },
-    { 2, 11, 0xFF },
-    { 0, 6, 12 },
-    { 0, 7, 13 }
-  };
-  if (p > MONSTER_POSITION3) return;
-  if (encounter.layout > MONSTER_LAYOUT_1M_2S) return;
-  uint8_t x = monster_clear_x[encounter.layout][p];
-  if (x == 0xFF) return;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x, 1);
-  core.fill(vram, 7, 7, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
-}
-
-/**
  * Loads the graphics and palettes for a monster instance.
  * @param p Position of the monsters on the battle screen.
  * @param m Monster instance to load.
@@ -200,22 +180,8 @@ void toggle_hp_bar_palette(MonsterPosition pos) {
   const uint8_t y = 9;
   uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
   VBK_REG = VBK_ATTRIBUTES;
-  for (uint8_t k = 0; k < 7; k++, vram++)
+  for (uint8_t k = 0; k < 5; k++, vram++) {
     set_vram_byte(vram, (pos + 1) | 0x08);
-}
-
-/**
- * Removes an HP bar from the screen.
- */
-void erase_hp_bar(MonsterPosition pos) {
-  const uint8_t x = get_hp_bar_x(pos);
-  const uint8_t y = 9;
-  uint8_t *vram = VRAM_BACKGROUND_XY(x, y);
-  for (uint8_t k = 0; k < 7; k++, vram++) {
-    VBK_REG = VBK_TILES;
-    set_vram_byte(vram, BATTLE_CLEAR_TILE);
-    VBK_REG = VBK_ATTRIBUTES;
-    set_vram_byte(vram, BATTLE_CLEAR_ATTR);
   }
 }
 
@@ -330,11 +296,18 @@ void redraw_monster_status_effects(void) {
   const uint8_t frame_offset = 0x60;
 
   for (uint8_t m = MONSTER_POSITION1; m <= MONSTER_POSITION3; m++, monster++) {
-    if (!monster->active)
-      continue;
-
     uint8_t p = 0;
     uint8_t *vram = VRAM_BACKGROUND_XY(status_effect_x[m], 10);
+
+    if (!monster->active) {
+      for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++) {
+        VBK_REG = VBK_TILES;
+        set_vram_byte(vram, BATTLE_CLEAR_TILE);
+        VBK_REG = VBK_ATTRIBUTES;
+        set_vram_byte(vram++, BATTLE_CLEAR_ATTR);
+      }
+      continue;
+    }
 
     StatusEffectInstance *effect = monster->status_effects;
     for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
@@ -1017,7 +990,15 @@ inline bool animate_monster_death(void) {
 
   if (monster_death_state == MONSTER_DEATH_START) {
     for (uint8_t pos = 0; pos < 3; pos++, monster++) {
-      if (monster->active && monster->hp == 0) {
+      if (monster->fled) {
+        monster_death_state = MONSTER_DEATH_ANIMATE;
+        return true;
+      }
+
+      if (!monster->active)
+        continue;
+
+      if (monster->hp == 0) {
         monster_death_state = MONSTER_DEATH_ANIMATE;
         return true;
       }
@@ -1035,7 +1016,9 @@ inline bool animate_monster_death(void) {
   }
 
   for (uint8_t pos = 0; pos < 3; pos++, monster++) {
-    if (!monster->active || monster->hp != 0)
+    if (!monster->active)
+      continue;
+    if (monster->hp != 0 && !monster->fled)
       continue;
     if (monster_death_step == 0)
       toggle_hp_bar_palette(pos);
@@ -1089,33 +1072,23 @@ void animate_action_result(void) {
 /**
  * Checks for status effect changes and updates UI accordingly.
  */
-inline void update_staus_effects_ui(void) {
+inline void update_status_effects_ui(void) {
   redraw_player_status_effects();
   redraw_monster_status_effects();
 }
 
 /**
- * Cleans up monsters after an action (handles death, etc.).
+ * Clears inactive monster palettes / graphics.
  */
-void cleanup_monsters(void) {
+void clear_inactive_monsters(void) {
+  // TODO Hopefully this is not too slow
   MonsterInstance *monster = encounter.monsters;
-  for (uint8_t pos = 0; pos < 3; pos++, monster++) {
+  for (uint8_t pos = 0; pos < 3; pos++, monster++)
     if (!monster->active)
-      continue;
-    if (monster->hp == 0) {
-      monster->active = false;
-      encounter.xp_reward += calc_monster_exp(
-        monster->level,
-        monster->exp_tier
-      );
-      erase_monster_tiles(pos);
-      erase_hp_bar(pos);
-    }
-  }
+      core.load_bg_palette(blank_palette, pos + 1, 1);
 }
 
 void battle_rewards(void) {
-  // TODO level up
   const uint16_t xp = encounter.xp_reward;
   player.exp += xp;
 
@@ -1125,8 +1098,9 @@ void battle_rewards(void) {
     sprintf(rewards_buf, str_battle_victory, xp);
   }
 
-  text_writer.auto_page = AUTO_PAGE_OFF;
-  text_writer.print(rewards_buf);
+  // TODO level up
+
+  battle_state = BATTLE_REWARDS;
 }
 
 /**
@@ -1145,7 +1119,6 @@ void fight_menu_isr(void) {
     return;
   }
 }
-
 
 void initialize_battle(void) {
   lcd_off();
@@ -1224,6 +1197,7 @@ void leave_battle(void) {
     battle_state = BATTLE_INACTIVE;
     return;
   }
+
   fade_out();
   toggle_sprites();
   battle_state = BATTLE_COMPLETE;
@@ -1268,9 +1242,8 @@ void update_battle(void) NONBANKED {
     }
     break;
   case BATTLE_STATUS_EFFECT_UPDATE:
-    // TODO I don't know why this causes issues if called here.
-    //      No time to figure it out now.
-    // update_staus_effects_ui();
+    // TODO This might be fixed now, try again!
+    // update_status_effects_ui();
     battle_state = BATTLE_TAKE_ACTION;
     break;
   case BATTLE_TAKE_ACTION:
@@ -1279,48 +1252,40 @@ void update_battle(void) NONBANKED {
     animation_state = ANIMATION_PREAMBLE;
     battle_state = BATTLE_ANIMATE;
     break;
-  case BATTLE_ANIMATE:
-    text_writer.update();
-    animate_action_result();
-    if (animation_state == ANIMATION_COMPLETE) {
-      battle_state = BATTLE_ACTION_CLEANUP;
-    }
-    break;
   case BATTLE_ACTION_CLEANUP:
-    if (encounter.player_fled) {
-      battle_state = BATTLE_PLAYER_FLED;
-      init_timer(effect_delay_timer, FLEE_DELAY_FRAMES);
-      return;
-    }
-    update_staus_effects_ui();
-    cleanup_monsters();
-    if (player.target_hp == 0) {
+    after_action();
+    clear_inactive_monsters();
+    if (encounter.player_died) {
       battle_state = BATTLE_PLAYER_DIED;
+    } else if (encounter.victory) {
+      battle_rewards();
+    } else if (encounter.player_fled) {
+      init_timer(effect_delay_timer, FLEE_DELAY_FRAMES);
+      battle_state = BATTLE_PLAYER_FLED;
     } else {
-      player.hp = player.target_hp;
-      update_player_hp();
-      battle_state = BATTLE_NEXT_TURN;
+      battle_state = BATTLE_UI_UPDATE;
     }
     break;
   case BATTLE_PLAYER_FLED:
+    // TODO Player Flee SFX
     if (was_pressed(J_A) || update_timer(effect_delay_timer))
       leave_battle();
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
-    text_writer.print("GAME OVER");
+    // TODO Handle player death
     break;
   case BATTLE_END_ROUND:
-    if (monsters_slain()) {
-      battle_state = BATTLE_SUCCESS;
-      battle_rewards();
-      return;
-    }
     battle_state = BATTLE_STATE_MENU;
     battle_menu.active_menu = BATTLE_MENU_MAIN;
     update_player_mp();
     hide_battle_text();
     move_screen_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+    break;
+  case BATTLE_REWARDS:
+    text_writer.auto_page = AUTO_PAGE_OFF;
+    text_writer.print(rewards_buf);
+    battle_state = BATTLE_SUCCESS;
     break;
   case BATTLE_SUCCESS:
     if (!was_pressed(J_A))
@@ -1338,6 +1303,20 @@ void update_battle(void) NONBANKED {
 
 void draw_battle(void) NONBANKED {
   switch (battle_state) {
+  case BATTLE_SUCCESS:
+    text_writer.update();
+    break;
+  case BATTLE_ANIMATE:
+    text_writer.update();
+    animate_action_result();
+    if (animation_state == ANIMATION_COMPLETE)
+      battle_state = BATTLE_ACTION_CLEANUP;
+    break;
+  case BATTLE_UI_UPDATE:
+    update_status_effects_ui();
+    update_player_hp();
+    battle_state = BATTLE_NEXT_TURN;
+    break;
   case BATTLE_COMPLETE:
     if (fade_update()) {
       // Return to the world map.

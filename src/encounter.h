@@ -47,6 +47,7 @@ typedef enum MonsterLayout {
  * Denotes an action that can be taken by the player during battle.
  */
 typedef enum PlayerAction {
+  PLAYER_NO_ACTION,
   PLAYER_ACTION_FIGHT,
   PLAYER_ACTION_ABILITY,
   PLAYER_ACTION_ITEM,
@@ -117,6 +118,14 @@ typedef struct Encounter {
    */
   bool player_fled;
   /**
+   * Set to `true` if the player died as of the last action.
+   */
+  bool player_died;
+  /**
+   * Whether or not the encounter is over and the player has won.
+   */
+  bool victory;
+  /**
    * Used to denote that this encounter is being used during testing. The battle
    * system will not return to the map after the battle is complete.
    */
@@ -171,9 +180,15 @@ void check_status_effects(void);
 void take_action(void);
 
 /**
+ * Call after an action completes to perform any state management before the
+ * next action is taken.
+ */
+void after_action(void);
+
+/**
  * @return `true` If all the monsters have been defeated.
  */
-bool monsters_slain(void);
+bool is_battle_over(void);
 
 /**
  * Resets the encounter so it can be reconfigured for another battle.

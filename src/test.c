@@ -67,22 +67,22 @@ void test_setup_encounter(MonsterLayout layout) {
 
   switch (layout) {
   case MONSTER_LAYOUT_1:
-    dummy_generator(monster, player.level, true);
+    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'A';
     break;
   case MONSTER_LAYOUT_2:
-    dummy_generator(monster, player.level, true);
+    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'A';
-    dummy_generator(++monster, player.level, true);
+    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'B';
     break;
   case MONSTER_LAYOUT_1M_2S:
   case MONSTER_LAYOUT_3S:
-    dummy_generator(monster, player.level, true);
+    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'A';
-    dummy_generator(++monster, player.level, true);
+    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'B';
-    dummy_generator(++monster, player.level, true);
+    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
     monster->id = 'C';
     break;
   }

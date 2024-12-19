@@ -89,15 +89,22 @@ const palette_color_t DUMMY_COLORS[4] = {
 
 void dummy_take_turn(MonsterInstance *dummy) {
   sprintf(battle_pre_message, str_monster_dummy_pre, dummy->id);
-  if (dummy->parameter) {
+
+  switch (dummy->parameter) {
+  case DUMMY_INVINCIBLE:
     dummy->target_hp = dummy->max_hp;
     sprintf(battle_post_message, str_monster_dummy_post_heal);
-  } else {
+    break;
+  case DUMMY_COWARD:
+    monster_flee(dummy);
+    break;
+  default:
     sprintf(battle_post_message, str_monster_dummy_post);
+    break;
   }
 }
 
-void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible) {
+void dummy_generator(MonsterInstance *m, uint8_t level, TestDummyType type) {
   monster_init_instance(m, &MONSTER_DUMMY);
 
   PowerTier tier = S_TIER;
@@ -116,7 +123,7 @@ void dummy_generator(MonsterInstance *m, uint8_t level, bool invincible) {
   m->agl_base = get_agl(1, C_TIER);
 
   m->take_turn = dummy_take_turn;
-  m->parameter = invincible;
+  m->parameter = type;
 
   monster_reset_stats(m);
 

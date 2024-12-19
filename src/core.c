@@ -27,6 +27,12 @@ uint8_t flags[32] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
+const palette_color_t blank_palette[4] = {
+  RGB_WHITE,
+  RGB_WHITE,
+  RGB_WHITE,
+  RGB_WHITE,
+};
 
 /**
  * Font tileset.
