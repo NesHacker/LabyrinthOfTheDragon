@@ -274,6 +274,16 @@ uint16_t get_player_heal(uint8_t level, PowerTier tier) BANKED;
 bool roll_attack(uint8_t atk, uint8_t def) BANKED;
 
 /**
+ * Checks the given attack for a given roll. Allows for the use of one random
+ * roll to be used to check multiple defenders.
+ * @param d256_roll The attack roll.
+ * @param atk Atacker's ATK.
+ * @param def Defender's DEF.
+ * @return `true` if the attack succeeds.
+ */
+bool check_attack(uint8_t d256_roll, uint8_t atk, uint8_t def) BANKED;
+
+/**
  * @return An attack's resulting damage given a roll.
  * @param d16_roll The d16 roll.
  * @param base_dmg The base damage for the attack.

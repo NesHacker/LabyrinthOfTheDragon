@@ -77,6 +77,7 @@ addNamespace('battle', 3, {
   'player_heal': 'You heal %damage HP.',
   'player_heal_crit': 'CRITICAL! You heal a whopping %damage HP!',
   'player_heal_fumble': 'You only heal a measly %damage HP.',
+  'player_miss_all': 'A COMPLETE WHIFF.',
   'victory': 'Victory! You gain %exp XP!',
   'victory_no_xp': 'Victory! You gain no XP.\fMust have been too weak...',
   'level_up': 'LEVEL UP! You reach %level!',

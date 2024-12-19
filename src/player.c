@@ -245,7 +245,15 @@ void test_class_base_attack(void) {
 }
 
 void test_class_ability0(void) {
-  ability_placeholder();
+  sprintf(battle_pre_message, "Attacking all\x60");
+  const uint8_t base_damage = get_player_damage(player.level, B_TIER);
+  const uint8_t hits = damage_all(base_damage, player.atk, false, DAMAGE_PHYSICAL);
+
+  if (!hits) {
+    sprintf(battle_post_message, str_battle_player_miss_all);
+  } else {
+    sprintf(battle_post_message, "Damage Applied.");
+  }
 }
 
 void test_class_ability1(void) {
@@ -269,7 +277,7 @@ void test_class_ability5(void) {
 }
 
 const Ability test_class0 = {
-  1, "Test 1", TARGET_SELF, 0, test_class_ability0
+  1, "Damage All", TARGET_SELF, 0, test_class_ability0
 };
 
 const Ability test_class1 = {

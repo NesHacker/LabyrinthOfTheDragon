@@ -64,6 +64,14 @@ bool roll_attack(uint8_t atk, uint8_t def) BANKED {
   return rand() < attack_roll_target[atk - def + 32];
 }
 
+bool check_attack(uint8_t d256_roll, uint8_t atk, uint8_t def) BANKED {
+  if (atk + 32 < def)
+    return d256_roll < attack_roll_target[0];
+  if (atk > 32 + 32)
+    return d256_roll < attack_roll_target[64];
+  return d256_roll < attack_roll_target[atk - def + 32];
+}
+
 uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED {
   return (damage_roll_modifier[d16_roll & 0x0F] * base_dmg) >> 4;
 }

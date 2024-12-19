@@ -112,23 +112,23 @@ uint8_t get_hp_bar_x(MonsterPosition pos) {
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
     // 1 Monster  - (6, 9)
-    return 6;
+    return 7;
   case MONSTER_LAYOUT_2:
     // 2 Monsters - (2, 9), (11, 9)
-    return (pos == MONSTER_POSITION1) ? 2 : 11;
+    return (pos == MONSTER_POSITION1) ? 3 : 12;
   case MONSTER_LAYOUT_3S:
     // 3 Monsters - (0, 9), (6, 9), (12, 9)
     switch (pos) {
-    case MONSTER_POSITION1: return 0;
-    case MONSTER_POSITION2: return 6;
-    case MONSTER_POSITION3: return 12;
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 7;
+    case MONSTER_POSITION3: return 13;
     }
   case MONSTER_LAYOUT_1M_2S:
     // 1 md + 2 sm - (0) (7) (13)
     switch (pos) {
-    case MONSTER_POSITION1: return 0;
-    case MONSTER_POSITION2: return 7;
-    case MONSTER_POSITION3: return 13;
+    case MONSTER_POSITION1: return 1;
+    case MONSTER_POSITION2: return 8;
+    case MONSTER_POSITION3: return 14;
     }
   }
   return 6;
@@ -151,7 +151,7 @@ void erase_monster_tiles(MonsterPosition p) {
   uint8_t x = monster_clear_x[encounter.layout][p];
   if (x == 0xFF) return;
   uint8_t *vram = VRAM_BACKGROUND_XY(x, 1);
-  core.fill(vram, 7, 8, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
+  core.fill(vram, 7, 7, BATTLE_CLEAR_TILE, BATTLE_CLEAR_ATTR);
 }
 
 /**
@@ -249,9 +249,6 @@ void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
   VBK_REG = VBK_TILES;
   col = 0;
 
-  // Draw the "left cap"
-  set_vram_byte(vram++, HP_BAR_LEFT_CAP);
-
   // Fill full bar sprites until the pips value falls below 8
   while (p >= 8) {
     set_vram_byte(vram++, HP_BAR_FULL_PIPS);
@@ -271,9 +268,6 @@ void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
     set_vram_byte(vram++, HP_BAR_EMPTY_PIPS);
     col++;
   }
-
-  // Finally draw the "right cap"
-  set_vram_byte(vram, HP_BAR_RIGHT_CAP);
 }
 
 /**
@@ -479,16 +473,16 @@ void battle_init_encounter(void) {
   // Initialize graphics for the monsters in the encounter
   switch (encounter.layout) {
   case MONSTER_LAYOUT_1:
-    core.draw_tilemap(monster_layout_1, VRAM_BACKGROUND);
+    core.draw_tilemap(tilemap_monster_layout_1, VRAM_BACKGROUND);
     break;
   case MONSTER_LAYOUT_2:
-    core.draw_tilemap(monster_layout_2, VRAM_BACKGROUND);
+    core.draw_tilemap(tilemap_monster_layout_2, VRAM_BACKGROUND);
     break;
   case MONSTER_LAYOUT_3S:
-    core.draw_tilemap(monster_layout_3s, VRAM_BACKGROUND);
+    core.draw_tilemap(tilemap_monster_layout_3s, VRAM_BACKGROUND);
     break;
   case MONSTER_LAYOUT_1M_2S:
-    core.draw_tilemap(monster_layout_1m2s, VRAM_BACKGROUND);
+    core.draw_tilemap(tilemap_monster_layout_1m2s, VRAM_BACKGROUND);
     break;
   }
 

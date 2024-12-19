@@ -290,7 +290,7 @@ void take_action(void) {
     monster_turn();
 
   MonsterInstance *monster = encounter.monsters;
-  for (uint8_t k = 0; k < 3; k++) {
+  for (uint8_t k = 0; k < 3; k++, monster++) {
     if (monster->target_hp != monster->hp)
       monster->hp_delta = monster->target_hp - monster->hp;
   }
@@ -388,17 +388,30 @@ void damage_monster(uint16_t base_damage, DamageAspect type) {
     monster->target_hp -= damage;
 }
 
-void damage_all_monster(uint16_t base_damage, DamageAspect type) {
-  uint8_t roll = d16();
-  uint16_t damage = calc_damage(roll, base_damage);
+uint8_t damage_all(
+  uint8_t base_damage,
+  uint8_t atk,
+  bool use_mdef,
+  DamageAspect type
+) {
+  uint8_t dam_roll = d16();
+  uint16_t damage = calc_damage(dam_roll, base_damage);
 
   MonsterInstance *monster = encounter.monsters;
+  uint8_t atk_roll = d256();
+  uint8_t hits = 0;
+
   for (uint8_t k = 0; k < 3; k++, monster++) {
     if (!monster->active)
       continue;
-
     if (monster->aspect_immune & type)
       continue;
+
+    const uint8_t def = use_mdef ? monster->mdef : monster->def;
+    if (!check_attack(atk_roll, atk, def))
+      continue;
+
+    hits++;
 
     uint16_t d = damage;
     if (monster->aspect_resist & type) {
@@ -412,6 +425,8 @@ void damage_all_monster(uint16_t base_damage, DamageAspect type) {
     else
       monster->target_hp -= d;
   }
+
+  return hits;
 }
 
 void ability_placeholder(void) {

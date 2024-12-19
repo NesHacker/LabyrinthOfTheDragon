@@ -187,8 +187,18 @@ void damage_monster(uint16_t base_damage, DamageAspect type);
 /**
  * Applies damage to all active monsters in the encounter. Takes immmunities,
  * etc. into account. Does **NOT** handle battle result messages.
+ * @param base_damage Base damage for the attack.
+ * @param atk ATK of the attacker.
+ * @param use_mdef Whether or not to use DEF or MDEF when checking attack roll.
+ * @param type Aspect type for the damage.
+ * @return Number of monsters hit by the attack.
  */
-void damage_all_monster(uint16_t base_damage, DamageAspect type);
+uint8_t damage_all(
+  uint8_t base_damage,
+  uint8_t atk,
+  bool use_mdef,
+  DamageAspect type
+);
 
 /**
  * @return The monster at the given index.

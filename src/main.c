@@ -33,7 +33,7 @@ inline void initialize(void) {
   initarand(RANDOM_SEED);
   hide_window();
   // initialize_game();
-  test_combat_general();
+  test_combat_general(MONSTER_LAYOUT_1M_2S);
 }
 
 /**

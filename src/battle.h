@@ -147,25 +147,14 @@
 #define SUBMENU_TEXT_X 1
 
 /**
- * Tile for the HP bar graphics's left cap.
- */
-#define HP_BAR_LEFT_CAP 0x50
-
-/**
  * Tile with full pips for the HP bar.
  */
-#define HP_BAR_FULL_PIPS 0x51
+#define HP_BAR_FULL_PIPS 0x58
 
 /**
  * Tile with empty pips for the HP bar.
  */
-#define HP_BAR_EMPTY_PIPS 0x52
-
-/**
- * Tile for the HP bar graphics's right cap.
- */
-#define HP_BAR_RIGHT_CAP 0x5A
-
+#define HP_BAR_EMPTY_PIPS 0x50
 
 /**
  * VRAM address for the main menu summon text in the background.
@@ -410,10 +399,12 @@ inline void hide_battle_text(void) {
 
 extern const palette_color_t data_battle_bg_colors[];
 extern const palette_color_t data_battle_sprite_colors[];
-extern const Tilemap monster_layout_1;
-extern const Tilemap monster_layout_2;
-extern const Tilemap monster_layout_3s;
-extern const Tilemap monster_layout_1m2s;
+
+extern const Tilemap tilemap_monster_layout_1;
+extern const Tilemap tilemap_monster_layout_2;
+extern const Tilemap tilemap_monster_layout_3s;
+extern const Tilemap tilemap_monster_layout_1m2s;
+
 extern const Tilemap battle_menu_tilemap;
 extern const Tilemap battle_submenu_tilemap;
 extern const Tilemap battle_textbox_tilemap;

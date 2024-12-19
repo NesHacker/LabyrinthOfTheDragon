@@ -221,6 +221,11 @@ extern const char str_battle_player_heal_crit[];
 extern const char str_battle_player_heal_fumble[];
 
 /**
+ * "A COMPLETE WHIFF."
+ */
+extern const char str_battle_player_miss_all[];
+
+/**
  * "Victory! You gain %exp XP!"
  */
 extern const char str_battle_victory[];

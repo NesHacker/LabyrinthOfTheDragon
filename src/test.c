@@ -14,6 +14,12 @@ void reset_test(void) {
   _test = (void *)0xA000;
 }
 
+void test_battle_init(void) {
+  encounter.is_test = true;
+  toggle_sprites();
+  init_battle();
+}
+
 void test_stats(void) {
   game_state = GAME_STATE_TEST;
   reset_test();
@@ -53,22 +59,34 @@ void test_stats(void) {
   TEST(def_up(base, S_TIER), 41);
 }
 
-void test_combat_general(void) {
+void test_combat_general(MonsterLayout layout) {
   init_test_player(20);
 
-  reset_encounter(MONSTER_LAYOUT_3S);
-  encounter.is_test = true;
+  reset_encounter(layout);
 
   MonsterInstance *monster = encounter.monsters;
-  dummy_generator(monster, player.level, true);
-  monster->id = 'A';
-  dummy_generator(++monster, player.level, true);
-  monster->id = 'B';
-  dummy_generator(++monster, player.level, true);
-  monster->id = 'C';
 
-  toggle_sprites();
-  init_battle();
+  switch (layout) {
+  case MONSTER_LAYOUT_1:
+    dummy_generator(monster, player.level, true);
+    monster->id = 'A';
+    break;
+  case MONSTER_LAYOUT_2:
+    dummy_generator(monster, player.level, true);
+    monster->id = 'A';
+    dummy_generator(++monster, player.level, true);
+    monster->id = 'B';
+    break;
+  case MONSTER_LAYOUT_1M_2S:
+  case MONSTER_LAYOUT_3S:
+    dummy_generator(monster, player.level, true);
+    monster->id = 'A';
+    dummy_generator(++monster, player.level, true);
+    monster->id = 'B';
+    dummy_generator(++monster, player.level, true);
+    monster->id = 'C';
+    break;
+  }
+
+  test_battle_init();
 }
-
-

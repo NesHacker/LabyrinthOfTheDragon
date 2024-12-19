@@ -130,19 +130,19 @@ const palette_color_t data_battle_sprite_colors[] = {
   RGB_WHITE,
 };
 
-const Tilemap monster_layout_1 = {
+const Tilemap tilemap_monster_layout_1 = {
   20, 11, 5, tilemap_battle_monster_layouts
 };
 
-const Tilemap monster_layout_2 = {
+const Tilemap tilemap_monster_layout_2 = {
   20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 1
 };
 
-const Tilemap monster_layout_3s = {
+const Tilemap tilemap_monster_layout_3s = {
   20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 2
 };
 
-const Tilemap monster_layout_1m2s = {
+const Tilemap tilemap_monster_layout_1m2s = {
   20, 11, 5, tilemap_battle_monster_layouts + 20 * 11 * 2 * 3
 };
 

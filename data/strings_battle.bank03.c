@@ -32,6 +32,7 @@ const char str_battle_player_hit_crit[] = "CRITICAL HIT! You \ndeal %u damage!";
 const char str_battle_player_heal[] = "You heal %u HP.";
 const char str_battle_player_heal_crit[] = "CRITICAL! You heal\n a whopping %u \nHP!";
 const char str_battle_player_heal_fumble[] = "You only heal a \nmeasly %u HP.";
+const char str_battle_player_miss_all[] = "A COMPLETE WHIFF.";
 const char str_battle_victory[] = "Victory! You gain \n%u XP!";
 const char str_battle_victory_no_xp[] = "Victory! You gain \nno XP.\fMust have \nbeen too weak\x60";
 const char str_battle_level_up[] = "LEVEL UP! You \nreach %u!";
