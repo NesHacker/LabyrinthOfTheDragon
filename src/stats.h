@@ -521,4 +521,17 @@ bool fear_flee_roll(PowerTier tier) BANKED;
  */
 bool fear_shiver_roll(PowerTier tier) BANKED;
 
+/**
+ * @param tier power tier for the effect.
+ * @return `true` if they cannot move.
+ */
+bool paralyzed_roll(PowerTier tier) BANKED;
+
+/**
+ * @param tier Tier of poison debuff.
+ * @param max_hp Max HP of the target.
+ * @return HP loss due to poison.
+ */
+uint16_t poison_hp(PowerTier tier, uint16_t max_hp) BANKED;
+
 #endif

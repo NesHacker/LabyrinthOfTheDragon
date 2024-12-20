@@ -76,20 +76,20 @@ uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED {
   return (damage_roll_modifier[d16_roll & 0x0F] * base_dmg) >> 4;
 }
 
-uint16_t calc_monster_exp(uint8_t level, PowerTier tier) BANKED {
-  // Monster is eight levels or more below the player's level.
-  if (level + 8 <= player.level)
+uint16_t calc_monster_exp(uint8_t mlevel, PowerTier tier) BANKED {
+  // If the monster is 8 levels or greater: 2x rewards
+  if (mlevel >= player.level + 8)
+    return get_monster_exp(mlevel, tier) << 1;
+
+  // No experience from monsters seven levels below
+  if (player.level >= mlevel + 7)
     return 0;
 
-  // Monster seven levels or higher tha n the player's level.
-  if (level >= player.level + 7)
-    return get_monster_exp(level, tier) << 1;
+  uint16_t k = xp_mod[mlevel - player.level + 8];
+  k *= get_monster_exp(mlevel, tier);
+  k >>= 4;
 
-  // Otherwise use the experience adjust calculator
-  const uint8_t index = player.level - level;
-  const uint16_t multipler = xp_mod[index];
-  const uint16_t exp = get_monster_exp(level, tier);
-  return (multipler * exp) >> 4;
+  return k;
 }
 
 // TODO Move these out into tables?
@@ -154,4 +154,15 @@ bool fear_flee_roll(PowerTier tier) BANKED {
 bool fear_shiver_roll(PowerTier tier) BANKED {
   const uint8_t chance_tbl[4] = { 128, 135, 185, 240 };
   return d256() < chance_tbl[tier < 4 ? tier : 0];
+}
+
+bool paralyzed_roll(PowerTier tier) BANKED {
+  const uint8_t chance_tbl[4] = { 192, 212, 230, 250 };
+  return d256() < chance_tbl[tier < 4 ? tier : 0];
+}
+
+uint16_t poison_hp(PowerTier tier, uint16_t max_hp) BANKED {
+  uint16_t k = max_hp * (tier < 4 ? tier + 2 : 1);
+  k >>= 4;
+  return k;
 }
