@@ -70,6 +70,8 @@ addNamespace('battle', 3, {
   'monster_flee_failure': 'But they cannot get away!',
   'monster_flee_success': 'And they get away!',
   'monster_scared_frozen': '%monster %c shivers in fear...',
+  'monster_paralyzed': "%monster %c can't move!",
+  'monster_poison_death': '%monster %c succumbs to the poison!',
   'player_miss': 'But you miss!',
   'player_magic_miss': 'But it has no effect!',
   'player_hit': 'You deal %damage damage!',
@@ -95,7 +97,7 @@ addNamespace('battle', 3, {
 addNamespace('monster', 3, {
   'dummy_pre': 'Dummy %c just stands there...',
   'dummy_post': 'Sad and wishing for it all to end.',
-  'dummy_post_heal': "I will never die...",
+  'dummy_post_heal': '"I will never die..."',
   'kobold_axe': 'Kobold %c raises a tiny axe...',
   'kobold_fire': 'Kobold %c spits a glob of fire...',
   'kobold_dazed': 'Kobold %c looks dazed...',

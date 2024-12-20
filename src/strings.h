@@ -186,6 +186,16 @@ extern const char str_battle_monster_flee_success[];
 extern const char str_battle_monster_scared_frozen[];
 
 /**
+ * "%monster %c can't move!"
+ */
+extern const char str_battle_monster_paralyzed[];
+
+/**
+ * "%monster %c succumbs to the poison!"
+ */
+extern const char str_battle_monster_poison_death[];
+
+/**
  * "But you miss!"
  */
 extern const char str_battle_player_miss[];
@@ -281,7 +291,7 @@ extern const char str_monster_dummy_pre[];
 extern const char str_monster_dummy_post[];
 
 /**
- * "I will never die..."
+ * ""I will never die...""
  */
 extern const char str_monster_dummy_post_heal[];
 
