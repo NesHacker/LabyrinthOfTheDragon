@@ -35,6 +35,7 @@ uint8_t status_effect_x[3] = { 7, 7, 7 };
 char battle_pre_message[64];
 char battle_post_message[64];
 char rewards_buf[64];
+bool skip_post_message = false;
 
 // TODO covert these into a single BattleAnimation state structure
 BattleAnimation battle_animation;
@@ -1047,7 +1048,10 @@ void animate_action_result(void) {
     break;
   case ANIMATION_EFFECT:
     if (update_timer(effect_delay_timer)) {
-      text_writer.print(battle_post_message);
+      if (skip_post_message)
+        skip_post_message = false;
+      else
+        text_writer.print(battle_post_message);
       reset_monster_death_animation();
       animation_state = ANIMATION_RESULT;
     }
