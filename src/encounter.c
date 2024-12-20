@@ -286,80 +286,86 @@ inline void monster_turn(void) {
     if (!effect->active)
       continue;
     switch (effect->effect) {
-  case DEBUFF_SCARED:
-    const uint8_t scared_roll = d256();
-    if (fear_flee_roll(effect->tier)) {
-      monster_flee(monster);
-      return;
-    } else if (fear_shiver_roll(effect->tier)) {
-      sprintf(battle_pre_message, str_battle_monster_scared_frozen,
-        monster->monster->name, monster->id);
-      skip_post_message = true;
-      return;
-    }
-    break;
-  case DEBUFF_PARALYZED:
-    if (paralyzed_roll(effect->tier)) {
-      sprintf(battle_pre_message, str_battle_monster_paralyzed,
-        monster->monster->name, monster->id);
-      skip_post_message = true;
-      return;
-    }
-    break;
-  case DEBUFF_POISONED:
-    const uint16_t poison = poison_hp(effect->tier, monster->max_hp);
-    if (monster->target_hp <= poison)
-      monster->target_hp = 0;
-    else
-      monster->target_hp -= poison;
-
-    if (monster->target_hp == 0) {
-      sprintf(battle_pre_message, str_battle_monster_poison_death,
-        monster->monster->name, monster->id);
-      skip_post_message = true;
-      return;
-    }
-    break;
-  case DEBUFF_CONFUSED:
-    if (confused_attack(effect->tier)) {
-      MonsterInstance *target = monster;
-      MonsterInstance *list = encounter.monsters;
-      for (uint8_t k = 0; k < 3; k++, list++) {
-        if (!list->active)
-          continue;
-        if (list != target) {
-          target = list;
-          break;
-        }
+    case DEBUFF_SCARED:
+      const uint8_t scared_roll = d256();
+      if (fear_flee_roll(effect->tier)) {
+        monster_flee(monster);
+        return;
+      } else if (fear_shiver_roll(effect->tier)) {
+        sprintf(battle_pre_message, str_battle_monster_scared_frozen,
+          monster->monster->name, monster->id);
+        skip_post_message = true;
+        return;
       }
-      const uint8_t roll = d16();
-      const uint8_t base_damage = get_monster_dmg(
-        monster->level,
-        monster->exp_tier
-      );
-      const uint16_t damage = calc_damage(roll, base_damage);
-      if (target->target_hp < damage)
-        target->target_hp = 0;
+      break;
+    case DEBUFF_PARALYZED:
+      if (paralyzed_roll(effect->tier)) {
+        sprintf(battle_pre_message, str_battle_monster_paralyzed,
+          monster->monster->name, monster->id);
+        skip_post_message = true;
+        return;
+      }
+      break;
+    case DEBUFF_POISONED:
+      const uint16_t poison = poison_hp(effect->tier, monster->max_hp);
+      if (monster->target_hp <= poison)
+        monster->target_hp = 0;
       else
-        target->target_hp -= damage;
+        monster->target_hp -= poison;
 
-      if (target == monster) {
-        sprintf(battle_pre_message, str_battle_monster_confuse_attack_self,
+      if (monster->target_hp == 0) {
+        sprintf(battle_pre_message, str_battle_monster_poison_death,
           monster->monster->name, monster->id);
-      } else {
-        sprintf(battle_pre_message, str_battle_monster_confuse_attack_other,
-          monster->monster->name, monster->id);
+        skip_post_message = true;
+        return;
       }
-      skip_post_message = true;
-      return;
-    } else {
-      sprintf(battle_pre_message, str_battle_monster_confuse_stupor,
-        monster->monster->name, monster->id);
-      skip_post_message = true;
-      return;
-    }
-    break;
-  // case BUFF_REGEN: break;
+      break;
+    case DEBUFF_CONFUSED:
+      if (confused_attack(effect->tier)) {
+        MonsterInstance *target = monster;
+        MonsterInstance *list = encounter.monsters;
+        for (uint8_t k = 0; k < 3; k++, list++) {
+          if (!list->active)
+            continue;
+          if (list != target) {
+            target = list;
+            break;
+          }
+        }
+        const uint8_t roll = d16();
+        const uint8_t base_damage = get_monster_dmg(
+          monster->level,
+          monster->exp_tier
+        );
+        const uint16_t damage = calc_damage(roll, base_damage);
+        if (target->target_hp < damage)
+          target->target_hp = 0;
+        else
+          target->target_hp -= damage;
+
+        if (target == monster) {
+          sprintf(battle_pre_message, str_battle_monster_confuse_attack_self,
+            monster->monster->name, monster->id);
+        } else {
+          sprintf(battle_pre_message, str_battle_monster_confuse_attack_other,
+            monster->monster->name, monster->id);
+        }
+        skip_post_message = true;
+        return;
+      } else {
+        sprintf(battle_pre_message, str_battle_monster_confuse_stupor,
+          monster->monster->name, monster->id);
+        skip_post_message = true;
+        return;
+      }
+      break;
+    case BUFF_REGEN:
+      uint16_t regen = regen_hp(effect->tier, monster->max_hp);
+      if (regen + monster->target_hp > monster->max_hp)
+        monster->target_hp = monster->max_hp;
+      else
+        monster->target_hp += regen;
+      break;
     }
   }
 

@@ -540,4 +540,11 @@ uint16_t poison_hp(PowerTier tier, uint16_t max_hp) BANKED;
  */
 bool confused_attack(PowerTier tier) BANKED;
 
+/**
+ * @param tier Tier of poison debuff.
+ * @param max_hp Max HP of the target.
+ * @return HP recovered by regen.
+ */
+uint16_t regen_hp(PowerTier tier, uint16_t max_hp) BANKED;
+
 #endif

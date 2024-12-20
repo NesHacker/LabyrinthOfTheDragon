@@ -171,3 +171,9 @@ bool confused_attack(PowerTier tier) BANKED {
   const uint8_t chance_tbl[4] = { 64, 96, 128, 192 };
   return d256() < chance_tbl[tier < 4 ? tier : 0];
 }
+
+uint16_t regen_hp(PowerTier tier, uint16_t max_hp) BANKED {
+  uint16_t k = max_hp * (tier < 4 ? tier + 2 : 1);
+  k >>= 4;
+  return k;
+}
