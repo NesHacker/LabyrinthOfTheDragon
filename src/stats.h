@@ -534,4 +534,10 @@ bool paralyzed_roll(PowerTier tier) BANKED;
  */
 uint16_t poison_hp(PowerTier tier, uint16_t max_hp) BANKED;
 
+/**
+ * @param tier Power tier for the debuff.
+ * @return if the entity attacks itself or a friend.
+ */
+bool confused_attack(PowerTier tier) BANKED;
+
 #endif

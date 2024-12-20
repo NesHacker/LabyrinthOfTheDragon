@@ -166,3 +166,8 @@ uint16_t poison_hp(PowerTier tier, uint16_t max_hp) BANKED {
   k >>= 4;
   return k;
 }
+
+bool confused_attack(PowerTier tier) BANKED {
+  const uint8_t chance_tbl[4] = { 64, 96, 128, 192 };
+  return d256() < chance_tbl[tier < 4 ? tier : 0];
+}

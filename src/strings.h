@@ -196,6 +196,21 @@ extern const char str_battle_monster_paralyzed[];
 extern const char str_battle_monster_poison_death[];
 
 /**
+ * "Confused, %monster %c attacks itself!"
+ */
+extern const char str_battle_monster_confuse_attack_self[];
+
+/**
+ * "Confused, %monster %c attacks any ally!"
+ */
+extern const char str_battle_monster_confuse_attack_other[];
+
+/**
+ * "%monster %c stares aimlessly."
+ */
+extern const char str_battle_monster_confuse_stupor[];
+
+/**
  * "But you miss!"
  */
 extern const char str_battle_player_miss[];

@@ -320,11 +320,48 @@ inline void monster_turn(void) {
       return;
     }
     break;
-  // case DEBUFF_CONFUSED: break;
+  case DEBUFF_CONFUSED:
+    if (confused_attack(effect->tier)) {
+      MonsterInstance *target = monster;
+      MonsterInstance *list = encounter.monsters;
+      for (uint8_t k = 0; k < 3; k++, list++) {
+        if (!list->active)
+          continue;
+        if (list != target) {
+          target = list;
+          break;
+        }
+      }
+      const uint8_t roll = d16();
+      const uint8_t base_damage = get_monster_dmg(
+        monster->level,
+        monster->exp_tier
+      );
+      const uint16_t damage = calc_damage(roll, base_damage);
+      if (target->target_hp < damage)
+        target->target_hp = 0;
+      else
+        target->target_hp -= damage;
+
+      if (target == monster) {
+        sprintf(battle_pre_message, str_battle_monster_confuse_attack_self,
+          monster->monster->name, monster->id);
+      } else {
+        sprintf(battle_pre_message, str_battle_monster_confuse_attack_other,
+          monster->monster->name, monster->id);
+      }
+      skip_post_message = true;
+      return;
+    } else {
+      sprintf(battle_pre_message, str_battle_monster_confuse_stupor,
+        monster->monster->name, monster->id);
+      skip_post_message = true;
+      return;
+    }
+    break;
   // case BUFF_REGEN: break;
     }
   }
-
 
   monster->take_turn(monster);
 }
