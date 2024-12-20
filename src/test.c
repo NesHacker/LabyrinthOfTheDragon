@@ -27,12 +27,6 @@ void test_stats(void) {
 
   uint8_t base = 30;
 
-  TEST(blind_atk(base, C_TIER), base - 8);
-  TEST(blind_atk(base, B_TIER), base - 12);
-  TEST(blind_atk(base, A_TIER), base - 16);
-  TEST(blind_atk(base, S_TIER), base - 22);
-  TEST(blind_atk(20, S_TIER), 0);
-
   TEST(agl_down(base, C_TIER), base - 2);
   TEST(agl_down(base, B_TIER), base - 4);
   TEST(agl_down(base, A_TIER), base - 8);
@@ -60,37 +54,37 @@ void test_stats(void) {
   TEST(def_up(base, S_TIER), 41);
 }
 
-void test_setup_encounter(MonsterLayout layout) {
+void test_setup_encounter(MonsterLayout layout, TestDummyType type) {
   reset_encounter(layout);
 
   MonsterInstance *monster = encounter.monsters;
 
   switch (layout) {
   case MONSTER_LAYOUT_1:
-    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(monster, player.level, type);
     monster->id = 'A';
     break;
   case MONSTER_LAYOUT_2:
-    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(monster, player.level, type);
     monster->id = 'A';
-    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(++monster, player.level, type);
     monster->id = 'B';
     break;
   case MONSTER_LAYOUT_1M_2S:
   case MONSTER_LAYOUT_3S:
-    dummy_generator(monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(monster, player.level, type);
     monster->id = 'A';
-    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(++monster, player.level, type);
     monster->id = 'B';
-    dummy_generator(++monster, player.level, DUMMY_INVINCIBLE);
+    dummy_generator(++monster, player.level, type);
     monster->id = 'C';
     break;
   }
 }
 
-void test_combat_general(MonsterLayout layout) {
+void test_combat_general(MonsterLayout layout, TestDummyType type) {
   init_test_player(20);
-  test_setup_encounter(layout);
+  test_setup_encounter(layout, type);
   test_battle_init();
 }
 

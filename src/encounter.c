@@ -144,7 +144,7 @@ void update_player_status_effects(void) {
 
     switch (k) {
     case DEBUFF_BLIND:
-      player.atk = blind_atk(player.atk_base, effect->tier);
+      player.atk = 0;
       break;
     case DEBUFF_AGL_DOWN:
       player.agl = agl_down(player.agl_base, effect->tier);
@@ -195,7 +195,7 @@ void update_monster_status_effects(MonsterInstance *monster) {
 
     switch (effect->effect) {
     case DEBUFF_BLIND:
-      monster->atk = blind_atk(monster->atk, effect->tier);
+      monster->atk = 0;
       break;
     case DEBUFF_AGL_DOWN:
       monster->agl = agl_down(monster->agl_base, effect->tier);
@@ -281,14 +281,32 @@ inline void monster_turn(void) {
   if (!monster->active)
     return;
 
-  monster->take_turn(monster);
-
-  // // Handled in the turn function
-  // case DEBUFF_SCARED: break;
+  StatusEffectInstance *effect = monster->status_effects;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    if (!effect->active)
+      continue;
+    switch (effect->effect) {
+  case DEBUFF_SCARED:
+    const uint8_t scared_roll = d256();
+    if (fear_flee_roll(effect->tier)) {
+      monster_flee(monster);
+      return;
+    } else if (fear_shiver_roll(effect->tier)) {
+      sprintf(battle_pre_message, str_battle_monster_scared_frozen,
+        monster->monster->name, monster->id);
+      skip_post_message = true;
+      return;
+    }
+    break;
   // case DEBUFF_PARALZYED: break;
   // case DEBUFF_POISONED: break;
   // case DEBUFF_CONFUSED: break;
   // case BUFF_REGEN: break;
+    }
+  }
+
+
+  monster->take_turn(monster);
 }
 
 void take_action(void) {

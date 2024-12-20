@@ -468,13 +468,6 @@ inline StatusEffectInstance *get_effect(
 }
 
 /**
- * @return Modified attack given "Blink debuff".
- * @param base_atk Base attack.
- * @param tier Power tier of the debuff.
- */
-uint8_t blind_atk(uint8_t base_atk, PowerTier tier) BANKED;
-
-/**
  * @return Modified agility given "AGL down" debuff.
  * @param base_agl Base Agility.
  * @param tier Power tier of the debuff.
@@ -515,5 +508,17 @@ uint8_t atk_up(uint8_t base, PowerTier tier) BANKED;
  * @param tier Power tier for the debuff.
  */
 uint8_t def_up(uint8_t base, PowerTier tier) BANKED;
+
+/**
+ * @param tier power tier for the fear effect.
+ * @return `true` if they try to flee.
+ */
+bool fear_flee_roll(PowerTier tier) BANKED;
+
+/**
+ * @param tier power tier for the fear effect.
+ * @return `true` if they shiver and do nothing.
+ */
+bool fear_shiver_roll(PowerTier tier) BANKED;
 
 #endif

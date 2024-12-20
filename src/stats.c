@@ -93,7 +93,6 @@ uint16_t calc_monster_exp(uint8_t level, PowerTier tier) BANKED {
 }
 
 // TODO Move these out into tables?
-const uint8_t blind_mod[4] = { 8, 12, 16, 22 };
 const uint8_t agl_mod[4] = { 2, 4, 8, 12 };
 const uint16_t atk_def_mod[4] = { 1, 2, 4, 6 };
 
@@ -104,11 +103,6 @@ bool roll_flee(uint8_t agl, uint8_t block_agl) BANKED {
   if (agl > block_agl + 10)
     return true;
   return rand() < 128;
-}
-
-uint8_t blind_atk(uint8_t base_atk, PowerTier tier) BANKED {
-  const uint8_t mod = blind_mod[tier];
-  return base_atk < mod ? 0 : base_atk - mod;
 }
 
 uint8_t agl_down(uint8_t base_agl, PowerTier tier) BANKED {
@@ -150,4 +144,14 @@ uint8_t def_up(uint8_t base, PowerTier tier) BANKED {
   k >>= 4;
   k += base;
   return k;
+}
+
+bool fear_flee_roll(PowerTier tier) BANKED {
+  const uint8_t chance_tbl[4] = { 64, 96, 135, 185 };
+  return d256() < chance_tbl[tier < 4 ? tier : 0];
+}
+
+bool fear_shiver_roll(PowerTier tier) BANKED {
+  const uint8_t chance_tbl[4] = { 128, 135, 185, 240 };
+  return d256() < chance_tbl[tier < 4 ? tier : 0];
 }

@@ -262,11 +262,10 @@ void test_class_ability1(void) {
 
   MonsterInstance *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++, monster++) {
+    if (!monster->active)
+      continue;
     StatusEffectInstance *effects = monster->status_effects;
-    apply_poison(effects, C_TIER, 4, monster->debuff_immune);
-    apply_blind(effects, C_TIER, 3, monster->debuff_immune);
-    apply_scared(effects, C_TIER, 2, monster->debuff_immune);
-    apply_confused(effects, C_TIER, 1, monster->debuff_immune);
+    apply_scared(effects, S_TIER, 3, monster->debuff_immune);
   }
 }
 

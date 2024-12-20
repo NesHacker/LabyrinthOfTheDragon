@@ -366,6 +366,11 @@ extern char battle_pre_message[64];
 extern char battle_post_message[64];
 
 /**
+ * Whether or not a message should show up after an effect animation.
+ */
+extern bool skip_post_message;
+
+/**
  * Animation to play prior to the results of a player or monster action.
  */
 extern BattleAnimation battle_action_effect;
