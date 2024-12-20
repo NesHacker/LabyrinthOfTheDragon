@@ -298,8 +298,28 @@ inline void monster_turn(void) {
       return;
     }
     break;
-  // case DEBUFF_PARALZYED: break;
-  // case DEBUFF_POISONED: break;
+  case DEBUFF_PARALYZED:
+    if (paralyzed_roll(effect->tier)) {
+      sprintf(battle_pre_message, str_battle_monster_paralyzed,
+        monster->monster->name, monster->id);
+      skip_post_message = true;
+      return;
+    }
+    break;
+  case DEBUFF_POISONED:
+    const uint16_t poison = poison_hp(effect->tier, monster->max_hp);
+    if (monster->target_hp <= poison)
+      monster->target_hp = 0;
+    else
+      monster->target_hp -= poison;
+
+    if (monster->target_hp == 0) {
+      sprintf(battle_pre_message, str_battle_monster_poison_death,
+        monster->monster->name, monster->id);
+      skip_post_message = true;
+      return;
+    }
+    break;
   // case DEBUFF_CONFUSED: break;
   // case BUFF_REGEN: break;
     }
