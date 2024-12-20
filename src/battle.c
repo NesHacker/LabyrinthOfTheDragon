@@ -208,11 +208,11 @@ void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
   // Update the attributes based on HP percentage
   // If p <= 13, then HP <= (1/3) * max, so set critical palette
   VBK_REG = VBK_ATTRIBUTES;
-  for (col = 0; col < 7; col++)
+  for (col = 0; col < 5; col++)
     set_vram_byte(vram++, p <= 13 ? 0b00001101 : 0b00001100);
 
   // Draw the graphics
-  vram -= 7;
+  vram -= 5;
   VBK_REG = VBK_TILES;
   col = 0;
 
@@ -1093,21 +1093,6 @@ void clear_inactive_monsters(void) {
       core.load_bg_palette(blank_palette, pos + 1, 1);
 }
 
-void battle_rewards(void) {
-  const uint16_t xp = encounter.xp_reward;
-  player.exp += xp;
-
-  if (xp == 0) {
-    sprintf(rewards_buf, str_battle_victory_no_xp);
-  } else {
-    sprintf(rewards_buf, str_battle_victory, xp);
-  }
-
-  // TODO level up
-
-  battle_state = BATTLE_REWARDS;
-}
-
 /**
  * LCY interrupt handler for the fight and skill menus. This handler changes the
  * scroll-y position at a specific scanline to display a different part of the
@@ -1234,12 +1219,36 @@ void update_battle(void) NONBANKED {
     before_round();
     roll_initiative();
     hide_cursor();
-    text_writer.clear();
     show_battle_text();
     battle_state = BATTLE_NEXT_TURN;
     break;
   case BATTLE_NEXT_TURN:
+    if (encounter.player_died) {
+      sprintf(rewards_buf, "You died.");
+      text_writer.print(rewards_buf);
+      battle_state = BATTLE_PLAYER_DIED;
+      return;
+    }
+
+    if (encounter.victory) {
+      const uint16_t xp = encounter.xp_reward;
+      player.exp += xp;
+      if (xp == 0)
+        sprintf(rewards_buf, str_battle_victory_no_xp);
+      else
+        sprintf(rewards_buf, str_battle_victory, xp);
+      battle_state = BATTLE_REWARDS;
+      return;
+    }
+
+    if (encounter.player_fled) {
+      init_timer(effect_delay_timer, FLEE_DELAY_FRAMES);
+      battle_state = BATTLE_PLAYER_FLED;
+      return;
+    }
+
     next_turn();
+
     if (encounter.round_complete) {
       battle_state = BATTLE_END_ROUND;
     } else {
@@ -1256,16 +1265,9 @@ void update_battle(void) NONBANKED {
   case BATTLE_ACTION_CLEANUP:
     after_action();
     clear_inactive_monsters();
-    if (encounter.player_died) {
-      battle_state = BATTLE_PLAYER_DIED;
-    } else if (encounter.victory) {
-      battle_rewards();
-    } else if (encounter.player_fled) {
-      init_timer(effect_delay_timer, FLEE_DELAY_FRAMES);
-      battle_state = BATTLE_PLAYER_FLED;
-    } else {
-      battle_state = BATTLE_UI_UPDATE;
-    }
+
+    battle_state = BATTLE_UI_UPDATE;
+
     break;
   case BATTLE_PLAYER_FLED:
     // TODO Player Flee SFX
@@ -1274,6 +1276,7 @@ void update_battle(void) NONBANKED {
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
+    text_writer.update();
     // TODO Handle player death
     break;
   case BATTLE_END_ROUND:
