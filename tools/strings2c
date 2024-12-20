@@ -211,7 +211,7 @@ function encodeString(namespace, key, str, debugOn=false) {
     result += rep.encoded;
   })
 
-  return result;
+  return result.replace(/[']/g, "\\'").replace(/["]/g, '\\"');
 }
 
 function varName(ns, key) {
