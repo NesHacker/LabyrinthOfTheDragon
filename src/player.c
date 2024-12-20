@@ -257,16 +257,23 @@ void test_class_ability0(void) {
 }
 
 void test_class_ability1(void) {
-  sprintf(battle_pre_message, "Debuffing all\x60");
-  sprintf(battle_post_message, "Take that!");
+  sprintf(battle_pre_message, "(De)buffing\x60");
 
-  MonsterInstance *monster = encounter.monsters;
-  for (uint8_t k = 0; k < 3; k++, monster++) {
-    if (!monster->active)
-      continue;
-    StatusEffectInstance *effects = monster->status_effects;
-    apply_scared(effects, S_TIER, 3, monster->debuff_immune);
-  }
+  sprintf(battle_post_message, "Take that, scallywag!");
+
+
+  // apply_poison(encounter.player_status_effects, S_TIER, 6, player.debuff_immune);
+
+  apply_regen(encounter.player_status_effects, S_TIER, 10, 0);
+  player.target_hp = 1;
+
+  // MonsterInstance *monster = encounter.monsters;
+  // for (uint8_t k = 0; k < 3; k++, monster++) {
+  //   if (!monster->active)
+  //     continue;
+  //   StatusEffectInstance *effects = monster->status_effects;
+  //   apply_regen(effects, C_TIER, 6, monster->debuff_immune);
+  // }
 }
 
 void test_class_ability2(void) {
@@ -290,7 +297,7 @@ const Ability test_class0 = {
 };
 
 const Ability test_class1 = {
-  2, "Debuff All", TARGET_SELF, 0, test_class_ability1
+  2, "(De)buff", TARGET_SELF, 0, test_class_ability1
 };
 
 const Ability test_class2 = {

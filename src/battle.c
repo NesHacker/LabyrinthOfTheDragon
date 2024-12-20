@@ -880,7 +880,7 @@ inline void update_battle_menu(void) {
       const Ability *ability = player_abilities[battle_menu.cursor];
 
       if (player.sp < ability->sp_cost) {
-        // TODO Need a "error" sound to play here
+        // TODO SFX "Menu Error"
         break;
       }
 
@@ -1074,6 +1074,10 @@ void animate_action_result(void) {
   }
 }
 
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 /**
  * Checks for status effect changes and updates UI accordingly.
  */
@@ -1086,7 +1090,6 @@ inline void update_status_effects_ui(void) {
  * Clears inactive monster palettes / graphics.
  */
 void clear_inactive_monsters(void) {
-  // TODO Hopefully this is not too slow
   MonsterInstance *monster = encounter.monsters;
   for (uint8_t pos = 0; pos < 3; pos++, monster++)
     if (!monster->active)
@@ -1219,6 +1222,7 @@ void update_battle(void) NONBANKED {
     before_round();
     roll_initiative();
     hide_cursor();
+    text_writer.clear();
     show_battle_text();
     battle_state = BATTLE_NEXT_TURN;
     break;
@@ -1277,7 +1281,7 @@ void update_battle(void) NONBANKED {
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
     text_writer.update();
-    // TODO Handle player death
+    // TODO Handle Game Over State
     break;
   case BATTLE_END_ROUND:
     battle_state = BATTLE_STATE_MENU;

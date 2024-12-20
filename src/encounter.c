@@ -250,12 +250,29 @@ void check_status_effects(void) {
 }
 
 inline void player_turn(void) {
-    // // Handled in the turn function
-    // case DEBUFF_SCARED: break;
-    // case DEBUFF_PARALZYED: break;
-    // case DEBUFF_POISONED: break;
-    // case DEBUFF_CONFUSED: break;
-    // case BUFF_REGEN: break;
+  StatusEffectInstance *effect = encounter.player_status_effects;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
+    if (!effect->active)
+      continue;
+    switch (effect->effect) {
+    case DEBUFF_POISONED:
+      const uint16_t poison = poison_hp(effect->tier, player.max_hp);
+      if (player.target_hp <= poison) {
+        player.target_hp = 0;
+        return;
+      }
+      else
+        player.target_hp -= poison;
+      break;
+    case BUFF_REGEN:
+      uint16_t regen = regen_hp(effect->tier, player.max_hp);
+      if (regen + player.target_hp > player.max_hp)
+        player.target_hp = player.max_hp;
+      else
+        player.target_hp += regen;
+      break;
+    }
+  }
 
   switch (encounter.player_action) {
   case PLAYER_ACTION_FIGHT:
