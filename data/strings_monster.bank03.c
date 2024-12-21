@@ -5,8 +5,7 @@
 
 #pragma bank 3
 
-const char str_monster_dummy_pre[] = "Dummy %c just \nstands there\x60";
-const char str_monster_dummy_post[] = "Sad and wishing \nfor it all to \nend.";
+const char str_monster_dummy_pre[] = "Dummy %c stands \nstill.";
 const char str_monster_dummy_post_heal[] = "\"I will never die\x60\n\"";
 const char str_monster_kobold_axe[] = "Kobold %c raises a \ntiny axe\x60";
 const char str_monster_kobold_fire[] = "Kobold %c spits a \nglob of fire\x60";

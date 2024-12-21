@@ -34,14 +34,27 @@ addNamespace('misc', 0, {
   'fire': 'fire',
   'light': 'light',
   'dark': 'dark',
-  'potion': 'Potion',
-  'remedy': 'Remedy',
-  'ether': 'Ether',
-  'atk_up_potion': "ATK ^",
-  'def_up_potion': 'DEF ^',
-  'elixer': 'Elixer',
-  'regen_pot': 'Regen',
-  'haste_pot': 'Haste'
+  'potion':        'Potion',
+  'remedy':        'Remedy',
+  'ether':         'Ether ',
+  'atk_up_potion': "ATK ^ ",
+  'def_up_potion': 'DEF ^ ',
+  'elixer':        'Elixer',
+  'regen_pot':     'Regen ',
+  'haste_pot':     'Haste '
+})
+
+addNamespace('items', 4, {
+  'use_potion': '%damage HP healed!',
+  'use_ether_sp': '%damage SP restored!',
+  'use_ether_mp': '%damage MP restored!',
+  'use_remedy': 'You remedy what ails you!',
+  'use_atkup': 'Your attack increases!',
+  'use_defup': 'Your defense increases!',
+  'use_elixer': 'You fully heal!',
+  'use_regen': 'You begin regenerating!',
+  'use_haste': 'The world slows down!',
+  'use_failed': "The item didn't work!",
 })
 
 addNamespace('ability', 0, {
@@ -106,8 +119,7 @@ addNamespace('battle', 3, {
  * Monster specific battle strings
  */
 addNamespace('monster', 3, {
-  'dummy_pre': 'Dummy %c just stands there...',
-  'dummy_post': 'Sad and wishing for it all to end.',
+  'dummy_pre': 'Dummy %c stands still.',
   'dummy_post_heal': '"I will never die..."',
   'kobold_axe': 'Kobold %c raises a tiny axe...',
   'kobold_fire': 'Kobold %c spits a glob of fire...',

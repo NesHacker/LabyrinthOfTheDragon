@@ -61,17 +61,17 @@ extern const char str_misc_potion[];
 extern const char str_misc_remedy[];
 
 /**
- * "Ether"
+ * "Ether "
  */
 extern const char str_misc_ether[];
 
 /**
- * "ATK ^"
+ * "ATK ^ "
  */
 extern const char str_misc_atk_up_potion[];
 
 /**
- * "DEF ^"
+ * "DEF ^ "
  */
 extern const char str_misc_def_up_potion[];
 
@@ -81,14 +81,64 @@ extern const char str_misc_def_up_potion[];
 extern const char str_misc_elixer[];
 
 /**
- * "Regen"
+ * "Regen "
  */
 extern const char str_misc_regen_pot[];
 
 /**
- * "Haste"
+ * "Haste "
  */
 extern const char str_misc_haste_pot[];
+
+/**
+ * "%damage HP healed!"
+ */
+extern const char str_items_use_potion[];
+
+/**
+ * "%damage SP restored!"
+ */
+extern const char str_items_use_ether_sp[];
+
+/**
+ * "%damage MP restored!"
+ */
+extern const char str_items_use_ether_mp[];
+
+/**
+ * "You remedy what ails you!"
+ */
+extern const char str_items_use_remedy[];
+
+/**
+ * "Your attack increases!"
+ */
+extern const char str_items_use_atkup[];
+
+/**
+ * "Your defense increases!"
+ */
+extern const char str_items_use_defup[];
+
+/**
+ * "You fully heal!"
+ */
+extern const char str_items_use_elixer[];
+
+/**
+ * "You begin regenerating!"
+ */
+extern const char str_items_use_regen[];
+
+/**
+ * "The world slows down!"
+ */
+extern const char str_items_use_haste[];
+
+/**
+ * "The item didn't work!"
+ */
+extern const char str_items_use_failed[];
 
 /**
  * "Poison Spray "
@@ -336,14 +386,9 @@ extern const char str_battle_victory_no_xp[];
 extern const char str_battle_level_up[];
 
 /**
- * "Dummy %c just stands there..."
+ * "Dummy %c stands still."
  */
 extern const char str_monster_dummy_pre[];
-
-/**
- * "Sad and wishing for it all to end."
- */
-extern const char str_monster_dummy_post[];
 
 /**
  * ""I will never die...""
