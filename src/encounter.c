@@ -464,7 +464,6 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.player_ability = NULL;
   encounter.target = NULL;
   encounter.xp_reward = 0;
-  encounter.item_effects = 0;
   encounter.item_id = ITEM_INVALID;
   reset_status_effects(encounter.player_status_effects);
 
@@ -553,6 +552,101 @@ void ability_placeholder(void) {
   sprintf(battle_post_message, "It doesn't work.");
 }
 
+/**
+ * @return The opposing status effect if defined.
+ * @param effect Effect to for which to find opposition.
+ */
+inline StatusEffect get_opposing_effect(StatusEffect effect) {
+  switch (effect) {
+  case DEBUFF_POISONED:
+    return BUFF_REGEN;
+  case DEBUFF_AGL_DOWN:
+    return BUFF_HASTE;
+  case DEBUFF_ATK_DOWN:
+    return BUFF_ATK_UP;
+  case DEBUFF_DEF_DOWN:
+    return BUFF_DEF_UP;
+  case BUFF_HASTE:
+    return DEBUFF_AGL_DOWN;
+  case BUFF_REGEN:
+    return DEBUFF_POISONED;
+  case BUFF_AGL_UP:
+    return DEBUFF_AGL_DOWN;
+  case BUFF_ATK_UP:
+    return DEBUFF_ATK_DOWN;
+  case BUFF_DEF_UP:
+    return DEBUFF_DEF_DOWN;
+  default:
+    return NO_STATUS_EFFECT;
+  }
+}
+
+StatusEffectInstance *get_effect_slot(
+  StatusEffectInstance *list,
+  StatusEffect effect,
+  PowerTier tier,
+  uint8_t duration
+) {
+  StatusEffectInstance *e;
+  StatusEffect opposing = get_opposing_effect(effect);
+
+  // if there is a non perpetual opposing effect: replace it
+  if (opposing != NO_STATUS_EFFECT) {
+    e = list;
+    for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
+      if (!e->active)
+        continue;
+      if (e->duration == EFFECT_DURATION_PERPETUAL)
+        continue;
+      if (e->effect == opposing)
+        return e;
+    }
+  }
+
+  uint8_t *debug = (void *)0xA000;
+  *debug++ = effect;
+  *debug++ = opposing;
+
+  e = list;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
+    if (e->active && e->effect != effect)
+      continue;
+
+    // if there is a more powerful version: do nothing
+    if (e->tier > tier)
+      return NULL;
+
+    // if the version is perpetual, then do nothing
+    if (e->duration == EFFECT_DURATION_PERPETUAL)
+      return NULL;
+
+    // if there is a less or equally powerful version: replace it
+    return e;
+  }
+
+  e = list;
+  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
+    // if there is an empty slot: use it
+    if (!e->active)
+      return e;
+  }
+
+  // Your application has been denied (no place to put the effect).
+  return NULL;
+}
+
+bool has_effect_slot(
+  StatusEffectInstance *list,
+  StatusEffect effect,
+  PowerTier tier,
+  uint8_t duration
+) {
+  StatusEffectInstance *slot = get_effect_slot(list, effect, tier, duration);
+  if (slot == NULL)
+    return false;
+  return true;
+}
+
 StatusEffectResult apply_status_effect(
   StatusEffectInstance *list,
   StatusEffect effect,
@@ -561,27 +655,21 @@ StatusEffectResult apply_status_effect(
   uint8_t duration,
   uint8_t immune
 ) {
-  StatusEffectInstance *e = list;
-  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
-    if (e->active && e->effect == effect)
-      return STATUS_RESULT_DUPLICATE;
-  }
+  if (immune & flag)
+    return STATUS_RESULT_IMMUNE;
 
-  e = list;
-  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {
-    if (e->active)
-      continue;
-    if (is_debuff(effect) && is_debuff_immmune(immune, effect))
-      return STATUS_RESULT_IMMUNE;
-    e->effect = effect;
-    e->flag = flag;
-    e->active = true;
-    e->tier = tier;
-    e->duration = duration;
-    return STATUS_RESULT_SUCCESS;
-  }
+  StatusEffectInstance *slot = get_effect_slot(list, effect, tier, duration);
 
-  return STATUS_RESULT_MAX;
+  if (!slot)
+    return STATUS_RESULT_FAILED;
+
+  slot->effect = effect;
+  slot->flag = flag;
+  slot->active = true;
+  slot->tier = tier;
+  slot->duration = duration;
+
+  return STATUS_RESULT_SUCCESS;
 }
 
 void player_flee(void) {

@@ -119,11 +119,6 @@ typedef struct Encounter {
    */
   StatusEffectInstance player_status_effects[MAX_ACTIVE_EFFECTS];
   /**
-   * Bit field that stores which buff items have been used this encounter. Makes
-   * it easy to determine if an item can be used.
-   */
-  uint8_t item_effects;
-  /**
    * Set to `true` if the player successfully fled from combat.
    */
   bool player_fled;
@@ -313,6 +308,16 @@ void player_flee(void);
  * @return Whether or not the monster could flee.
  */
 void monster_flee(MonsterInstance *monster);
+
+/**
+ * @return Whether or not a slot is available for the given status effect.
+ */
+bool has_effect_slot(
+  StatusEffectInstance *list,
+  StatusEffect effect,
+  PowerTier tier,
+  uint8_t duration
+);
 
 /**
  * Attempts to apply the 'blind' status effect.

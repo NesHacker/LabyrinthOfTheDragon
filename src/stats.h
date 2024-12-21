@@ -150,9 +150,8 @@ typedef enum StatusEffectImmunity {
  */
 typedef enum StatusEffectResult {
   STATUS_RESULT_SUCCESS,
-  STATUS_RESULT_DUPLICATE,
   STATUS_RESULT_IMMUNE,
-  STATUS_RESULT_MAX,
+  STATUS_RESULT_FAILED,
 } StatusEffectResult;
 
 /**

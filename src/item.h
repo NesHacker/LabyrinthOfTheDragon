@@ -81,13 +81,13 @@ inline uint8_t remove_item(ItemId id) {
 /**
  * Whether or not an item can be used.
  */
-bool can_use_item(ItemId id) BANKED;
+bool can_use_item(ItemId id);
 
 /**
  * Uses an item. Only performs the action for the item, inventory quantitiy
  * state must be managed with `remove_item`.
  * @param item Item to use.
  */
-void use_item(ItemId id) BANKED;
+void use_item(ItemId id);
 
 #endif

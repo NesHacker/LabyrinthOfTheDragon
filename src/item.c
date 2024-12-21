@@ -1,11 +1,10 @@
-#pragma bank 4
+#pragma bank 3
 
 #include <stdio.h>
 
 #include "encounter.h"
 #include "item.h"
 #include "strings.h"
-
 
 /**
  * Sets the buff for an item. Uses the first available status effect slot or
@@ -16,63 +15,16 @@
  * @param text Text to display upon successful application of the item buff.
  */
 void set_item_buff(StatusEffect s, uint8_t flag, const char *text) {
-  if (encounter.item_effects & flag)
-    return;
-
-  StatusEffectInstance *slot = NULL;
-  StatusEffectInstance *effect;
-
-  // Try to find the first effect with the same buff to overwrite
-  effect = encounter.player_status_effects;
-  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS - 1; k++, effect++) {
-    if (!effect->active)
-      continue;
-    if (effect->effect == s) {
-      slot = effect;
-      break;
-    }
-  }
-
-  // If not try to find the first inactive slot
-  if (!slot) {
-    effect = encounter.player_status_effects;
-    for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS - 1; k++, effect++) {
-      if (!effect->active) {
-        slot = effect;
-        break;
-      }
-    }
-  }
-
-  // If that fails, find the first active non-perpetual effect to overwrite
-  if (!slot) {
-    effect = encounter.player_status_effects;
-    for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS - 1; k++, effect++) {
-      if (!effect->active)
-        continue;
-      if (effect->duration == EFFECT_DURATION_PERPETUAL)
-        continue;
-      slot = effect;
-      break;
-    }
-  }
-
-  // You're shit out of luck and just wasted an item
-  if (!slot) {
-    sprintf(battle_pre_message, str_items_use_failed);
-    skip_post_message = true;
-    return;
-  }
-
+  apply_status_effect(
+    encounter.player_status_effects,
+    s,
+    flag,
+    A_TIER,
+    EFFECT_DURATION_PERPETUAL,
+    0
+  );
   sprintf(battle_pre_message, text);
   skip_post_message = true;
-
-  slot->effect = s;
-  slot->flag = flag;
-  slot->active = true;
-  slot->tier = A_TIER;
-  slot->duration = EFFECT_DURATION_PERPETUAL;
-  encounter.item_effects |= flag;
 }
 
 /**
@@ -153,7 +105,16 @@ inline void use_haste_potion(void) {
   set_item_buff(BUFF_HASTE, FLAG_BUFF_HASTE, str_items_use_haste);
 }
 
-bool can_use_item(ItemId id) BANKED {
+inline bool can_add_item_buff(StatusEffect effect) {
+  return has_effect_slot(
+    encounter.player_status_effects,
+    effect,
+    A_TIER,
+    EFFECT_DURATION_PERPETUAL
+  );
+}
+
+bool can_use_item(ItemId id) {
   Item *i = inventory + id;
   if (i->quantity == 0)
     return false;
@@ -173,19 +134,19 @@ bool can_use_item(ItemId id) BANKED {
   case ITEM_ELIXER:
     return player.hp < player.max_hp || player.sp < player.max_sp;
   case ITEM_ATK_UP:
-    return !(encounter.item_effects & FLAG_BUFF_ATK_UP);
+    return can_add_item_buff(BUFF_ATK_UP);
   case ITEM_DEF_UP:
-    return !(encounter.item_effects & FLAG_BUFF_DEF_UP);
+    return can_add_item_buff(BUFF_DEF_UP);
   case ITEM_REGEN:
-    return !(encounter.item_effects & FLAG_BUFF_REGEN);
+    return can_add_item_buff(BUFF_REGEN);
   case ITEM_HASTE:
-    return !(encounter.item_effects & FLAG_BUFF_HASTE);
+    return can_add_item_buff(BUFF_HASTE);
   default:
     return false;
   }
 }
 
-void use_item(ItemId id) BANKED {
+void use_item(ItemId id) {
   Item *i = inventory + id;
   switch (i->id) {
     case ITEM_POTION:
