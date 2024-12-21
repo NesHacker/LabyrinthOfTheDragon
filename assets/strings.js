@@ -34,6 +34,14 @@ addNamespace('misc', 0, {
   'fire': 'fire',
   'light': 'light',
   'dark': 'dark',
+  'potion': 'Potion',
+  'remedy': 'Remedy',
+  'ether': 'Ether',
+  'atk_up_potion': "ATK ^",
+  'def_up_potion': 'DEF ^',
+  'elixer': 'Elixer',
+  'regen_pot': 'Regen',
+  'haste_pot': 'Haste'
 })
 
 addNamespace('ability', 0, {

@@ -51,6 +51,46 @@ extern const char str_misc_light[];
 extern const char str_misc_dark[];
 
 /**
+ * "Potion"
+ */
+extern const char str_misc_potion[];
+
+/**
+ * "Remedy"
+ */
+extern const char str_misc_remedy[];
+
+/**
+ * "Ether"
+ */
+extern const char str_misc_ether[];
+
+/**
+ * "ATK ^"
+ */
+extern const char str_misc_atk_up_potion[];
+
+/**
+ * "DEF ^"
+ */
+extern const char str_misc_def_up_potion[];
+
+/**
+ * "Elixer"
+ */
+extern const char str_misc_elixer[];
+
+/**
+ * "Regen"
+ */
+extern const char str_misc_regen_pot[];
+
+/**
+ * "Haste"
+ */
+extern const char str_misc_haste_pot[];
+
+/**
  * "Poison Spray "
  */
 extern const char str_ability_druid_poison_spray[];
