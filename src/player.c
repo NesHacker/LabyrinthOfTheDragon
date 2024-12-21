@@ -258,14 +258,17 @@ void test_class_ability0(void) {
 
 void test_class_ability1(void) {
   sprintf(battle_pre_message, "(De)buffing\x60");
+  skip_post_message = true;
 
-  sprintf(battle_post_message, "Take that, scallywag!");
+  // player.hp = 1;
+  // player.sp = 1;
 
+  apply_poison(encounter.player_status_effects, C_TIER, 10, 0);
+  apply_def_down(encounter.player_status_effects, C_TIER, 10, 0);
+  apply_atk_down(encounter.player_status_effects, C_TIER, 10, 0);
+  apply_agl_down(encounter.player_status_effects, C_TIER, 10, 0);
 
-  // apply_poison(encounter.player_status_effects, S_TIER, 6, player.debuff_immune);
-
-  apply_regen(encounter.player_status_effects, S_TIER, 10, 0);
-  player.target_hp = 1;
+  // player.hp = 1;
 
   // MonsterInstance *monster = encounter.monsters;
   // for (uint8_t k = 0; k < 3; k++, monster++) {

@@ -2,6 +2,7 @@
 
 #include "battle.h"
 #include "core.h"
+#include "item.h"
 #include "map.h"
 #include "stats.h"
 
@@ -82,8 +83,15 @@ void test_setup_encounter(MonsterLayout layout, TestDummyType type) {
   }
 }
 
+void fill_inventory(uint8_t amt) {
+  Item *item = inventory;
+  for (uint8_t k = 0; k < INVENTORY_LEN; k++, item++)
+    item->quantity = amt;
+}
+
 void test_combat_general(MonsterLayout layout, TestDummyType type) {
   init_test_player(20);
+  fill_inventory(3);
   test_setup_encounter(layout, type);
   test_battle_init();
 }
