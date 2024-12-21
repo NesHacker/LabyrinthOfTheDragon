@@ -1,9 +1,9 @@
 /*
- * strings_items.bank04.c
+ * strings_items.bank03.c
  * Encoded string values for the "items" namespace.
  */
 
-#pragma bank 4
+#pragma bank 3
 
 const char str_items_use_potion[] = "%u HP healed!";
 const char str_items_use_ether_sp[] = "%u SP restored!";

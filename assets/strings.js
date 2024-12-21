@@ -44,7 +44,7 @@ addNamespace('misc', 0, {
   'haste_pot':     'Haste '
 })
 
-addNamespace('items', 4, {
+addNamespace('items', 3, {
   'use_potion': '%damage HP healed!',
   'use_ether_sp': '%damage SP restored!',
   'use_ether_mp': '%damage MP restored!',
