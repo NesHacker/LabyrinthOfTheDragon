@@ -161,7 +161,6 @@ typedef enum StatusEffectResult {
  */
 typedef struct StatusEffectInstance {
   bool active;
-  bool update;
   StatusEffect effect;
   uint8_t flag;
   uint8_t duration;

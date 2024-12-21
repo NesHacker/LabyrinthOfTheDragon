@@ -7,7 +7,7 @@ void before_round(void) {
   encounter.round_complete = false;
   encounter.player_died = false;
   encounter.player_fled = false;
-  player.target_hp = player.hp;
+  player.hp = player.hp;
 }
 
 void roll_initiative(void) {
@@ -76,15 +76,6 @@ void next_turn(void) {
 }
 
 /**
- * Resets the update flags for a set of status effects.
- * @param effect Pointer the list of effects.
- */
-inline void reset_effects_flags(StatusEffectInstance *effect) {
-  for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++)
-    effect->update = false;
-}
-
-/**
  * Updates a status effect duration and determines if it is still active.
  * @param effect Status effect to update.
  */
@@ -96,10 +87,8 @@ inline void update_effect_duration(StatusEffectInstance *effect) {
   if (effect->duration == EFFECT_DURATION_PERPETUAL)
     return;
 
-  if (effect->duration == 0) {
+  if (effect->duration == 0)
     effect->active = false;
-    effect->update = true;
-  }
 
   effect->duration--;
 }
@@ -109,8 +98,7 @@ void reset_player_stats(void) NONBANKED {
   player.def = player.def_base;
   player.matk = player.matk_base;
   player.mdef = player.mdef_base;
-  player.target_hp = player.hp;
-  reset_effects_flags(encounter.player_status_effects);
+  player.hp = player.hp;
   encounter.player_fled = false;
   encounter.player_died = false;
 }
@@ -124,7 +112,6 @@ void monster_reset_stats(MonsterInstance *m) NONBANKED {
   m->target_hp = m->hp;
   m->hp_delta = 0;
   m->fled = false;
-  reset_effects_flags(m->status_effects);
 }
 
 void update_player_status_effects(void) {
@@ -257,19 +244,19 @@ inline void player_turn(void) {
     switch (effect->effect) {
     case DEBUFF_POISONED:
       const uint16_t poison = poison_hp(effect->tier, player.max_hp);
-      if (player.target_hp <= poison) {
-        player.target_hp = 0;
+      if (player.hp <= poison) {
+        player.hp = 0;
         return;
       }
       else
-        player.target_hp -= poison;
+        player.hp -= poison;
       break;
     case BUFF_REGEN:
       uint16_t regen = regen_hp(effect->tier, player.max_hp);
-      if (regen + player.target_hp > player.max_hp)
-        player.target_hp = player.max_hp;
+      if (regen + player.hp > player.max_hp)
+        player.hp = player.max_hp;
       else
-        player.target_hp += regen;
+        player.hp += regen;
       break;
     }
   }
@@ -403,9 +390,9 @@ void take_action(void) {
 }
 
 void after_action(void) {
-  player.hp = player.target_hp;
+  player.hp = player.hp;
 
-  if (player.target_hp == 0 || player.hp == 0) {
+  if (player.hp == 0 || player.hp == 0) {
     encounter.player_died = true;
   }
 
@@ -452,7 +439,6 @@ void set_player_flee(void) {
 inline void reset_status_effects(StatusEffectInstance *effect) {
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
     effect->active = false;
-    effect->update = false;
     effect->duration = 0;
     effect->tier = C_TIER;
     effect->effect = NO_STATUS_EFFECT;
@@ -472,6 +458,7 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.player_ability = NULL;
   encounter.target = NULL;
   encounter.xp_reward = 0;
+  encounter.item_effects = 0;
   reset_status_effects(encounter.player_status_effects);
 
   MonsterInstance *monster = encounter.monsters;
@@ -582,7 +569,6 @@ StatusEffectResult apply_status_effect(
     e->effect = effect;
     e->flag = flag;
     e->active = true;
-    e->update = true;
     e->tier = tier;
     e->duration = duration;
     return STATUS_RESULT_SUCCESS;

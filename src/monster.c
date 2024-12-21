@@ -65,10 +65,10 @@ void damage_player(uint16_t base_damage, DamageAspect type) {
     sprintf(battle_post_message, str_battle_monster_hit_aspect, damage, aspect);
   }
 
-  if (player.target_hp < damage)
-    player.target_hp = 0;
+  if (player.hp < damage)
+    player.hp = 0;
   else
-    player.target_hp -= damage;
+    player.hp -= damage;
 }
 
 
