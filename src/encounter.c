@@ -271,6 +271,7 @@ inline void player_turn(void) {
     encounter.player_ability->execute();
     break;
   case PLAYER_ACTION_ITEM:
+    use_item(encounter.item_id);
     break;
   case PLAYER_ACTION_FLEE:
     player_flee();
@@ -432,6 +433,11 @@ void set_player_flee(void) {
   encounter.player_action = PLAYER_ACTION_FLEE;
 }
 
+void set_player_item(ItemId item_id) {
+  encounter.item_id = item_id;
+  encounter.player_action = PLAYER_ACTION_ITEM;
+}
+
 /**
  * Resets a list of status effects.
  * @param effect List of status effects to reset.
@@ -459,6 +465,7 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.target = NULL;
   encounter.xp_reward = 0;
   encounter.item_effects = 0;
+  encounter.item_id = ITEM_INVALID;
   reset_status_effects(encounter.player_status_effects);
 
   MonsterInstance *monster = encounter.monsters;

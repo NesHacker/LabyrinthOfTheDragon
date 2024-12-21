@@ -7,12 +7,10 @@
 
 #include "core.h"
 #include "encounter.h"
+#include "item.h"
 #include "monster.h"
 #include "player.h"
 #include "tables.h"
-
-// TODO This belongs in the items module (once it exists)
-#define MAX_ITEMS 8
 
 /**
  * First sprite id for the cursor icon.
@@ -330,7 +328,9 @@ typedef struct BattleMenu {
   uint8_t max_scroll;
   const Ability *active_ability;
   char ability_text[MAX_ABILITIES][18];
-  char item_text[MAX_ITEMS][18];
+  char item_text[INVENTORY_LEN][18];
+  ItemId item_at[INVENTORY_LEN];
+  uint8_t inventory_entries;
 } BattleMenu;
 
 /**

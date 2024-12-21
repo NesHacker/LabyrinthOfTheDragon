@@ -6,6 +6,7 @@
 
 #include "battle.h"
 #include "data.h"
+#include "item.h"
 #include "monster.h"
 #include "stats.h"
 #include "player.h"
@@ -102,6 +103,10 @@ typedef struct Encounter {
    */
   const Ability *player_ability;
   /**
+   * If the player used an item, this is the id of the item they used.
+   */
+  ItemId item_id;
+  /**
    * If the player is targeting a monster, this is the index for that monster.
    */
   MonsterInstance *target;
@@ -113,6 +118,11 @@ typedef struct Encounter {
    * Active player status effects.
    */
   StatusEffectInstance player_status_effects[MAX_ACTIVE_EFFECTS];
+  /**
+   * Bit field that stores which buff items have been used this encounter. Makes
+   * it easy to determine if an item can be used.
+   */
+  uint8_t item_effects;
   /**
    * Set to `true` if the player successfully fled from combat.
    */
@@ -156,8 +166,11 @@ void set_player_ability(const Ability *a, MonsterInstance *target);
  */
 void set_player_flee(void);
 
-// TODO items bbe
-// void set_player_item(Item *item);
+
+/**
+ * Sets the player's next action to using an item.
+ */
+void set_player_item(ItemId item_id);
 
 /**
  * Called before each round of combat to initialize the encounter state.

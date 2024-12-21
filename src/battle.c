@@ -16,22 +16,11 @@
 #include "strings.h"
 #include "text_writer.h"
 
-// TODO Move these into a BattleState struct
 BattleState battle_state;
 BattleMenu battle_menu;
 uint8_t status_effect_x[3] = { 7, 7, 7 };
 
-// /**
-//  * Structure containing memory buffers used during battle.
-//  */
-// typedef struct BattleBuffers {
-//   char action[64];
-//   char result[64];
-//   char rewards[64];
-//   bool no_result;
-// } BattleBuffers;
-
-// TODO convert these into a single battle_buffer obeject
+// TODO convert these into a single battle_buffer object?
 char battle_pre_message[64];
 char battle_post_message[64];
 char rewards_buf[64];
@@ -90,8 +79,9 @@ void confirm_ability(const Ability *ability) {
  * Confirms that the player has chosen to use an item and begins the next round
  * of combat.
  */
-void confirm_item(void) {
-  // battle_state = BATTLE_ROLL_INITIATIVE;
+void confirm_item(ItemId item_id) {
+  set_player_item(item_id);
+  battle_state = BATTLE_ROLL_INITIATIVE;
 }
 
 /**
@@ -603,10 +593,70 @@ inline void draw_submenu_heading(void) {
 }
 
 /**
- * Pre copies the entry text for abilities to a buffer so they can be rendered
+ * Pre renders entry text for the player's inventory into a buffer. This allows
+ * the items to be quickly rendered when the submenu is opened.
+ */
+void render_item_text(void) {
+  const char *format = " %s        x%2u";
+
+  Item *item = inventory;
+  uint8_t p = 0;
+  for (uint8_t k = 0; k < INVENTORY_LEN; k++, item++) {
+    if (!item->quantity)
+      continue;
+    battle_menu.item_at[p] = item->id;
+    sprintf(battle_menu.item_text[p], format, item->name, item->quantity);
+    p++;
+  }
+
+  battle_menu.inventory_entries = p;
+
+  while (p < INVENTORY_LEN) {
+    for (uint8_t k = 0; k < 18; k++) {
+      battle_menu.item_text[p][k] = (char)FONT_SPACE;
+      battle_menu.item_at[p] = ITEM_INVALID;
+    }
+    p++;
+  }
+}
+
+/**
+ * Re-renders the item at the current submenu cursor. Primarily used to redraw
+ * item quantities when they are used.
+ */
+void update_item_text_at_cursor(void) {
+  const char *format = " %s        x%2u";
+  const uint8_t cursor = battle_menu.cursor;
+  Item *item = inventory + battle_menu.item_at[cursor];
+  sprintf(battle_menu.item_text[cursor], format, item->name, item->quantity);
+}
+
+/**
+ * Removes the text for the item at the cursor if the last one was used.
+ */
+void remove_item_text_at_cursor(void) {
+  const uint8_t cursor = battle_menu.cursor;
+  const uint8_t entries = battle_menu.inventory_entries - 1;
+
+  for (uint8_t c = 0; c < 18; c++) {
+    battle_menu.item_text[cursor][c] = (char)FONT_SPACE;
+    battle_menu.item_at[cursor] = ITEM_INVALID;
+  }
+
+  for (uint8_t k = cursor; k < entries; k++) {
+    battle_menu.item_at[k] = battle_menu.item_at[k + 1];
+    for (uint8_t c = 0; c < 18; c++)
+      battle_menu.item_text[k][c] = battle_menu.item_text[k + 1][c];
+  }
+
+  battle_menu.inventory_entries = entries;
+}
+
+/**
+ * Pre renders the entry text for abilities to a buffer so they can be rendered
  * quickly.
  */
-void copy_ability_text(void) {
+void render_ability_text(void) {
   uint8_t a = 0;
 
   const char *format = is_magic_class() ?
@@ -669,20 +719,27 @@ void redraw_submenu_text(void) {
     return;
   }
 
+  const uint8_t max = battle_menu.entries < 4 ? battle_menu.entries : 4;
+  uint8_t *vram = VRAM_SUBMENU_TEXT;
+
   if (battle_menu.active_menu == BATTLE_MENU_ABILITY) {
-    const uint8_t max = battle_menu.entries < 4 ?
-      battle_menu.entries : 4;
-    uint8_t *vram = VRAM_SUBMENU_TEXT;
     for (uint8_t k = 0; k < max; k++, vram += 0x20) {
       const uint8_t line = k + battle_menu.scroll;
       core.draw_text(vram, battle_menu.ability_text[line], 18);
     }
-    if (max >= 4)
-      return;
-    for (uint8_t j = 0; j < 4 - max; j++, vram += 32 - 18) {
-      for (uint8_t x = 0; x < 18; x++, vram++)
-        set_vram_byte(vram, FONT_SPACE);
+  } else {
+    for (uint8_t k = 0; k < max; k++, vram += 0x20) {
+      const uint8_t line = k + battle_menu.scroll;
+      core.draw_text(vram, battle_menu.item_text[line], 18);
     }
+  }
+
+  if (max >= 4)
+    return;
+
+  for (uint8_t j = 0; j < 4 - max; j++, vram += 32 - 18) {
+    for (uint8_t x = 0; x < 18; x++, vram++)
+      set_vram_byte(vram, FONT_SPACE);
   }
 }
 
@@ -701,7 +758,7 @@ void load_submenu(BattleMenuType menu) {
 
   uint8_t entries = (menu == BATTLE_MENU_ABILITY) ?
     player_num_abilities :
-    0;
+    battle_menu.inventory_entries;
 
   battle_menu.active_menu = menu;
   battle_menu.entries = entries;
@@ -901,8 +958,21 @@ inline void update_battle_menu(void) {
     // Select an item from the inventory
     if (was_pressed(J_B))
       open_battle_menu(BATTLE_MENU_MAIN);
-    else if (was_pressed(J_A) && battle_menu.entries > 0)
-      confirm_item();
+    else if (was_pressed(J_A)) {
+      ItemId item_id = battle_menu.item_at[battle_menu.cursor];
+
+      if (!can_use_item(item_id)) {
+        // TODO SFX "Menu Error"
+        break;
+      }
+
+      if (!remove_item(item_id))
+        remove_item_text_at_cursor();
+      else
+        update_item_text_at_cursor();
+
+      confirm_item(item_id);
+    }
     else if (was_pressed(J_UP))
       submenu_cursor_up();
     else if (was_pressed(J_DOWN))
@@ -1157,7 +1227,8 @@ void initialize_battle(void) {
   set_magic_or_martial();
   update_player_hp();
   update_player_mp();
-  copy_ability_text();
+  render_ability_text();
+  render_item_text();
 
   // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
