@@ -107,7 +107,7 @@ void dummy_take_turn(MonsterInstance *dummy) {
     }
     break;
   default:
-    sprintf(battle_post_message, str_monster_dummy_post);
+    skip_post_message = true;
     break;
   }
 }
