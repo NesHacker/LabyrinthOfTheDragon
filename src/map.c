@@ -453,10 +453,10 @@ void update_map_move(void) {
     if (handle_exit())
       return;
     break;
-  // case MAP_SPECIAL:
-  //   if (on_special())
-  //     return;
-  //   break;
+  case MAP_SPECIAL:
+    if (on_special())
+      return;
+    break;
   default:
   }
 
@@ -484,8 +484,8 @@ void initialize_world_map(void) {
   textbox.init();
 
   init_hero();
-  refresh_map_screen();
   update_local_tiles();
+  refresh_map_screen();
 
   lcd_on();
 }
@@ -496,14 +496,21 @@ void init_world_map(void) NONBANKED {
   map.state = MAP_STATE_WAITING;
 }
 
-void return_from_battle(void) BANKED {
-  // SWITCH_ROM(MAP_SYSTEM_BANK); initialize_world_map();
-  // TODO Handle fade out/in
-  // map.state = MAP_STATE_WAITING;
+void start_battle(void) {
+  map_fade_out(MAP_STATE_START_BATTLE);
 }
 
-void update_world_map(void) {
+void return_from_battle(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
+  game_state = GAME_STATE_WORLD_MAP;
+  initialize_world_map();
+  map_fade_in(MAP_STATE_WAITING);
+}
+
+void update_world_map(void) NONBANKED {
   switch (map.state) {
+  case MAP_STATE_INACTIVE:
+    return;
   case MAP_STATE_WAITING:
     check_map_move();
     break;
@@ -527,6 +534,11 @@ void update_world_map(void) {
   case MAP_STATE_EXIT_LOADED:
     start_move(map.active_exit->heading);
     break;
+  case MAP_STATE_START_BATTLE:
+    map.state = MAP_STATE_INACTIVE;
+    lcd_off();
+    init_battle();
+    return;
   }
 
   update_hero();
@@ -539,9 +551,6 @@ void draw_world_map(void) {
 // BEGIN OLD CODE
 //------------------------------------------------------------------------------
 
-// void start_battle(void) {
-//   map_fade_out(MAP_STATE_START_BATTLE);
-// }
 
 
 

@@ -2,6 +2,7 @@
 #define _FLOOR_H
 
 #include "core.h"
+#include "encounter.h"
 #include "map.h"
 
 // IMPORTANT if you add a new floor, add an extern here

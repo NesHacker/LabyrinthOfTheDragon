@@ -136,6 +136,10 @@ typedef enum MapState {
    * Map is being transitioned to the battle system.
    */
   MAP_STATE_START_BATTLE,
+  /**
+   * Map is returning from battle.
+   */
+  MAP_STATE_FROM_BATTLE,
 } MapState;
 
 /**
@@ -557,7 +561,7 @@ void start_battle(void);
 /**
  * Called when returning to the map system from the battle system.
  */
-void return_from_battle(void) BANKED;
+void return_from_battle(void) NONBANKED;
 
 /**
  * Opens a textbox while on the world map.
