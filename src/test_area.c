@@ -5,6 +5,8 @@
 #include "map.h"
 #include "floor.h"
 
+/*
+
 // TODO Factor me out into a general flame class
 Timer flame_timer;
 uint8_t flame_state = 0;
@@ -201,3 +203,5 @@ Floor area0 = {
   NULL, // on_exit
   NULL, // on_move
 };
+
+*/

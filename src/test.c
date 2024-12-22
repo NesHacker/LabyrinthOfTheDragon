@@ -2,6 +2,7 @@
 
 #include "battle.h"
 #include "core.h"
+#include "floor.h"
 #include "item.h"
 #include "map.h"
 #include "stats.h"
@@ -89,17 +90,6 @@ void fill_inventory(uint8_t amt) {
     item->quantity = amt;
 }
 
-const Map big_map = { 1, 9, floor_test_data, 32, 32 };
-
-void test_big_map(void) {
-  set_map_position(1, 3);
-  set_active_map(&big_map);
-
-  init_test_player(20);
-  init_world_map();
-  game_state = GAME_STATE_WORLD_MAP;
-}
-
 void test_combat_general(MonsterLayout layout, TestDummyType type) {
   init_test_player(20);
   fill_inventory(3);
@@ -113,13 +103,15 @@ void test_flee(void) {
   init_test_player(20);
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
-
-  // update_world_map();
-  // draw_world_map();
-
-  // test_combat_general(MONSTER_LAYOUT_1);
-  // start_battle();
-
-  // toggle_sprites();
-  // init_battle();
 }
+
+void test_big_map(void) {
+  init_test_player(20);
+  fill_inventory(3);
+
+  set_active_floor(&floor_test);
+  init_world_map();
+
+  game_state = GAME_STATE_WORLD_MAP;
+}
+

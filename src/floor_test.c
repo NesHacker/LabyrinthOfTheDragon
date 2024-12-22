@@ -7,8 +7,9 @@
 //------------------------------------------------------------------------------
 
 #define FLOOR_TEST_ID 99
-#define FLOOR_TEST_START_COL 0
-#define FLOOR_TEST_START_ROW 0
+#define FLOOR_TEST_DEFAULT_X 0
+#define FLOOR_TEST_DEFAULT_Y 0
+#define FLOOR_TEST_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
 // Maps
@@ -16,31 +17,53 @@
 
 #define FLOOR_TEST_NUM_MAPS 1
 
+// const Map area0_maps[] = {
+//   // id, bank, data
+//   { MAP_FLOOR1, 8, map_example_0 },
+//   { MAP_FLOOR2, 8, map_example_1 }
+// };
+
 const Map floor_test_maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_9, floor_test_data, 32, 32 },
+  { MAP_A, BANK_9, floor_test_data, 32, 32 }
 };
 
 //------------------------------------------------------------------------------
 // Palette Colors
 //------------------------------------------------------------------------------
+
 const uint16_t floor_test_palettes[] = {
-  // Palette 0 - Core background tiles
+  // Palette 1 - Core background tiles
   RGB8(190, 200, 190),
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
   RGB8(24, 0, 0),
-  // Palette 1 - Treasure chests
+  // Palette 2 - Treasure chests
   RGB8(192, 138, 40),
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
   RGB8(24, 0, 0),
-  // Palette 2
+  // Palette 3
   RGB_WHITE,
   RGB8(120, 120, 120),
   RGB8(60, 60, 60),
   RGB_BLACK,
-  // Palette 3
+  // Palette 4
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+  // Palette 5
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+  // Palette 6
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+  // Palette 7
   RGB_WHITE,
   RGB8(120, 120, 120),
   RGB8(60, 60, 60),
@@ -50,20 +73,21 @@ const uint16_t floor_test_palettes[] = {
 //------------------------------------------------------------------------------
 // Chests
 //------------------------------------------------------------------------------
+
 #define FLOOR_TEST_NUM_CHESTS 0
 
-typedef enum floor_testChests {
-  F1_CHEST_MyChesticles,
-} floor_testChests;
+typedef enum FLOOR_TEST_Chests {
+  FLOOR_TEST_CHEST_0,
+} FLOOR_TEST_Chests;
 
 const Chest floor_test_chests[] = {
   /*
   {
-    1,                // id (anything non-zero here works, ptrs amirite?)
-    MAP_A,            // Map where the chest is at
-    0, 0,             // Column & row in that map
-    FLAGS_CHEST_OPEN, // Flag page for the open/closed flag
-    CHEST_1           // Open flag
+    CFLOOR_TEST_CHEST_0,  // id (use the enum above to define these)
+    MAP_A,                // Map where the chest is at
+    0, 0,                 // Column & row in that map
+    FLAGS_CHEST_OPEN,     // Global flag page for the open/closed flag.
+    CHEST_FLAG_1          // Open flag (the bit determines if it's been opened)
   }
   */
   { 0 }, // Remove me when you add your first chest (pointers amirite?)
@@ -72,6 +96,7 @@ const Chest floor_test_chests[] = {
 //------------------------------------------------------------------------------
 // Exits
 //------------------------------------------------------------------------------
+
 #define FLOOR_TEST_NUM_EXITS 0
 
 const Exit floor_test_exits[] = {
@@ -114,7 +139,9 @@ void floor_test_on_enter(uint8_t from_id, uint8_t to_id) {
 
 void floor_test_on_chest(Chest *chest) {
   switch (chest->id) {
-  case F1_CHEST_MyChesticles:
+  default:
+  case FLOOR_TEST_CHEST_0:
+    // ...
     break;
   }
 }
@@ -132,16 +159,16 @@ bool floor_test_on_move(void) {
 }
 
 //------------------------------------------------------------------------------
-// Floor Definition (shouldn't have to touch this)
+// Area Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
 const Floor floor_test = {
   FLOOR_TEST_ID,                              // Id
-  FLOOR_TEST_START_COL, FLOOR_TEST_START_ROW, // Starting Col, Row
+  FLOOR_TEST_DEFAULT_MAP,                     // Default Map
+  FLOOR_TEST_DEFAULT_X, FLOOR_TEST_DEFAULT_Y, // Default Starting (x, y)
   floor_test_palettes,                        // Palettes
   FLOOR_TEST_NUM_MAPS, floor_test_maps,       // # of maps, maps
   FLOOR_TEST_NUM_EXITS, floor_test_exits,     // # of exits, exits
   FLOOR_TEST_NUM_CHESTS, floor_test_chests,   // # of chests, chests
-  BANK_2,
   floor_test_on_init,
   floor_test_on_update,
   floor_test_on_draw,

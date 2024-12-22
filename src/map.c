@@ -11,52 +11,287 @@
 #include "floor.h"
 #include "map.h"
 
-Floor *active_area;
-Map *active_map;
-Exit *active_exit;
-
-MapTileAttribute map_tile_attributes[256];
-
-uint8_t current_map_id;
-
-MapState map_state;
-uint8_t map_x = 0;
-uint8_t map_y = 0;
-uint8_t map_col = 0;
-uint8_t map_row = 0;
-uint8_t map_scroll_x = 0;
-uint8_t map_scroll_y = 0;
-
-Direction map_move_direction = NO_DIRECTION;
-uint8_t map_move_counter = 0;
-
-HeroState hero_state = HERO_STILL;
-Direction hero_direction = DOWN;
-uint8_t hero_x = 0 + 8;
-uint8_t hero_y = 0 + 16;
-
-Timer walk_timer;
-uint8_t walk_frame;
-
 extern const uint8_t map_tile_lookup[];
 
+
+// /**
+//  * Determines if a player can move form the current square in the given
+//  * direction.
+//  * @param d Direction to check.
+//  * @return `true` If the player can move in the given direction.
+//  */
+// bool can_move(Direction d) {
+//   uint8_t col = map_col;
+//   uint8_t row = map_row;
+
+//   // Even if the hero cannot move in the direction, update the heading
+//   hero_direction = d;
+
+//   if (d == UP) {
+//     if (row == 0) return false;
+//     row--;
+//   } else if (d == DOWN) {
+//     if (row == 15) return false;
+//     row++;
+//   } else if (d == LEFT) {
+//     if (col == 0) return false;
+//     col--;
+//   } else if (d == RIGHT) {
+//     if (col == 15) return false;
+//     col++;
+//   }
+
+//   uint16_t k = row * 16 + col;
+//   MapTileAttribute t = map_tile_attributes[k];
+
+//   return t != MAP_WALL;
+// }
+
+// /**
+//  * Checks to see if the player is attempting to, and can move in the desired
+//  * direction. If so it initiates move by updating map state.
+//  * @see can_move, start_map_move, stop_map_move
+//  */
+// void check_move(void) {
+//   if (is_down(J_UP) && can_move(UP))
+//     start_map_move(UP);
+//   else if (is_down(J_DOWN) && can_move(DOWN))
+//     start_map_move(DOWN);
+//   else if (is_down(J_LEFT) && can_move(LEFT))
+//     start_map_move(LEFT);
+//   else if (is_down(J_RIGHT) && can_move(RIGHT))
+//     start_map_move(RIGHT);
+//   else
+//     stop_map_move();
+// }
+
+// /**
+//  * Stops map movement, turns off sprites, and begins fading the screen out.
+//  */
+// void map_fade_out(void) {
+//   stop_map_move();
+//   toggle_sprites();
+//   fade_out();
+// }
+
+// /**
+//  * Handle state updates when a player lands on an exit tile. Currently the area
+//  * structure defines a list of exits for all maps, if this function doesn't find
+//  * an exit at the given position in the current map then nothing happens and the
+//  * tile is treated as if it were simply a "ground" tile.
+//  *
+//  * @return `true` If an exit was found and a transition has been initiated.
+//  */
+// bool handle_exit(void) {
+//   MapTileAttribute a = get_tile_attribute();
+//   if (a != MAP_EXIT)
+//     return false;
+
+//   for (uint8_t k = 0; k < active_area->num_exits; k++) {
+//     Exit *x = &active_area->exits[k];
+//     if (x->map_id != active_map->id) continue;
+//     if (x->col != map_col) continue;
+//     if (x->row != map_row) continue;
+
+//     active_exit = x;
+//     map_fade_out();
+//     map_state = MAP_STATE_FADE_OUT;
+
+//     // TODO Add player "exiting" animation based on exit type
+//     // TODO Handle exits in the same map
+//     // TODO Handle area spanning exis
+//     // TODO Gracefully handle map sprites
+
+//     return true;
+//   }
+
+//   return false;
+// }
+
+// /**
+//  * Updates map state while the character is moving.
+//  */
+// void update_map_move_old(void) {
+//   // Move the map one pixel in the move direction
+//   switch (map_move_direction) {
+//   case UP:
+//     map_y--;
+//     break;
+//   case DOWN:
+//     map_y++;
+//     break;
+//   case LEFT:
+//     map_x--;
+//     break;
+//   case RIGHT:
+//     map_x++;
+//     break;
+//   }
+
+//   // Update map positions
+//   update_map_positions();
+//   update_hero();
+//   move_bkg(map_scroll_x, map_scroll_y);
+
+//   // Check if the move animation is complete
+//   if (--map_move_counter != 0)
+//     return;
+
+//   // Move is complete, update the row/column and execute handlers for the
+//   // landing tile's type.
+//   map_col = map_x >> 4;
+//   map_row = map_y >> 4;
+
+//   on_move();
+
+//   // Note: map state changes based on attribute must return from this switch
+//   //       otherwise the state will be overwritten by `check_move` below.
+//   switch (get_tile_attribute()) {
+//   case MAP_EXIT:
+//     if (on_exit() || handle_exit())
+//       return;
+//     break;
+//   case MAP_SPECIAL:
+//     if (on_special())
+//       return;
+//     break;
+//   default:
+//   }
+
+//   // Immediately check for d-pad input to allow continuous movement.
+//   check_move();
+// }
+
+// /**
+//  * Determines if a player is attempting to open a chest and handles the logic
+//  * if they are.
+//  */
+// void check_chests(void) {
+//   Chest *chest = active_area->chests;
+//   for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
+//     if (active_map->id != chest->map_id)
+//       continue;
+//     if (check_flags(chest->flag_page, chest->open_flag))
+//       continue;
+//     if (!player_facing(chest->col, chest->row))
+//       continue;
+//     if (before_chest(chest)) {
+//       set_flags(chest->flag_page, chest->open_flag);
+//       set_chest_open_graphics(chest);
+//       on_chest(chest);
+//     }
+//     return;
+//   }
+// }
+
+// /**
+//  * Checks to see if the player is attempting to perform an action by pressing
+//  * the A button.
+//  * @return `true` if an action was attempted.
+//  */
+// bool check_action(void) {
+//   if (was_pressed(J_A)) {
+//     check_chests();
+//     on_action();
+//     return true;
+//   }
+//   return false;
+// }
+
+// void set_chest_open_graphics(Chest *chest) {
+//   // TODO Decide on a standard position for chest graphics in the general area
+//   //      tileset layout, 0x2C will suffice for now.
+//   uint8_t *vram = VRAM_BACKGROUND_XY(chest->col * 2, chest->row * 2);
+//   set_vram_byte(vram, 0x2C);
+//   set_vram_byte(vram + 1, 0x2D);
+//   set_vram_byte(vram + 0x20, 0x3C);
+//   set_vram_byte(vram + 0x20 + 1, 0x3D);
+// }
+
+// void start_battle(void) {
+//   // TODO "Cool" battle starting animation
+//   map_fade_out();
+//   map_state = MAP_STATE_START_BATTLE;
+// }
+
+// // TODO This is very similar "init", I think the only real difference is
+// //      that init loads the area and sets the map to map_id 0
+// void return_from_battle(void) NONBANKED {
+//   SWITCH_ROM(MAP_SYSTEM_BANK);
+
+//   text_writer.auto_page = AUTO_PAGE_OFF;
+
+//   textbox.init();
+//   core.load_font();
+//   text_writer.auto_page = AUTO_PAGE_OFF;
+
+//   init_hero();
+//   load_area_graphics(active_area);
+//   on_init();
+//   load_map_old(active_map);
+//   set_map_xy_from_col_row();
+
+//   // TODO It is weird these are decoupled. Is there a reason?
+//   update_map_positions();
+//   move_bkg(map_scroll_x, map_scroll_y);
+
+//   fade_in();
+//   map_state = MAP_STATE_FADE_IN;
+//   game_state = GAME_STATE_WORLD_MAP;
+
+//   lcd_on();
+// }
+
+// void init_world_map_old(Floor *area) NONBANKED {
+//   SWITCH_ROM(MAP_SYSTEM_BANK);
+//   lcd_off();
+
+//   load_area(area);
+
+//   textbox.init();
+//   core.load_font();
+//   text_writer.auto_page = AUTO_PAGE_OFF;
+
+//   init_hero();
+//   load_area_graphics(active_area);
+//   on_init();
+//   load_map_old(get_map(0));
+
+//   map_state = MAP_STATE_WAITING;
+
+//   lcd_on();
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------
+// BEGIN NEW CODE
+//------------------------------------------------------------------------------
+
+MapSystem map = { MAP_STATE_WAITING };
+
+/**
+ * Initializes the hero character sprites.
+ */
 void init_hero(void) {
-  // const uint8_t x = 8 + 16 * 4;
-  // const uint8_t y = 16 + 16 * 4;
-
+  const uint8_t hero_x = 0 + 16 * 4;
+  const uint8_t hero_y = 0 + 16 * 4;
   const uint8_t offset = 0x00;
-  const uint8_t frame = (walk_frame << 1) + offset;
+  const uint8_t frame = (map.walk_frame << 1) + offset;
 
-  core.load_hero_tiles(1);
-  const uint16_t hpal[4] = {
-    RGB(0, 0, 0),
-    RGB8(245, 213, 135),
-    RGB8(167, 75, 0),
-    RGB8(8, 46, 54),
-  };
-  core.load_sprite_palette(hpal, 0, 1);
-
-  init_timer(walk_timer, 8);
+  init_timer(map.walk_timer, 8);
 
   set_sprite_tile(0, frame);
   set_sprite_tile(1, frame + 0x01);
@@ -72,20 +307,35 @@ void init_hero(void) {
   move_sprite(1, hero_x + 8 + 8, hero_y + 16);
   move_sprite(2, hero_x + 8, hero_y + 8 + 16);
   move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
+
+  // TODO Load palettes/hero sprites based on class
+  core.load_hero_tiles(1);
+  const uint16_t hpal[4] = {
+    RGB(0, 0, 0),
+    RGB8(245, 213, 135),
+    RGB8(167, 75, 0),
+    RGB8(8, 46, 54),
+  };
+  core.load_sprite_palette(hpal, 0, 1);
 }
 
+/**
+ * Updates the hero sprites each frame.
+ */
 void update_hero(void) {
-  if (hero_state == HERO_WALKING) {
-    if (update_timer(walk_timer)) {
-      reset_timer(walk_timer);
-      walk_frame ^= 1;
+  const uint8_t hero_x = 0 + 16 * 4;
+  const uint8_t hero_y = 0 + 16 * 4;
+  if (map.hero_state == HERO_WALKING) {
+    if (update_timer(map.walk_timer)) {
+      reset_timer(map.walk_timer);
+      map.walk_frame ^= 1;
     }
   } else {
-    walk_frame = 0;
+    map.walk_frame = 0;
   }
 
   uint8_t offset = 0x00;
-  switch (hero_direction) {
+  switch (map.hero_direction) {
   case DOWN:
     offset = 0x00;
     break;
@@ -98,9 +348,9 @@ void update_hero(void) {
     break;
   }
 
-  const uint8_t frame = (walk_frame << 1) + offset;
+  const uint8_t frame = (map.walk_frame << 1) + offset;
 
-  if (hero_direction != LEFT) {
+  if (map.hero_direction != LEFT) {
     set_sprite_tile(0, frame);
     set_sprite_tile(1, frame + 0x01);
     set_sprite_tile(2, frame + 0x10);
@@ -126,440 +376,15 @@ void update_hero(void) {
   move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
 }
 
+/**
+ * Clears hero sprites.
+ */
 void clear_hero(void) {
   move_sprite(0, 0, 0);
   move_sprite(1, 0, 0);
   move_sprite(2, 0, 0);
   move_sprite(3, 0, 0);
 }
-
-/**
- * Sets the map position x & y coordinates from the current column and row.
- */
-inline void set_map_xy_from_col_row(void) {
-  map_x = map_col << 4;
-  map_y = map_row << 4;
-}
-
-/**
- * Begins a map move in the given direction.
- */
-inline void start_map_move(Direction d) {
-  map_move_direction = d;
-  map_move_counter = 16;
-  map_state = MAP_STATE_MOVING;
-  hero_state = HERO_WALKING;
-}
-
-/**
- * Stops a map move.
- */
-inline void stop_map_move(void) {
-  map_move_direction = NO_DIRECTION;
-  map_state = MAP_STATE_WAITING;
-  hero_state = HERO_STILL;
-}
-
-/**
- * Sets the x & y positions for the hero and the screen scroll based on the
- * current global map position.
- */
-void update_map_positions(void) {
-  // Update the horizontal positions
-  if (map_x <= 64) {
-    map_scroll_x = 0;
-    hero_x = map_x;
-  } else if (map_x < 160) {
-    map_scroll_x = map_x - 64;
-    hero_x = 64;
-  } else {
-    map_scroll_x = 96;
-    hero_x = map_x - 96;
-  }
-  // Update the vertical positions
-  if (map_y <= 64) {
-    map_scroll_y = 0;
-    hero_y = map_y;
-  } else if (map_y < 176) {
-    map_scroll_y = map_y - 64;
-    hero_y = 64;
-  } else {
-    map_scroll_y = 176 - 64;
-    hero_y = map_y - 112;
-  }
-}
-
-void load_area_graphics(Floor *a) {
-  VBK_REG = VBK_BANK_0;
-  // core.load_tileset(a->tileset, VRAM_BG_TILES);
-  core.load_object_tiles();
-  core.load_bg_palette(a->palettes, 0, 4);
-}
-
-/**
- * Loads an area state and assets and initializes the world map controller.
- * @param a Floor to load.
- */
-void load_area(Floor *a) {
-  active_area = a;
-  map_col = a->default_start_column;
-  map_row = a->default_start_row;
-  map_state = MAP_STATE_WAITING;
-  set_map_xy_from_col_row();
-  update_map_positions();
-}
-
-/**
- * Loads an individual map data tile into VRAM and the map attributes table.
- * Note: this is broken out into an inline to make the map loading routine
- * easier to read.
- *
- * @param map_data Pointer to the next map data to load.
- * @param vram Pointer to the VRAM location into which the graphics should be
- *  loaded.
- * @param map_attr Pointer to the place in the map attributes table where
- *  attribute data should be placed.
- */
-inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
-  // TODO This is a data loader, refactor into a core data service
-  uint8_t data = *map_data;
-  uint8_t attr = *(map_data + 1);
-  uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
-
-  // Set tilemap attributes
-  VBK_REG = VBK_ATTRIBUTES;
-  *vram = attr;
-  *(vram + 1) = attr;
-  *(vram + 0x20) = attr;
-  *(vram + 0x20 + 1) = attr;
-
-  // Set tile from data
-  VBK_REG = VBK_TILES;
-  *vram = tile;
-  *(vram + 0x20) = tile + 16;
-  *(vram + 1) = tile + 1;
-  *(vram + 0x20 + 1) = tile + 16 + 1;
-
-  // Load the tile type into main memory
-  *map_attr = data >> 6;
-}
-
-/**
- * Gets the active area map at the given index id.
- * @param id Id of the map to get.
- * @return The map with the given id.
- */
-Map *get_map(uint8_t id) {
-  return active_area->maps + id;
-}
-
-/**
- * Loads a map in the current area with the given map_id.
- * @param map_id Id of the map to load.
- */
-void load_map_old(Map *map) {
-  active_map = map;
-
-  uint8_t *vram = VRAM_BACKGROUND;
-  MapTileAttribute *map_attr = map_tile_attributes;
-  uint8_t *map_data = map->data;
-
-  uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(map->bank);
-
-  for (uint8_t y = 0; y < 16; y++) {
-    for (uint8_t x = 0; x < 16; x++) {
-      load_map_tile(map_data, vram, map_attr);
-      map_data += 2;
-      vram += 2;
-      map_attr++;
-    }
-    vram += 32;
-  }
-
-  SWITCH_ROM(_prev_bank);
-
-  // Set chest graphics based on their open flag state
-  Chest *chest = active_area->chests;
-  for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
-    if (chest->map_id != active_map->id)
-      continue;
-    if (check_flags(chest->flag_page, chest->open_flag)) {
-      set_chest_open_graphics(chest);
-    }
-  }
-}
-
-/**
- * Determines if a player can move form the current square in the given
- * direction.
- * @param d Direction to check.
- * @return `true` If the player can move in the given direction.
- */
-bool can_move(Direction d) {
-  uint8_t col = map_col;
-  uint8_t row = map_row;
-
-  // Even if the hero cannot move in the direction, update the heading
-  hero_direction = d;
-
-  if (d == UP) {
-    if (row == 0) return false;
-    row--;
-  } else if (d == DOWN) {
-    if (row == 15) return false;
-    row++;
-  } else if (d == LEFT) {
-    if (col == 0) return false;
-    col--;
-  } else if (d == RIGHT) {
-    if (col == 15) return false;
-    col++;
-  }
-
-  uint16_t k = row * 16 + col;
-  MapTileAttribute t = map_tile_attributes[k];
-
-  return t != MAP_WALL;
-}
-
-/**
- * Checks to see if the player is attempting to, and can move in the desired
- * direction. If so it initiates move by updating map state.
- * @see can_move, start_map_move, stop_map_move
- */
-void check_move(void) {
-  if (is_down(J_UP) && can_move(UP))
-    start_map_move(UP);
-  else if (is_down(J_DOWN) && can_move(DOWN))
-    start_map_move(DOWN);
-  else if (is_down(J_LEFT) && can_move(LEFT))
-    start_map_move(LEFT);
-  else if (is_down(J_RIGHT) && can_move(RIGHT))
-    start_map_move(RIGHT);
-  else
-    stop_map_move();
-}
-
-/**
- * Stops map movement, turns off sprites, and begins fading the screen out.
- */
-void map_fade_out(void) {
-  stop_map_move();
-  toggle_sprites();
-  fade_out();
-}
-
-/**
- * Handle state updates when a player lands on an exit tile. Currently the area
- * structure defines a list of exits for all maps, if this function doesn't find
- * an exit at the given position in the current map then nothing happens and the
- * tile is treated as if it were simply a "ground" tile.
- *
- * @return `true` If an exit was found and a transition has been initiated.
- */
-bool handle_exit(void) {
-  MapTileAttribute a = get_tile_attribute();
-  if (a != MAP_EXIT)
-    return false;
-
-  for (uint8_t k = 0; k < active_area->num_exits; k++) {
-    Exit *x = &active_area->exits[k];
-    if (x->map_id != active_map->id) continue;
-    if (x->col != map_col) continue;
-    if (x->row != map_row) continue;
-
-    active_exit = x;
-    map_fade_out();
-    map_state = MAP_STATE_FADE_OUT;
-
-    // TODO Add player "exiting" animation based on exit type
-    // TODO Handle exits in the same map
-    // TODO Handle area spanning exis
-    // TODO Gracefully handle map sprites
-
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Updates map state while the character is moving.
- */
-void update_map_move_old(void) {
-  // Move the map one pixel in the move direction
-  switch (map_move_direction) {
-  case UP:
-    map_y--;
-    break;
-  case DOWN:
-    map_y++;
-    break;
-  case LEFT:
-    map_x--;
-    break;
-  case RIGHT:
-    map_x++;
-    break;
-  }
-
-  // Update map positions
-  update_map_positions();
-  update_hero();
-  move_bkg(map_scroll_x, map_scroll_y);
-
-  // Check if the move animation is complete
-  if (--map_move_counter != 0)
-    return;
-
-  // Move is complete, update the row/column and execute handlers for the
-  // landing tile's type.
-  map_col = map_x >> 4;
-  map_row = map_y >> 4;
-
-  on_move();
-
-  // Note: map state changes based on attribute must return from this switch
-  //       otherwise the state will be overwritten by `check_move` below.
-  switch (get_tile_attribute()) {
-  case MAP_EXIT:
-    if (on_exit() || handle_exit())
-      return;
-    break;
-  case MAP_SPECIAL:
-    if (on_special())
-      return;
-    break;
-  default:
-  }
-
-  // Immediately check for d-pad input to allow continuous movement.
-  check_move();
-}
-
-/**
- * Determines if a player is attempting to open a chest and handles the logic
- * if they are.
- */
-void check_chests(void) {
-  Chest *chest = active_area->chests;
-  for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
-    if (active_map->id != chest->map_id)
-      continue;
-    if (check_flags(chest->flag_page, chest->open_flag))
-      continue;
-    if (!player_facing(chest->col, chest->row))
-      continue;
-    if (before_chest(chest)) {
-      set_flags(chest->flag_page, chest->open_flag);
-      set_chest_open_graphics(chest);
-      on_chest(chest);
-    }
-    return;
-  }
-}
-
-/**
- * Checks to see if the player is attempting to perform an action by pressing
- * the A button.
- * @return `true` if an action was attempted.
- */
-bool check_action(void) {
-  if (was_pressed(J_A)) {
-    check_chests();
-    on_action();
-    return true;
-  }
-  return false;
-}
-
-void set_chest_open_graphics(Chest *chest) {
-  // TODO Decide on a standard position for chest graphics in the general area
-  //      tileset layout, 0x2C will suffice for now.
-  uint8_t *vram = VRAM_BACKGROUND_XY(chest->col * 2, chest->row * 2);
-  set_vram_byte(vram, 0x2C);
-  set_vram_byte(vram + 1, 0x2D);
-  set_vram_byte(vram + 0x20, 0x3C);
-  set_vram_byte(vram + 0x20 + 1, 0x3D);
-}
-
-void start_battle(void) {
-  // TODO "Cool" battle starting animation
-  map_fade_out();
-  map_state = MAP_STATE_START_BATTLE;
-}
-
-// TODO This is very similar "init", I think the only real difference is
-//      that init loads the area and sets the map to map_id 0
-void return_from_battle(void) NONBANKED {
-  SWITCH_ROM(MAP_SYSTEM_BANK);
-
-  text_writer.auto_page = AUTO_PAGE_OFF;
-
-  textbox.init();
-  core.load_font();
-  text_writer.auto_page = AUTO_PAGE_OFF;
-
-  init_hero();
-  load_area_graphics(active_area);
-  on_init();
-  load_map_old(active_map);
-  set_map_xy_from_col_row();
-
-  // TODO It is weird these are decoupled. Is there a reason?
-  update_map_positions();
-  move_bkg(map_scroll_x, map_scroll_y);
-
-  fade_in();
-  map_state = MAP_STATE_FADE_IN;
-  game_state = GAME_STATE_WORLD_MAP;
-
-  lcd_on();
-}
-
-void init_world_map_old(Floor *area) NONBANKED {
-  SWITCH_ROM(MAP_SYSTEM_BANK);
-  lcd_off();
-
-  load_area(area);
-
-  textbox.init();
-  core.load_font();
-  text_writer.auto_page = AUTO_PAGE_OFF;
-
-  init_hero();
-  load_area_graphics(active_area);
-  on_init();
-  load_map_old(get_map(0));
-
-  map_state = MAP_STATE_WAITING;
-
-  lcd_on();
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------------------------------------------------------------------
-// BEGIN NEW CODE
-//------------------------------------------------------------------------------
-
-
-MapSystem map = { MAP_STATE_WAITING };
-
-
 
 /**
  * Loads a map data tile at the given position in the current map.
@@ -580,10 +405,11 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
     return;
   }
 
-  uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(map.active_map->bank);
   const uint16_t offset = (uint16_t)(2 * (x + y * w));
   const uint8_t *data = map.active_map->data + offset;
+
+  uint8_t _prev_bank = _current_bank;
+  SWITCH_ROM(map.active_map->bank);
   const uint8_t t = *data++;
   const uint8_t a = *data;
   SWITCH_ROM(_prev_bank);
@@ -736,8 +562,26 @@ void start_move(Direction d) {
   map.move_direction = d;
   map.move_step = 0;
   map.state = MAP_STATE_MOVING;
+  map.hero_direction = d;
+  map.hero_state = HERO_WALKING;
   load_tile_buffer();
 }
+
+/**
+ * Checks user input and initiates a map move if they're holding the d-pad in
+ * a given direction.
+ */
+void check_map_move(void) {
+  if (is_down(J_UP))
+    start_move(UP);
+  else if (is_down(J_DOWN))
+    start_move(DOWN);
+  else if (is_down(J_LEFT))
+    start_move(LEFT);
+  else if (is_down(J_RIGHT))
+    start_move(RIGHT);
+}
+
 
 /**
  * Update handler for when the player is moving.
@@ -775,13 +619,20 @@ void update_map_move(void) {
 
   move_bkg(map.scroll_x, map.scroll_y);
 
-  // Move complete
-  if (++map.move_step == 16) {
-    map.state = MAP_STATE_WAITING;
+  if (++map.move_step < 16)
     return;
-  }
+
+  map.state = MAP_STATE_WAITING;
+  map.hero_state = HERO_STILL;
+
+  check_map_move();
 }
 
+void set_active_floor(Floor *floor) BANKED {
+  map.active_floor = floor;
+  map.active_map = &floor->maps[floor->default_map];
+  set_map_position(floor->default_x, floor->default_y);
+}
 
 /**
  * Initializes the world map system.
@@ -792,73 +643,43 @@ void initialize_world_map(void) {
   core.load_font();
   core.load_object_tiles();
   core.load_dungeon_tiles();
+  core.load_bg_palette(map.active_floor->palettes, 0, 7);
 
   text_writer.auto_page = AUTO_PAGE_OFF;
   textbox.init();
 
-  reset_map_screen();
   init_hero();
+  reset_map_screen();
 
-  map.state = MAP_STATE_WAITING;
-
-  // TODO Fix me
-  core.load_bg_palette(area0.palettes, 0, 4);
-  toggle_sprites();
 
   lcd_on();
 }
 
-
-
-
 void init_world_map(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   initialize_world_map();
+  map.state = MAP_STATE_WAITING;
 }
 
-void return_from_battle_new(void) NONBANKED {
-  // SWITCH_ROM(MAP_SYSTEM_BANK);
-
-  // text_writer.auto_page = AUTO_PAGE_OFF;
-
-  // textbox.init();
-  // core.load_font();
-  // text_writer.auto_page = AUTO_PAGE_OFF;
-
-  // init_hero();
-  // load_area_graphics(active_area);
-  // on_init();
-  // load_map_old(active_map);
-  // set_map_xy_from_col_row();
-
-  // // TODO It is weird these are decoupled. Is there a reason?
-  // update_map_positions();
-  // move_bkg(map_scroll_x, map_scroll_y);
-
-  // fade_in();
-  // map_state = MAP_STATE_FADE_IN;
-  // game_state = GAME_STATE_WORLD_MAP;
-
-  // lcd_on();
+void return_from_battle(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
+  initialize_world_map();
+  // TODO Handle fade out/in
+  // map.state = MAP_STATE_WAITING;
 }
 
 
 void update_world_map(void) {
   switch (map.state) {
   case MAP_STATE_WAITING:
-    if (was_pressed(J_UP))
-      start_move(UP);
-    else if (was_pressed(J_DOWN))
-      start_move(DOWN);
-    else if (was_pressed(J_LEFT))
-      start_move(LEFT);
-    else if (was_pressed(J_RIGHT))
-      start_move(RIGHT);
+    check_map_move();
     break;
   case MAP_STATE_MOVING:
     update_map_move();
     break;
   }
+
+  update_hero();
 }
 
 void draw_world_map(void) {
@@ -895,76 +716,76 @@ void draw_world_map(void) {
 
 
 
-void update_world_map_old(void) {
-  if (
-    map_state == MAP_STATE_START_BATTLE ||
-    map_state == MAP_STATE_INACTIVE
-  ) {
-    // Important, don't remove.
-    return;
-  }
+// void update_world_map_old(void) {
+//   if (
+//     map_state == MAP_STATE_START_BATTLE ||
+//     map_state == MAP_STATE_INACTIVE
+//   ) {
+//     // Important, don't remove.
+//     return;
+//   }
 
-  switch (map_state) {
-  case MAP_STATE_WAITING:
-    if (!check_action()) {
-      check_move();
-    }
-    update_hero();
-    move_bkg(map_scroll_x, map_scroll_y);
-    break;
-  case MAP_STATE_MOVING:
-    update_map_move();
-    break;
-  }
-  on_update();
-}
+//   switch (map_state) {
+//   case MAP_STATE_WAITING:
+//     if (!check_action()) {
+//       check_move();
+//     }
+//     update_hero();
+//     move_bkg(map_scroll_x, map_scroll_y);
+//     break;
+//   case MAP_STATE_MOVING:
+//     update_map_move();
+//     break;
+//   }
+//   on_update();
+// }
 
-void draw_world_map_old(void) {
-  if (map_state == MAP_STATE_INACTIVE)
-    return;
+// void draw_world_map_old(void) {
+//   if (map_state == MAP_STATE_INACTIVE)
+//     return;
 
-  switch (map_state) {
-  case MAP_STATE_TEXTBOX:
-    textbox.update();
-    if (textbox.state == TEXT_BOX_CLOSED) {
-      map_state = MAP_STATE_WAITING;
-    }
-    break;
-  case MAP_STATE_START_BATTLE:
-    if (fade_update()) {
-      lcd_off();
-      map_state = MAP_STATE_INACTIVE;
-      init_battle();
-      return;
-    }
-    break;
-  case MAP_STATE_FADE_OUT:
-    if (fade_update()) {
-      map_state = MAP_STATE_LOAD;
-    }
-    break;
-  case MAP_STATE_LOAD:
-    lcd_off();
-    load_map_old(get_map(active_exit->to_map));
-    map_col = active_exit->to_col;
-    map_row = active_exit->to_row;
-    hero_direction = active_exit->heading;
-    set_map_xy_from_col_row();
-    update_map_positions();
-    update_hero();
-    move_bkg(map_scroll_x, map_scroll_y);
-    map_state = MAP_STATE_FADE_IN;
-    fade_in();
-    lcd_on();
-    break;
-  case MAP_STATE_FADE_IN:
-    if (fade_update()) {
-      // TODO Animate the character based on exit type and heading
-      map_state = MAP_STATE_WAITING;
-      LCDC_REG ^= LCDCF_OBJON;
-    }
-    break;
-  }
-  on_draw();
-}
+//   switch (map_state) {
+//   case MAP_STATE_TEXTBOX:
+//     textbox.update();
+//     if (textbox.state == TEXT_BOX_CLOSED) {
+//       map_state = MAP_STATE_WAITING;
+//     }
+//     break;
+//   case MAP_STATE_START_BATTLE:
+//     if (fade_update()) {
+//       lcd_off();
+//       map_state = MAP_STATE_INACTIVE;
+//       init_battle();
+//       return;
+//     }
+//     break;
+//   case MAP_STATE_FADE_OUT:
+//     if (fade_update()) {
+//       map_state = MAP_STATE_LOAD;
+//     }
+//     break;
+//   case MAP_STATE_LOAD:
+//     lcd_off();
+//     load_map_old(get_map(active_exit->to_map));
+//     map_col = active_exit->to_col;
+//     map_row = active_exit->to_row;
+//     hero_direction = active_exit->heading;
+//     set_map_xy_from_col_row();
+//     update_map_positions();
+//     update_hero();
+//     move_bkg(map_scroll_x, map_scroll_y);
+//     map_state = MAP_STATE_FADE_IN;
+//     fade_in();
+//     lcd_on();
+//     break;
+//   case MAP_STATE_FADE_IN:
+//     if (fade_update()) {
+//       // TODO Animate the character based on exit type and heading
+//       map_state = MAP_STATE_WAITING;
+//       LCDC_REG ^= LCDCF_OBJON;
+//     }
+//     break;
+//   }
+//   on_draw();
+// }
 

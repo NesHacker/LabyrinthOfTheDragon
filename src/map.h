@@ -14,6 +14,65 @@
 #define MAP_SYSTEM_BANK 2
 
 /**
+ * Number of progressive tile loads required when scrolling vertically.
+ */
+#define MAP_HORIZ_LOADS 12
+
+/**
+ * Number of progressive tiles loads required when scroll horizontally.
+ */
+#define MAP_VERT_LOADS 11
+
+/**
+ * Enumeration of map attribute values. Map attributes are used by the engine to
+ * handle common / high level interactions for map movement in addition to
+ * determining specific map callbacks to execute during game logic.
+ */
+typedef enum MapTileAttribute {
+  /**
+   * Denotes an impassible wall.
+   */
+  MAP_WALL,
+  /**
+   * Denotes a passable ground tile.
+   */
+  MAP_GROUND,
+  /**
+   * Denotes an exit tile used to load other map / pages.
+   */
+  MAP_EXIT,
+  /**
+   * Denotes a special tile to be handled by a map's code implementation.
+   */
+  MAP_SPECIAL
+} MapTileAttribute;
+
+/**
+ * Represents a tile in a game map.
+ */
+typedef struct MapTile {
+  /**
+   * Whether or not the tile is blank. These tiles are used when rendering
+   * outside the bounds of the current map. Default tile is 0x00 and default
+   * attribute is 0x00.
+   */
+  bool blank;
+  /**
+   * Base vram tile id. Used to generate graphics tiles during rendering.
+   */
+  uint8_t tile;
+  /**
+   * VRAM attribute. This is set for every tile rendered from the base tile.
+   */
+  uint8_t attr;
+  /**
+   * Map game data attribute. Holds high level information about the tile (is
+   * it a wall, etc.).
+   */
+  MapTileAttribute map_attr;
+} MapTile;
+
+/**
  * State animation state for the overworld hero.
  */
 typedef enum HeroState {
@@ -102,7 +161,7 @@ typedef struct Map {
   /**
    * Pointer to the data for the map.
    */
-  const uint8_t *data;
+  uint8_t *data;
   /**
    * Width for the map (in map tiles).
    */
@@ -189,6 +248,21 @@ typedef struct Chest {
 } Chest;
 
 /**
+ * Use these values when denoting map ids instead of hard coded constants.
+ */
+typedef enum MapId {
+  MAP_A,
+  MAP_B,
+  MAP_C,
+  MAP_D,
+  MAP_E,
+  MAP_F,
+  MAP_G,
+  MAP_H,
+  MAP_I,
+} MapId;
+
+/**
  * Defines a floor (level) for the game.
  */
 typedef struct Floor {
@@ -197,19 +271,21 @@ typedef struct Floor {
    */
   uint8_t id;
   /**
-   * Default starting column for the player if the map is loaded directly and
-   * not via an exit from another map.
+   * Index of the starting map for the floor.
    */
-  uint8_t default_start_column;
+  uint8_t default_map;
   /**
-   * Default starting row for the player if the map is loaded directly and not
-   * via an exit from another map.
+   * Default starting column for the player on the starting map.
    */
-  uint8_t default_start_row;
+  uint8_t default_x;
+  /**
+   * Default starting row for the player on the starting map.
+   */
+  uint8_t default_y;
   /**
    * Palettes to use for the dungeon.
    */
-  palette_color_t *palettes;
+  const palette_color_t *palettes;
   /**
    * Number of pages in the map.
    */
@@ -217,7 +293,7 @@ typedef struct Floor {
   /**
    * List of all pages for the map.
    */
-  Map *maps;
+  const Map *maps;
   /**
    * Number of exit entries for the area.
    */
@@ -225,7 +301,7 @@ typedef struct Floor {
   /**
    * List of exits for all pages on the map.
    */
-  Exit *exits;
+  const Exit *exits;
   /**
    * Number of chests in the area.
    */
@@ -233,23 +309,19 @@ typedef struct Floor {
   /**
    * Array of treasure chests for the area.
    */
-  Chest *chests;
-  /**
-   * Bank where the map's callback functions reside.
-   */
-  uint8_t callback_bank;
+  const Chest *chests;
   /**
    * Called when the map is initialized by the game engine.
    */
-  void (*on_init)(void);
+  const void (*on_init)(void);
   /**
    * Called on game loop update when the map is active.
    */
-  void (*on_update)(void);
+  const void (*on_update)(void);
   /**
    * Called on VBLANK draw when the map is active.
    */
-  void (*on_draw)(void);
+  const void (*on_draw)(void);
   /**
    * Called when the player interacts by pressing the "A" button while in the
    * area.
@@ -257,40 +329,40 @@ typedef struct Floor {
    * @param col Current column for the player.
    * @param row Current row for the player.
    */
-  void (*on_action)(void);
+  const void (*on_action)(void);
   /**
    * Called before a chest is opened.
    * @param chest_id Id of the chest being opened.
    * @return `true` if the chest can be opened.
    */
-  bool (*before_chest)(Chest *chest);
+  const bool (*before_chest)(Chest *chest);
   /**
    * Called after a chest has been opened.
    */
-  void (*on_chest)(Chest *chest);
+  const void (*on_chest)(Chest *chest);
   /**
    * Called when the player enters a map from another map.
    * @param from_id Id of the map the player exited.
    * @param to_id Id of the map the player is entering.
    */
-  void (*on_enter)(uint8_t from_id, uint8_t to_id);
+  const void (*on_enter)(uint8_t from_id, uint8_t to_id);
   /**
    * Called when the map is active and the player moves into a special tile.
    * @return `true` if the map should prevent default behavior.
    */
-  bool (*on_special)(void);
+  const bool (*on_special)(void);
   /**
    * Called when the map is active and the player moves into an "exit" tile.
    * @return `true` if the map should prevent default behavior.
    */
-  bool (*on_exit)(void);
+  const bool (*on_exit)(void);
   /**
    * Called when the map is active and the player moves into a floor tile.
    * @param col The column for the tile.
    * @param row The row for the tile.
    * @return `true` if the map should prevent default behavior.
    */
-  bool (*on_move)(void);
+  const bool (*on_move)(void);
 } Floor;
 
 /**
@@ -304,175 +376,110 @@ typedef struct Floor {
 #define MAP_ATTR_MASK 0b11000000
 
 /**
- * Enumeration of map attribute values. Map attributes are used by the engine to
- * handle common / high level interactions for map movement in addition to
- * determining specific map callbacks to execute during game logic.
+ * Map system main state. Holds all global memory values used in the system.
  */
-typedef enum MapTileAttribute {
-  /**
-   * Denotes an impassible wall.
-   */
-  MAP_WALL,
-  /**
-   * Denotes a passable ground tile.
-   */
-  MAP_GROUND,
-  /**
-   * Denotes an exit tile used to load other map / pages.
-   */
-  MAP_EXIT,
-  /**
-   * Denotes a special tile to be handled by a map's code implementation.
-   */
-  MAP_SPECIAL
-} MapTileAttribute;
-
-
-/**
- * Pointer to the active area.
- */
-extern Floor *active_area;
-
-/**
- * Pointer to the area that is currently loaded.
- */
-extern Map *active_map;
-
-/**
- * Id of the currently loaded map.
- */
-extern uint8_t current_map_id;
-
-/**
- * A 16 x 16 (256 entry) array that contains the tile attribute type for every
- * tile in the current map.
- */
-extern MapTileAttribute map_tile_attributes[256];
-
-/**
- * Column the player occupies in the active map.
- */
-extern uint8_t map_col;
-
-/**
- * Row the player occupies in the active map.
- */
-extern uint8_t map_row;
-
-/**
- * State of the world map controller.
- */
-extern MapState map_state;
-
-/**
- * Absolute x position of the hero on the map.
- */
-extern uint8_t map_x;
-
-/**
- * Absolute y position of the hero on the map.
- */
-extern uint8_t map_y;
-
-/**
- * Horizontal background scroll for the current map.
- */
-extern uint8_t map_scroll_x;
-
-/**
- * Vertical background scroll for the current map.
- */
-extern uint8_t map_scroll_y;
-
-/**
- * Direction the map is currently moving.
- */
-extern Direction map_move_direction;
-
-/**
- * Frame counter for the current map move.
- */
-extern uint8_t map_move_counter;
-
-/**
- * Reference to the exit taken prior to a progressive load. Used to initialize
- * player's sprite and such after the transition.
- */
-extern Exit *current_exit;
-
-// TODO Factor me out in to a struct
-extern HeroState hero_state;
-extern Direction hero_direction;
-extern uint8_t hero_x;
-extern uint8_t hero_y;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TODO Clean this mess up!
-
-
-#define MAP_HORIZ_LOADS 12
-#define MAP_VERT_LOADS 11
-
-typedef struct MapTile {
-  bool blank;
-  uint8_t tile;
-  uint8_t attr;
-  uint8_t map_attr;
-} MapTile;
-
-typedef struct MapData {
-  GameRomBank bank;
-  uint8_t *data;
-  int8_t width;
-  int8_t height;
-} MapData;
-
 typedef struct MapSystem {
-  // Global State
+  /**
+   * Top-level state for the map system.
+   */
   MapState state;
-
-  // Map position
+  /**
+   * Horizontal map coordinate.
+   */
   int8_t x;
+  /**
+   * Veritcal map coordinate.
+   */
   int8_t y;
-
-  // Movement
+  /**
+   * Horizontal background scroll position.
+   */
   int8_t scroll_x;
+  /**
+   * Vertical background scroll position.
+   */
   int8_t scroll_y;
+  /**
+   * Direction the player is currently moving.
+   */
   Direction move_direction;
+  /**
+   * Animation step for the move.
+   */
   uint8_t move_step;
-
-  // Progressive load
+  /**
+   * Current VRAM progressive load origin x-position.
+   */
   int8_t vram_x;
+  /**
+   * Curren VRAM progressive load origin y-position.
+   */
   int8_t vram_y;
+  /**
+   * Tile buffer containing all map tiles to be progressively loaded while
+   * scrolling the map during a move.
+   */
   MapTile tile_buf[2 * MAP_HORIZ_LOADS];
+  /**
+   * Position in the buffer for the next map tile to be loaded.
+   */
   uint8_t buffer_pos;
+  /**
+   * Maximum number of map tiles to load during a move.
+   */
   uint8_t buffer_max;
+  /**
+   * VRAM start colum to use during a progressive load.
+   */
   int8_t vram_col;
+  /**
+   * VRAM start row to use during a progressive load.
+   */
   int8_t vram_row;
+  /**
+   * Amount added to the vram column position after loading each tile during a
+   * progressive load.
+   */
   int8_t vram_d_col;
+  /**
+   * Amount added to the vram row position after loading each tile during a
+   * progressive load.
+   */
   int8_t vram_d_row;
-
-  // Map data
-  const Map *active_map;
+  /**
+   * The active floor.
+   */
+  Floor *active_floor;
+  /**
+   * Active map in the active floor.
+   */
+  Map *active_map;
+  /**
+   * State of the hero sprites.
+   */
+  HeroState hero_state;
+  /**
+   * Direction the hero is facing.
+   */
+  Direction hero_direction;
+  /**
+   * Hero walk animation timer.
+   */
+  Timer walk_timer;
+  /**
+   * Hero walk animation frame.
+   */
+  uint8_t walk_frame;
+  /**
+   * Reference to the exit prior to loading the destination for an exit.
+   */
+  Exit *current_exit;
 } MapSystem;
 
-
-
+/**
+ * Main state for the map system.
+ */
 extern MapSystem map;
-
-
-
 
 /**
  * Sets the position of the active map. Note this method will not re-render the
@@ -485,19 +492,12 @@ inline void set_map_position(int8_t x, int8_t y) {
   map.y = y;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+/**
+ * Sets the active floor for the map system. An active floor must be set prior
+ * to initializing map system controller.
+ * @param floor Floor to set.
+ */
+void set_active_floor(Floor *floor) BANKED;
 
 /**
  * Initialize the world map controller.
@@ -515,12 +515,6 @@ void update_world_map(void) NONBANKED;
 void draw_world_map(void) NONBANKED;
 
 /**
- * Set the "open" state graphics for the given chest.
- * @param chest Chest that needs to be graphically depicted as "open".
- */
-void set_chest_open_graphics(Chest *chest);
-
-/**
  * Initiates battle using the currently configured encounter. This should be
  * called by area handlers to start battle after initalizing the `encounter`
  * state used by the battle system.
@@ -532,6 +526,9 @@ void start_battle(void);
  */
 void return_from_battle(void) NONBANKED;
 
+/**
+ * Sets the active map.
+ */
 inline void set_active_map(const Map *m) NONBANKED {
   map.active_map = m;
 }
@@ -541,51 +538,8 @@ inline void set_active_map(const Map *m) NONBANKED {
  * @param text Text to display in the text box.
  */
 inline void map_textbox(const char *text) {
-  map_state = MAP_STATE_TEXTBOX;
+  map.state = MAP_STATE_TEXTBOX;
   textbox.open(text);
-}
-
-/**
- * @return The map tile attribute at the player's current column and row.
- */
-inline MapTileAttribute get_tile_attribute_xy(uint8_t col, uint8_t row) {
-  return map_tile_attributes[col + row * 16];
-}
-
-/**
- * @param col Column for the tile attribute.
- * @param row Row for the tile attribute.
- * @return The map tile attribute at the given column and row.
- */
-inline MapTileAttribute get_tile_attribute(void) {
-  return map_tile_attributes[map_col + map_row * 16];
-}
-
-/**
- * @param d Direction to check.
- * @return The map tile attribute at the given direction.
- */
-inline MapTileAttribute get_tile_attribute_at(Direction d) {
-  switch (d) {
-  case NO_DIRECTION:
-    return get_tile_attribute();
-  case UP:
-    return get_tile_attribute_xy(map_col, map_row - 1);
-  case DOWN:
-    return get_tile_attribute_xy(map_col, map_row + 1);
-  case LEFT:
-    return get_tile_attribute_xy(map_col - 1, map_row);
-  default:
-    return get_tile_attribute_xy(map_col + 1, map_row);
-  }
-}
-
-/**
- * @param id Id of the map to check.
- * @return `true` if the map with the given id is active.
- */
-inline bool is_map(uint8_t id) {
-  return active_map->id == id;
 }
 
 /**
@@ -594,7 +548,7 @@ inline bool is_map(uint8_t id) {
  * @return `true` If the player is at the given column and row in the map.
  */
 inline bool player_at(uint8_t c, uint8_t r) {
-  return map_col == c && map_row == r;
+  return map.x + 4 == c && map.y + 4 == r;
 }
 
 /**
@@ -605,7 +559,7 @@ inline bool player_at(uint8_t c, uint8_t r) {
  *   facing the given direction.
  */
 inline bool player_at_facing(uint8_t col, uint8_t row, Direction d) {
-  return map_col == col && map_row == row && hero_direction == d;
+  return map.x + 4 == col && map.y + 4 == row && map.hero_direction == d;
 }
 
 /**
@@ -626,40 +580,40 @@ inline bool player_facing(uint8_t col, uint8_t row) {
  * Executes the active area's `on_init` callback if one is set.
  */
 inline void on_init(void) {
-  if (active_area->on_init)
-    active_area->on_init();
+  if (map.active_floor->on_init)
+    map.active_floor->on_init();
 }
 
 /**
  * Executes the active area's `on_update` callback if one is set.
  */
 inline void on_update(void) {
-  if (active_area->on_update)
-    active_area->on_update();
+  if (map.active_floor->on_update)
+    map.active_floor->on_update();
 }
 
 /**
  * Executes the active area's `on_draw` callback if one is set.
  */
 inline void on_draw(void) {
-  if (active_area->on_draw)
-    active_area->on_draw();
+  if (map.active_floor->on_draw)
+    map.active_floor->on_draw();
 }
 
 /**
  * Executes the active area's `on_action` callback if one is set.
  */
 inline void on_action(void) {
-  if (active_area->on_action)
-    active_area->on_action();
+  if (map.active_floor->on_action)
+    map.active_floor->on_action();
 }
 
 /**
  * Executes the active area's `before_chest` callback if one is set.
  */
 inline bool before_chest(Chest *chest) {
-  if (active_area->before_chest)
-    return active_area->before_chest(chest);
+  if (map.active_floor->before_chest)
+    return map.active_floor->before_chest(chest);
   return true;
 }
 
@@ -667,24 +621,24 @@ inline bool before_chest(Chest *chest) {
  * Executes the active area's `on_chest` callback if one is set.
  */
 inline void on_chest(Chest *chest) {
-  if (active_area->on_chest)
-    active_area->on_chest(chest);
+  if (map.active_floor->on_chest)
+    map.active_floor->on_chest(chest);
 }
 
 /**
  * Executes the active area's `on_enter` callback if one is set.
  */
 inline void on_enter(uint8_t from_id, uint8_t to_id) {
-  if (active_area->on_enter)
-    active_area->on_enter(from_id, to_id);
+  if (map.active_floor->on_enter)
+    map.active_floor->on_enter(from_id, to_id);
 }
 
 /**
  * Executes the active area's `on_special` callback if one is set.
  */
 inline bool on_special(void) {
-  if (active_area->on_special)
-    return active_area->on_special();
+  if (map.active_floor->on_special)
+    return map.active_floor->on_special();
   return false;
 }
 
@@ -692,8 +646,8 @@ inline bool on_special(void) {
  * Executes the active area's `on_exit` callback if one is set.
  */
 inline bool on_exit(void) {
-  if (active_area->on_exit)
-    return active_area->on_exit();
+  if (map.active_floor->on_exit)
+    return map.active_floor->on_exit();
   return false;
 }
 
@@ -701,12 +655,9 @@ inline bool on_exit(void) {
  * Executes the active area's `on_move` callback if one is set.
  */
 inline bool on_move(void) {
-  if (active_area->on_move)
-    return active_area->on_move();
+  if (map.active_floor->on_move)
+    return map.active_floor->on_move();
   return false;
 }
-
-// External area data references
-extern Floor area0;
 
 #endif
