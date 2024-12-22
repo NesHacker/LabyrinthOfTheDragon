@@ -351,7 +351,7 @@ typedef struct Floor {
   /**
    * Called before a chest is opened.
    * @param chest_id Id of the chest being opened.
-   * @return `true` if the chest can be opened.
+   * @return `true` if the default behavior for chest should be overriden.
    */
   const bool (*before_chest)(Chest *chest);
   /**

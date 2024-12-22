@@ -441,15 +441,15 @@ void update_map_move(void) {
   map.state = MAP_STATE_WAITING;
   map.hero_state = HERO_STILL;
 
-  // if (on_move())
-  //   return;
+  if (on_move())
+    return;
 
   MapTile *here = map.local_tiles + HERE;
 
   switch (here->map_attr) {
   case MAP_EXIT:
-    // if (on_exit())
-    //   return;
+    if (on_exit())
+      return;
     if (handle_exit())
       return;
     break;

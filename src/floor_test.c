@@ -131,7 +131,7 @@ void floor_test_on_action(void) {
 }
 
 bool floor_test_before_chest(Chest *chest) {
-  return true;
+  return false;
 }
 
 void floor_test_on_enter(uint8_t from_id, uint8_t to_id) {
