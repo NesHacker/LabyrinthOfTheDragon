@@ -286,8 +286,8 @@ MapSystem map = { MAP_STATE_WAITING };
  * Initializes the hero character sprites.
  */
 void init_hero(void) {
-  const uint8_t hero_x = 0 + 16 * 4;
-  const uint8_t hero_y = 0 + 16 * 4;
+  const uint8_t hero_x = 16 * HERO_X_OFFSET;
+  const uint8_t hero_y = 16 * HERO_Y_OFFSET;
   const uint8_t offset = 0x00;
   const uint8_t frame = (map.walk_frame << 1) + offset;
 
@@ -323,8 +323,8 @@ void init_hero(void) {
  * Updates the hero sprites each frame.
  */
 void update_hero(void) {
-  const uint8_t hero_x = 0 + 16 * 4;
-  const uint8_t hero_y = 0 + 16 * 4;
+  const uint8_t hero_x = 16 * HERO_X_OFFSET;
+  const uint8_t hero_y = 16 * HERO_Y_OFFSET;
   if (map.hero_state == HERO_WALKING) {
     if (update_timer(map.walk_timer)) {
       reset_timer(map.walk_timer);
@@ -555,14 +555,21 @@ void reset_map_screen(void) {
 }
 
 /**
- * Initiates player movement in the given direction.
+ * Initiates player movement in the given direction if possible.
  * @param d Direction the player is to move.
  */
 void start_move(Direction d) {
+  MapTile *destination = map.local_tiles + d;
+
+  map.hero_direction = d;
+
+  if (destination->map_attr == MAP_WALL) {
+    return;
+  }
+
   map.move_direction = d;
   map.move_step = 0;
   map.state = MAP_STATE_MOVING;
-  map.hero_direction = d;
   map.hero_state = HERO_WALKING;
   load_tile_buffer();
 }
@@ -582,6 +589,18 @@ void check_map_move(void) {
     start_move(RIGHT);
 }
 
+/**
+ * Updates the local tiles state based on the current map position.
+ */
+void update_local_tiles(void) {
+  uint8_t x = map.x + HERO_X_OFFSET;
+  uint8_t y = map.y + HERO_Y_OFFSET;
+  get_map_tile(map.local_tiles + HERE, x, y);
+  get_map_tile(map.local_tiles + UP, x, y - 1);
+  get_map_tile(map.local_tiles + DOWN, x, y + 1);
+  get_map_tile(map.local_tiles + LEFT, x - 1, y);
+  get_map_tile(map.local_tiles + RIGHT, x + 1, y);
+}
 
 /**
  * Update handler for when the player is moving.
@@ -622,6 +641,8 @@ void update_map_move(void) {
   if (++map.move_step < 16)
     return;
 
+  update_local_tiles();
+
   map.state = MAP_STATE_WAITING;
   map.hero_state = HERO_STILL;
 
@@ -631,7 +652,7 @@ void update_map_move(void) {
 void set_active_floor(Floor *floor) BANKED {
   map.active_floor = floor;
   map.active_map = &floor->maps[floor->default_map];
-  set_map_position(floor->default_x, floor->default_y);
+  set_hero_position(floor->default_x, floor->default_y);
 }
 
 /**
@@ -650,7 +671,7 @@ void initialize_world_map(void) {
 
   init_hero();
   reset_map_screen();
-
+  update_local_tiles();
 
   lcd_on();
 }

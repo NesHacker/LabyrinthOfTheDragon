@@ -24,6 +24,16 @@
 #define MAP_VERT_LOADS 11
 
 /**
+ * Number of tiles by which the hero is offset on the screen horizontally.
+ */
+#define HERO_X_OFFSET 4
+
+/**
+ * Number of tiles by which the hero is offset on the screen vertically.
+ */
+#define HERO_Y_OFFSET 4
+
+/**
  * Enumeration of map attribute values. Map attributes are used by the engine to
  * handle common / high level interactions for map movement in addition to
  * determining specific map callbacks to execute during game logic.
@@ -455,6 +465,11 @@ typedef struct MapSystem {
    */
   Map *active_map;
   /**
+   * Map tile data for the tile the hero currently occupies and those in every
+   * cardinal direction (index this with a `Direction`).
+   */
+  MapTile local_tiles[5];
+  /**
    * State of the hero sprites.
    */
   HeroState hero_state;
@@ -490,6 +505,15 @@ extern MapSystem map;
 inline void set_map_position(int8_t x, int8_t y) {
   map.x = x;
   map.y = y;
+}
+
+/**
+ * Sets position of map based on hero position. Does not re-render the map. You
+ * must call `reset_map_screen()` to do this.
+ */
+inline void set_hero_position(int8_t x, int8_t y) {
+  map.x = x - HERO_X_OFFSET;
+  map.y = y - HERO_X_OFFSET;
 }
 
 /**

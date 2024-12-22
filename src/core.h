@@ -194,7 +194,7 @@ typedef enum GameRomBank {
  * Universal direction type.
  */
 typedef enum Direction {
-  NO_DIRECTION, DOWN, UP, LEFT, RIGHT
+  HERE, DOWN, UP, LEFT, RIGHT
 } Direction;
 
 /**

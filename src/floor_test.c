@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define FLOOR_TEST_ID 99
-#define FLOOR_TEST_DEFAULT_X 0
-#define FLOOR_TEST_DEFAULT_Y 0
+#define FLOOR_TEST_DEFAULT_X 14
+#define FLOOR_TEST_DEFAULT_Y 14
 #define FLOOR_TEST_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
