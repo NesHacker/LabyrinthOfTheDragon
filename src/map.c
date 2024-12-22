@@ -11,7 +11,7 @@
 #include "floor.h"
 #include "map.h"
 
-Area *active_area;
+Floor *active_area;
 Map *active_map;
 Exit *active_exit;
 
@@ -189,7 +189,7 @@ void update_map_positions(void) {
   }
 }
 
-void load_area_graphics(Area *a) {
+void load_area_graphics(Floor *a) {
   VBK_REG = VBK_BANK_0;
   // core.load_tileset(a->tileset, VRAM_BG_TILES);
   core.load_object_tiles();
@@ -198,9 +198,9 @@ void load_area_graphics(Area *a) {
 
 /**
  * Loads an area state and assets and initializes the world map controller.
- * @param a Area to load.
+ * @param a Floor to load.
  */
-void load_area(Area *a) {
+void load_area(Floor *a) {
   active_area = a;
   map_col = a->default_start_column;
   map_row = a->default_start_row;
@@ -518,7 +518,7 @@ void return_from_battle(void) NONBANKED {
   lcd_on();
 }
 
-void init_world_map_old(Area *area) NONBANKED {
+void init_world_map_old(Floor *area) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   lcd_off();
 

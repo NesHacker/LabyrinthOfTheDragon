@@ -181,7 +181,7 @@ Chest area0_chests[] = {
   { CHEST_TORCH, MAP_FLOOR1, 9, 13, TEST_FLAGS, FLAG_HAS_TORCH }
 };
 
-Area area0 = {
+Floor area0 = {
   0,                    // Id
   2, 14,                // Default column & row
   // &dungeon_tileset,

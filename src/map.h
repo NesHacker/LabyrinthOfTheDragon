@@ -189,14 +189,11 @@ typedef struct Chest {
 } Chest;
 
 /**
- * Contains callbacks and data for a game area. Areas define tilesets, palettes,
- * maps, and callbacks used by the world map controller to produce adventure
- * gameplay for the game.
+ * Defines a floor (level) for the game.
  */
-typedef struct Area {
+typedef struct Floor {
   /**
-   * Id for the area. This should be the same as its index in the areas
-   * table.
+   * Unique id for the area. Must be non-zero.
    */
   uint8_t id;
   /**
@@ -294,7 +291,7 @@ typedef struct Area {
    * @return `true` if the map should prevent default behavior.
    */
   bool (*on_move)(void);
-} Area;
+} Floor;
 
 /**
  * Mask used to isolate a map data byte's "tile id".
@@ -334,7 +331,7 @@ typedef enum MapTileAttribute {
 /**
  * Pointer to the active area.
  */
-extern Area *active_area;
+extern Floor *active_area;
 
 /**
  * Pointer to the area that is currently loaded.
@@ -710,6 +707,6 @@ inline bool on_move(void) {
 }
 
 // External area data references
-extern Area area0;
+extern Floor area0;
 
 #endif

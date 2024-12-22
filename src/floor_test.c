@@ -132,9 +132,9 @@ bool floor_test_on_move(void) {
 }
 
 //------------------------------------------------------------------------------
-// Area Definition (shouldn't have to touch this)
+// Floor Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
-const Area floor_test = {
+const Floor floor_test = {
   FLOOR_TEST_ID,                              // Id
   FLOOR_TEST_START_COL, FLOOR_TEST_START_ROW, // Starting Col, Row
   floor_test_palettes,                        // Palettes
