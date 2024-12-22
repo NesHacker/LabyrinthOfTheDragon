@@ -25,5 +25,6 @@ INCBIN_EXTERN(tile_kobold)
 INCBIN_EXTERN(tile_beholder)
 INCBIN_EXTERN(tile_dummy)
 INCBIN_EXTERN(floor_test_data)
+INCBIN_EXTERN(floor_test_mini)
 
 #endif

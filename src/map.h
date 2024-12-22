@@ -117,6 +117,14 @@ typedef enum MapState {
    */
   MAP_STATE_FADE_IN,
   /**
+   * Denotes that map system is currently loading the destination for an exit.
+   */
+  MAP_STATE_LOAD_EXIT,
+  /**
+   * Ending state for a exit load.
+   */
+  MAP_STATE_EXIT_LOADED,
+  /**
    * Denotes that the current map is being loaded.
    */
   MAP_STATE_LOAD,
@@ -199,10 +207,6 @@ typedef struct Exit {
    * Row of the exit.
    */
   uint8_t row;
-  /**
-   * The destination area id.
-   */
-  uint8_t to_area;
   /**
    * The destination map id.
    */
@@ -486,9 +490,13 @@ typedef struct MapSystem {
    */
   uint8_t walk_frame;
   /**
+   * Map state to set after a fade in/out is complete.
+   */
+  MapState fade_to_state;
+  /**
    * Reference to the exit prior to loading the destination for an exit.
    */
-  Exit *current_exit;
+  Exit *active_exit;
 } MapSystem;
 
 /**
@@ -498,7 +506,8 @@ extern MapSystem map;
 
 /**
  * Sets the position of the active map. Note this method will not re-render the
- * map based on the position set. You must call `reset_map_screen()` to do this.
+ * map based on the position set. You must call `refresh_map_screen()` or load
+ * the screen progressively.
  * @param x Horizontal position.
  * @param y Vertical position.
  */
@@ -509,7 +518,7 @@ inline void set_map_position(int8_t x, int8_t y) {
 
 /**
  * Sets position of map based on hero position. Does not re-render the map. You
- * must call `reset_map_screen()` to do this.
+ * must call `refresh_map_screen()` or load the screen progresively.
  */
 inline void set_hero_position(int8_t x, int8_t y) {
   map.x = x - HERO_X_OFFSET;
@@ -531,12 +540,12 @@ void init_world_map(void) NONBANKED;
 /**
  * Update callback for the world map controller.
  */
-void update_world_map(void) NONBANKED;
+void update_world_map(void);
 
 /**
  * VBLANK draw routine for the world map controller.
  */
-void draw_world_map(void) NONBANKED;
+void draw_world_map(void);
 
 /**
  * Initiates battle using the currently configured encounter. This should be
@@ -548,14 +557,7 @@ void start_battle(void);
 /**
  * Called when returning to the map system from the battle system.
  */
-void return_from_battle(void) NONBANKED;
-
-/**
- * Sets the active map.
- */
-inline void set_active_map(const Map *m) NONBANKED {
-  map.active_map = m;
-}
+void return_from_battle(void) BANKED;
 
 /**
  * Opens a textbox while on the world map.

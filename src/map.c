@@ -11,6 +11,8 @@
 #include "floor.h"
 #include "map.h"
 
+uint8_t *debug = (void *)0xA000;
+
 MapSystem map = { MAP_STATE_WAITING };
 
 /**
@@ -115,6 +117,27 @@ void clear_hero(void) {
   move_sprite(1, 0, 0);
   move_sprite(2, 0, 0);
   move_sprite(3, 0, 0);
+}
+
+/**
+ * Initiates a fade out to state transition.
+ * @param to_state Map state to enter once the fade out completes.
+ */
+void map_fade_out(MapState to_state) {
+  toggle_sprites();
+  map.fade_to_state = to_state;
+  fade_out();
+  map.state = MAP_STATE_FADE_OUT;
+}
+
+/**
+ * Initiates a fade in to state transition.
+ * @param to_state Map state to enter once the fade in completes.
+ */
+void map_fade_in(MapState to_state) {
+  map.fade_to_state = to_state;
+  fade_in();
+  map.state = MAP_STATE_FADE_IN;
 }
 
 /**
@@ -262,7 +285,7 @@ void draw_map_tile(uint8_t *vram, MapTile *map_tile) {
  * of the map system, etc. as it sets initial positions and data required for
  * progressive loading of tiles based on movement.
  */
-void reset_map_screen(void) {
+void refresh_map_screen(void) {
   uint8_t *vram = VRAM_BACKGROUND;
   MapTile tile;
 
@@ -283,6 +306,47 @@ void reset_map_screen(void) {
   map.vram_x = 0;
   map.vram_y = 0;
   move_bkg(map.scroll_x, map.scroll_y);
+}
+
+/**
+ * Initiates a progressive screen reload based on the active exit being taken
+ * by the player.
+ */
+void load_exit(void) {
+  lcd_off();
+  Exit *exit = map.active_exit;
+  map.active_map = map.active_floor->maps + exit->to_map;
+  map.hero_direction = exit->heading;
+  set_hero_position(exit->to_col, exit->to_row);
+  refresh_map_screen();
+  map_fade_in(MAP_STATE_EXIT_LOADED);
+  lcd_on();
+}
+
+/**
+ * Handles state updates when the player moves into an exit tile.
+ * @return `true` if default move behavior should be prevented.
+ */
+bool handle_exit(void) {
+  uint8_t x = map.x + HERO_X_OFFSET;
+  uint8_t y = map.y + HERO_Y_OFFSET;
+
+  Exit *exit = map.active_floor->exits;
+  for (uint8_t k = 0; k < map.active_floor->num_exits; k++, exit++) {
+    if (exit->map_id != map.active_map->id)
+      continue;
+    if (exit->col != x || exit->row != y)
+      continue;
+
+    *debug++ = 0xAC;
+    *debug++ = 0xDC;
+
+    map.active_exit = exit;
+    map_fade_out(MAP_STATE_LOAD_EXIT);
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -377,6 +441,25 @@ void update_map_move(void) {
   map.state = MAP_STATE_WAITING;
   map.hero_state = HERO_STILL;
 
+  // if (on_move())
+  //   return;
+
+  MapTile *here = map.local_tiles + HERE;
+
+  switch (here->map_attr) {
+  case MAP_EXIT:
+    // if (on_exit())
+    //   return;
+    if (handle_exit())
+      return;
+    break;
+  // case MAP_SPECIAL:
+  //   if (on_special())
+  //     return;
+  //   break;
+  default:
+  }
+
   check_map_move();
 }
 
@@ -401,7 +484,7 @@ void initialize_world_map(void) {
   textbox.init();
 
   init_hero();
-  reset_map_screen();
+  refresh_map_screen();
   update_local_tiles();
 
   lcd_on();
@@ -413,13 +496,11 @@ void init_world_map(void) NONBANKED {
   map.state = MAP_STATE_WAITING;
 }
 
-void return_from_battle(void) NONBANKED {
-  SWITCH_ROM(MAP_SYSTEM_BANK);
-  initialize_world_map();
+void return_from_battle(void) BANKED {
+  // SWITCH_ROM(MAP_SYSTEM_BANK); initialize_world_map();
   // TODO Handle fade out/in
   // map.state = MAP_STATE_WAITING;
 }
-
 
 void update_world_map(void) {
   switch (map.state) {
@@ -428,6 +509,23 @@ void update_world_map(void) {
     break;
   case MAP_STATE_MOVING:
     update_map_move();
+    break;
+  case MAP_STATE_FADE_OUT:
+    if (fade_update()) {
+      map.state = map.fade_to_state;
+    }
+    break;
+  case MAP_STATE_FADE_IN:
+    if (fade_update()) {
+      toggle_sprites();
+      map.state = map.fade_to_state;
+    }
+    break;
+  case MAP_STATE_LOAD_EXIT:
+    load_exit();
+    break;
+  case MAP_STATE_EXIT_LOADED:
+    start_move(map.active_exit->heading);
     break;
   }
 
@@ -441,64 +539,11 @@ void draw_world_map(void) {
 // BEGIN OLD CODE
 //------------------------------------------------------------------------------
 
-// /**
-//  * Stops map movement, turns off sprites, and begins fading the screen out.
-//  */
-// void map_fade_out(void) {
-//   stop_map_move();
-//   toggle_sprites();
-//   fade_out();
-// }
-
-// /**
-//  * Handle state updates when a player lands on an exit tile. Currently the area
-//  * structure defines a list of exits for all maps, if this function doesn't find
-//  * an exit at the given position in the current map then nothing happens and the
-//  * tile is treated as if it were simply a "ground" tile.
-//  *
-//  * @return `true` If an exit was found and a transition has been initiated.
-//  */
-// bool handle_exit(void) {
-//   MapTileAttribute a = get_tile_attribute();
-//   if (a != MAP_EXIT)
-//     return false;
-//   for (uint8_t k = 0; k < active_area->num_exits; k++) {
-//     Exit *x = &active_area->exits[k];
-//     if (x->map_id != active_map->id) continue;
-//     if (x->col != map_col) continue;
-//     if (x->row != map_row) continue;
-//     active_exit = x;
-//     map_fade_out();
-//     map_state = MAP_STATE_FADE_OUT;
-//     // TODO Add player "exiting" animation based on exit type
-//     // TODO Handle exits in the same map
-//     // TODO Handle area spanning exis
-//     // TODO Gracefully handle map sprites
-//     return true;
-//   }
-//   return false;
+// void start_battle(void) {
+//   map_fade_out(MAP_STATE_START_BATTLE);
 // }
 
 
-//   // Map move complete
-//   on_move();
-
-//   // Note: map state changes based on attribute must return from this switch
-//   //       otherwise the state will be overwritten by `check_move` below.
-//   switch (get_tile_attribute()) {
-//   case MAP_EXIT:
-//     if (on_exit() || handle_exit())
-//       return;
-//     break;
-//   case MAP_SPECIAL:
-//     if (on_special())
-//       return;
-//     break;
-//   default:
-//   }
-//   // Immediately check for d-pad input to allow continuous movement.
-//   check_move();
-// }
 
 // /**
 //  * Determines if a player is attempting to open a chest and handles the logic

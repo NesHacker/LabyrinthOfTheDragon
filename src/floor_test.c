@@ -7,25 +7,20 @@
 //------------------------------------------------------------------------------
 
 #define FLOOR_TEST_ID 99
-#define FLOOR_TEST_DEFAULT_X 14
-#define FLOOR_TEST_DEFAULT_Y 14
+#define FLOOR_TEST_DEFAULT_X 8
+#define FLOOR_TEST_DEFAULT_Y 3
 #define FLOOR_TEST_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
 // Maps
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_MAPS 1
-
-// const Map area0_maps[] = {
-//   // id, bank, data
-//   { MAP_FLOOR1, 8, map_example_0 },
-//   { MAP_FLOOR2, 8, map_example_1 }
-// };
+#define FLOOR_TEST_NUM_MAPS 2
 
 const Map floor_test_maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_9, floor_test_data, 32, 32 }
+  { MAP_A, BANK_9, floor_test_data, 32, 32 },
+  { MAP_B, BANK_9, floor_test_mini, 8, 8 },
 };
 
 //------------------------------------------------------------------------------
@@ -83,7 +78,7 @@ typedef enum FLOOR_TEST_Chests {
 const Chest floor_test_chests[] = {
   /*
   {
-    CFLOOR_TEST_CHEST_0,  // id (use the enum above to define these)
+    FLOOR_TEST_CHEST_0,   // id (use the enum above to define these)
     MAP_A,                // Map where the chest is at
     0, 0,                 // Column & row in that map
     FLAGS_CHEST_OPEN,     // Global flag page for the open/closed flag.
@@ -97,7 +92,7 @@ const Chest floor_test_chests[] = {
 // Exits
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_EXITS 0
+#define FLOOR_TEST_NUM_EXITS 4
 
 const Exit floor_test_exits[] = {
   /*
@@ -111,7 +106,12 @@ const Exit floor_test_exits[] = {
     EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
   },
   */
-  { 0 }, // Remove me when you add your first chest (pointers amirite?)
+
+ { MAP_A, 8, 1, MAP_B, 4, 1, DOWN, EXIT_STAIRS },
+ { MAP_B, 4, 1, MAP_A, 8, 1, DOWN, EXIT_STAIRS },
+
+ { MAP_A, 25, 27, MAP_B, 4, 5, DOWN, EXIT_STAIRS },
+ { MAP_B, 4, 5, MAP_A, 25, 27, DOWN, EXIT_STAIRS },
 };
 
 //------------------------------------------------------------------------------

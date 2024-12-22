@@ -7,3 +7,4 @@
 #include <gbdk/incbin.h>
 
 INCBIN(floor_test_data, "res/maps/floor_test_data.tilemap")
+INCBIN(floor_test_mini, "res/maps/floor_test_mini.tilemap")

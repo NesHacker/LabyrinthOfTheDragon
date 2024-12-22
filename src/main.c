@@ -91,6 +91,10 @@ inline void update_joypad(void) {
  * joypad state updates.
  */
 void main(void) {
+  // TODO Send to "YOU NEED GBC screen if not"
+  if (_cpu == CGB_TYPE)
+    cpu_fast();
+
   lcd_off();
   LCDC_REG = LCDCF_OFF
     | LCDCF_OBJON
