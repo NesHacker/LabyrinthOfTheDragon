@@ -15,12 +15,13 @@
 // Maps
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_MAPS 2
+#define FLOOR_TEST_NUM_MAPS 3
 
 const Map floor_test_maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_9, floor_test_data, 32, 32 },
   { MAP_B, BANK_9, floor_test_mini, 8, 8 },
+  { MAP_C, BANK_9, floor_test_17x12, 17, 12 },
 };
 
 //------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ const Chest floor_test_chests[] = {
 // Exits
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_EXITS 4
+#define FLOOR_TEST_NUM_EXITS 6
 
 const Exit floor_test_exits[] = {
   /*
@@ -112,6 +113,9 @@ const Exit floor_test_exits[] = {
 
  { MAP_A, 25, 27, MAP_B, 4, 5, DOWN, EXIT_STAIRS },
  { MAP_B, 4, 5, MAP_A, 25, 27, DOWN, EXIT_STAIRS },
+
+ { MAP_A, 9, 27, MAP_C, 3, 3, DOWN, EXIT_STAIRS },
+ { MAP_C, 3, 3, MAP_A, 9, 27, DOWN, EXIT_STAIRS },
 };
 
 //------------------------------------------------------------------------------
