@@ -463,6 +463,72 @@ void update_map_move(void) {
   check_map_move();
 }
 
+/**
+ * Checks signs at the current location and opens the message if one is found.
+ * @return `true` if a sign was found and is being opened.
+ */
+bool check_signs(void) {
+  uint8_t x = map.x + HERO_X_OFFSET;
+  uint8_t y = map.y + HERO_Y_OFFSET;
+
+  Sign *sign = map.active_floor->signs;
+  for (uint8_t k = 0; k < map.active_floor->num_signs; k++, sign++) {
+    if (sign->map_id != map.active_map->id)
+      continue;
+
+    if (sign->facing == HERE)
+      continue;
+
+    if (map.hero_direction != sign->facing)
+      continue;
+
+    uint8_t hero_x, hero_y;
+    switch (sign->facing) {
+    case UP:
+      hero_x = sign->col;
+      hero_y = sign->row + 1;
+      break;
+    case DOWN:
+      hero_x = sign->col;
+      hero_y = sign->row - 1;
+      break;
+    case LEFT:
+      hero_x = sign->col - 1;
+      hero_y = sign->row;
+      break;
+    default:
+      hero_x = sign->col + 1;
+      hero_y = sign->row;
+      break;
+    }
+
+    if (x != hero_x || y != hero_y)
+      continue;
+
+    map_textbox(sign->message);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Checks to see if the player is attempting to perform an action by pressing
+ * the A button.
+ * @return `true` if an action was attempted.
+ */
+bool check_action(void) {
+  if (was_pressed(J_A)) {
+    if (on_action())
+      return true;
+    if (check_signs())
+      return true;
+    // if (check_chests())
+    //   return;
+    return true;
+  }
+  return false;
+}
+
 void set_active_floor(Floor *floor) BANKED {
   map.active_floor = floor;
   map.active_map = &floor->maps[floor->default_map];
@@ -512,15 +578,20 @@ void update_world_map(void) NONBANKED {
   case MAP_STATE_INACTIVE:
     return;
   case MAP_STATE_WAITING:
-    check_map_move();
+    if (!check_action())
+      check_map_move();
     break;
   case MAP_STATE_MOVING:
     update_map_move();
     break;
+  case MAP_STATE_TEXTBOX:
+    textbox.update();
+    if (textbox.state == TEXT_BOX_CLOSED)
+      map.state = MAP_STATE_WAITING;
+    break;
   case MAP_STATE_FADE_OUT:
-    if (fade_update()) {
+    if (fade_update())
       map.state = map.fade_to_state;
-    }
     break;
   case MAP_STATE_FADE_IN:
     if (fade_update()) {
@@ -574,20 +645,6 @@ void draw_world_map(void) {
 //     }
 //     return;
 //   }
-// }
-
-// /**
-//  * Checks to see if the player is attempting to perform an action by pressing
-//  * the A button.
-//  * @return `true` if an action was attempted.
-//  */
-// bool check_action(void) {
-//   if (was_pressed(J_A)) {
-//     check_chests();
-//     on_action();
-//     return true;
-//   }
-//   return false;
 // }
 
 // void start_battle(void) {

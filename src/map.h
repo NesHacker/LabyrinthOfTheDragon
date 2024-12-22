@@ -143,32 +143,6 @@ typedef enum MapState {
 } MapState;
 
 /**
- * Enumeration of all types of map exit tiles.
- */
-typedef enum ExitType {
-  /**
-   * Normal doorway exit.
-   */
-  EXIT_DOOR,
-  /**
-   * Stairs exit (down or up).
-   */
-  EXIT_STAIRS,
-  /**
-   * A hole in the ground (fall down).
-   */
-  EXIT_HOLE,
-  /**
-   * A wall ladder (down or up).
-   */
-  EXIT_LADDER,
-  /**
-   * A magical portal.
-   */
-  EXIT_PORTAL,
-} ExitType;
-
-/**
  * Holds the bank and data pointer for a map page.
  */
 typedef struct Map {
@@ -193,6 +167,32 @@ typedef struct Map {
    */
   uint8_t height;
 } Map;
+
+/**
+ * Enumeration of all types of map exit tiles.
+ */
+typedef enum ExitType {
+  /**
+   * Normal doorway exit.
+   */
+  EXIT_DOOR,
+  /**
+   * Stairs exit (down or up).
+   */
+  EXIT_STAIRS,
+  /**
+   * A hole in the ground (fall down).
+   */
+  EXIT_HOLE,
+  /**
+   * A wall ladder (down or up).
+   */
+  EXIT_LADDER,
+  /**
+   * A magical portal.
+   */
+  EXIT_PORTAL,
+} ExitType;
 
 /**
  * Represents a map exit and provides information about the destination for the
@@ -232,6 +232,33 @@ typedef struct Exit {
    */
   ExitType exit;
 } Exit;
+
+/**
+ * Easy way to add a informative "sign" to open the text box and send the user
+ * a message. Can be used on any tile.
+ */
+typedef struct Sign {
+  /**
+   * Map id where the sign resides.
+   */
+  uint8_t map_id;
+  /**
+   * Column for the chest.
+   */
+  uint8_t col;
+  /**
+   * Row for the chest.
+   */
+  uint8_t row;
+  /**
+   * Direction the player must be facing to read the sign.
+   */
+  Direction facing;
+  /**
+   * Message to display for the sign.
+   */
+  const char *message;
+} Sign;
 
 /**
  * Data representation of a treasure chest in an area. Chests can be placed at
@@ -305,19 +332,19 @@ typedef struct Floor {
    */
   const palette_color_t *palettes;
   /**
-   * Number of pages in the map.
+   * Number of maps.
    */
   uint8_t num_maps;
   /**
-   * List of all pages for the map.
+   * List of all maps for the floor.
    */
   const Map *maps;
   /**
-   * Number of exit entries for the area.
+   * Number of exit entries for the floor.
    */
   uint8_t num_exits;
   /**
-   * List of exits for all pages on the map.
+   * List of exits for all pages on the floor.
    */
   const Exit *exits;
   /**
@@ -325,9 +352,17 @@ typedef struct Floor {
    */
   uint8_t num_chests;
   /**
-   * Array of treasure chests for the area.
+   * Array of treasure chests for the floor.
    */
   const Chest *chests;
+  /**
+   * Number of signs for the floor.
+   */
+  uint8_t num_signs;
+  /**
+   * Signs for the floor.
+   */
+  const Sign *signs;
   /**
    * Called when the map is initialized by the game engine.
    */
@@ -341,21 +376,19 @@ typedef struct Floor {
    */
   const void (*on_draw)(void);
   /**
-   * Called when the player interacts by pressing the "A" button while in the
-   * area.
-   * @param map_id Id of the currently loaded map.
-   * @param col Current column for the player.
-   * @param row Current row for the player.
+   * Called when the player interacts by pressing the "A" button.
+   * @return `true` to prevent the default action behavior.
    */
-  const void (*on_action)(void);
+  const bool (*on_action)(void);
   /**
    * Called before a chest is opened.
-   * @param chest_id Id of the chest being opened.
+   * @param chest The chest being opened.
    * @return `true` if the default behavior for chest should be overriden.
    */
   const bool (*before_chest)(Chest *chest);
   /**
    * Called after a chest has been opened.
+   * @param chest The chest that was opened.
    */
   const void (*on_chest)(Chest *chest);
   /**
@@ -633,9 +666,10 @@ inline void on_draw(void) {
 /**
  * Executes the active area's `on_action` callback if one is set.
  */
-inline void on_action(void) {
+inline bool on_action(void) {
   if (map.active_floor->on_action)
-    map.active_floor->on_action();
+    return map.active_floor->on_action();
+  return false;
 }
 
 /**

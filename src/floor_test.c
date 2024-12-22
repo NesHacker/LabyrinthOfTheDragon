@@ -115,6 +115,25 @@ const Exit floor_test_exits[] = {
 };
 
 //------------------------------------------------------------------------------
+// Exits
+//------------------------------------------------------------------------------
+
+#define FLOOR_TEST_NUM_SIGNS 2
+
+const Sign floor_test_signs[] = {
+  /*
+  {
+    MAP_A,      // Id of the map
+    0, 0,       // Position in the map for the sign
+    UP,         // Direction the player must be facing
+    "Hi there!" // The message to display
+  }
+  */
+ { MAP_A, 4, 1, UP, "This skull\x60\nIs so metal." },
+ { MAP_A, 7, 1, UP, "A pair of glowing\neyes peers back\x60" }
+};
+
+//------------------------------------------------------------------------------
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
@@ -127,7 +146,8 @@ void floor_test_on_update(void) {
 void floor_test_on_draw(void) {
 }
 
-void floor_test_on_action(void) {
+bool floor_test_on_action(void) {
+  return false;
 }
 
 bool floor_test_before_chest(Chest *chest) {
@@ -185,6 +205,7 @@ const Floor floor_test = {
   FLOOR_TEST_NUM_MAPS, floor_test_maps,       // # of maps, maps
   FLOOR_TEST_NUM_EXITS, floor_test_exits,     // # of exits, exits
   FLOOR_TEST_NUM_CHESTS, floor_test_chests,   // # of chests, chests
+  FLOOR_TEST_NUM_SIGNS, floor_test_signs,     // # signs, signs
   floor_test_on_init,
   floor_test_on_update,
   floor_test_on_draw,
