@@ -541,4 +541,9 @@ typedef struct Core {
  */
 extern const Core core;
 
+/**
+ * Map tile lookup. Used by map code but placed in bank 0 for flexible access.
+ */
+extern const uint8_t map_tile_lookup[];
+
 #endif
