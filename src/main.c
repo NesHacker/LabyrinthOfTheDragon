@@ -32,9 +32,10 @@ inline void initialize(void) {
   ENABLE_RAM;
   initarand(RANDOM_SEED);
   hide_window();
-  initialize_game();
+  // initialize_game();
   // test_combat_general(MONSTER_LAYOUT_1, DUMMY_NORMAL);
   // test_flee();
+  test_big_map();
 }
 
 /**

@@ -89,6 +89,15 @@ void fill_inventory(uint8_t amt) {
     item->quantity = amt;
 }
 
+// TODO temp
+void init_world_map_new(void) NONBANKED;
+
+void test_big_map(void) {
+  init_test_player(20);
+  init_world_map_new();
+  game_state = GAME_STATE_WORLD_MAP;
+}
+
 void test_combat_general(MonsterLayout layout, TestDummyType type) {
   init_test_player(20);
   fill_inventory(3);

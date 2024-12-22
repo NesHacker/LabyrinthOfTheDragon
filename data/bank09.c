@@ -5,3 +5,5 @@
 
 #include <gb/gb.h>
 #include <gbdk/incbin.h>
+
+INCBIN(floor_test_data, "res/maps/floor_test_data.tilemap")

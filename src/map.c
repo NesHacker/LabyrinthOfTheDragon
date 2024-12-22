@@ -8,7 +8,9 @@
 
 #include "battle.h"
 #include "core.h"
+#include "floors.h"
 #include "map.h"
+
 
 Area *active_area;
 Map *active_map;
@@ -37,7 +39,6 @@ uint8_t hero_y = 0 + 16;
 Timer walk_timer;
 uint8_t walk_frame;
 
-// TODO This is in core right now, perhaps pull data loading out into a factory?
 extern const uint8_t map_tile_lookup[];
 
 void init_hero(void) {
@@ -47,7 +48,6 @@ void init_hero(void) {
   const uint8_t offset = 0x00;
   const uint8_t frame = (walk_frame << 1) + offset;
 
-  // TODO Load the sprites and palettes based on player model
   core.load_hero_tiles(1);
   const uint16_t hpal[4] = {
     RGB(0, 0, 0),
@@ -190,14 +190,8 @@ void update_map_positions(void) {
   }
 }
 
-
 void load_area_graphics(Area *a) {
-  // TODO this is a data loader, refactor into core Area data service
-  // Load tilesets and palettes
   VBK_REG = VBK_BANK_0;
-
-  // TODO Area tilesets need a revamp now called "Environments" and you can
-  //      load up to 3 at a time.
   core.load_tileset(a->tileset, VRAM_BG_TILES);
   core.load_object_tiles();
   core.load_bg_palette(a->palettes, 0, 4);
@@ -251,14 +245,12 @@ inline void load_map_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
   *map_attr = data >> 6;
 }
 
-
 /**
  * Gets the active area map at the given index id.
  * @param id Id of the map to get.
  * @return The map with the given id.
  */
 Map *get_map(uint8_t id) {
-  // TODO This is a data loader, refactor into a core data service
   return active_area->maps + id;
 }
 
@@ -266,8 +258,7 @@ Map *get_map(uint8_t id) {
  * Loads a map in the current area with the given map_id.
  * @param map_id Id of the map to load.
  */
-void load_map(Map *map) NONBANKED {
-  // TODO This is a data loader, refactor into a core data service
+void load_map_old(Map *map) {
   active_map = map;
 
   uint8_t *vram = VRAM_BACKGROUND;
@@ -397,7 +388,7 @@ bool handle_exit(void) {
 /**
  * Updates map state while the character is moving.
  */
-void update_map_move(void) {
+void update_map_move_old(void) {
   // Move the map one pixel in the move direction
   switch (map_move_direction) {
   case UP:
@@ -514,7 +505,7 @@ void return_from_battle(void) NONBANKED {
   init_hero();
   load_area_graphics(active_area);
   on_init();
-  load_map(active_map);
+  load_map_old(active_map);
   set_map_xy_from_col_row();
 
   // TODO It is weird these are decoupled. Is there a reason?
@@ -527,6 +518,38 @@ void return_from_battle(void) NONBANKED {
 
   lcd_on();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------
+// END NEW CODE
+//------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void init_world_map(Area *area) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
@@ -541,14 +564,373 @@ void init_world_map(Area *area) NONBANKED {
   init_hero();
   load_area_graphics(active_area);
   on_init();
-  load_map(get_map(0));
+  load_map_old(get_map(0));
 
   map_state = MAP_STATE_WAITING;
 
   lcd_on();
 }
 
-void update_world_map(void) NONBANKED {
+// inline void load_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
+//   // TODO This is a data loader, refactor into a core data service
+//   uint8_t data = *map_data;
+//   uint8_t attr = *(map_data + 1);
+//   uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
+
+//   // Set tilemap attributes
+//   VBK_REG = VBK_ATTRIBUTES;
+//   *vram = attr;
+//   *(vram + 1) = attr;
+//   *(vram + 0x20) = attr;
+//   *(vram + 0x20 + 1) = attr;
+
+//   // Set tile from data
+//   VBK_REG = VBK_TILES;
+//   *vram = tile;
+//   *(vram + 0x20) = tile + 16;
+//   *(vram + 1) = tile + 1;
+//   *(vram + 0x20 + 1) = tile + 16 + 1;
+
+//   // Load the tile type into main memory
+//   *map_attr = data >> 6;
+// }
+
+typedef struct MapTile {
+  bool blank;
+  uint8_t tile;
+  uint8_t attr;
+  uint8_t map_attr;
+} MapTile;
+
+typedef struct MapData {
+  uint8_t bank;
+  uint8_t *data;
+  int8_t width;
+  int8_t height;
+} MapData;
+
+#define MAP_HORIZ_LOADS 12
+#define MAP_VERT_LOADS 11
+
+typedef struct MapSystem {
+  // Global State
+  MapState state;
+
+  // Map position
+  int8_t x;
+  int8_t y;
+
+  // Movement
+  int8_t scroll_x;
+  int8_t scroll_y;
+  Direction move_direction;
+  uint8_t move_step;
+
+  // Progressive load
+  int8_t vram_x;
+  int8_t vram_y;
+  MapTile tile_buf[2 * MAP_HORIZ_LOADS];
+  uint8_t buffer_pos;
+  uint8_t buffer_max;
+  int8_t vram_col;
+  int8_t vram_row;
+  int8_t vram_d_col;
+  int8_t vram_d_row;
+
+  // Map data
+  uint8_t bank;
+  uint8_t *data;
+  int8_t width;
+  int8_t height;
+} MapSystem;
+
+MapSystem map = { MAP_STATE_WAITING };
+
+
+void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
+  if (x < 0 || y < 0 || x >= map.width || y >= map.height) {
+    tile->blank = true;
+    return;
+  }
+
+  uint8_t _prev_bank = _current_bank;
+  SWITCH_ROM(map.bank);
+  const uint16_t offset = (uint16_t)(2 * (x + y * map.width));
+  const uint8_t *data = map.data + offset;
+  const uint8_t t = *data++;
+  const uint8_t a = *data;
+  SWITCH_ROM(_prev_bank);
+
+  tile->blank = false;
+  tile->tile = map_tile_lookup[t & MAP_TILE_MASK];
+  tile->attr = a;
+  tile->map_attr = t >> 6;
+}
+
+
+void move_buffer(int8_t dx, int8_t dy) {
+  // Reset the buffer position
+  MapTile *tile_buf = map.tile_buf;
+  map.buffer_pos = 0;
+
+  // Update world coordinates
+  map.x += dx;
+  map.y += dy;
+
+  // Update VRAM origin
+  map.vram_x += 2 * dx;
+  if (map.vram_x < 0)
+    map.vram_x += 32;
+  else if (map.vram_x >= 32)
+    map.vram_x -= 32;
+
+  map.vram_y += 2 * dy;
+  if (map.vram_y < 0)
+    map.vram_y += 32;
+  else if (map.vram_y >= 32)
+    map.vram_y -= 32;
+
+  // Load data into buffer
+  if (dy != 0) {
+    map.buffer_max = MAP_HORIZ_LOADS;
+    map.vram_d_col = 2;
+    map.vram_d_row = 0;
+
+    const int8_t vram_offset = dy < 0 ? 0 : 0x14;
+    map.vram_col = map.vram_x;
+    map.vram_row = map.vram_y + vram_offset;
+    if (map.vram_row >= 0x20)
+      map.vram_row -= 0x20;
+
+    const int8_t map_offset = dy < 0 ? 0 : 10;
+    for (int8_t x = map.x - 1; x < map.x + MAP_HORIZ_LOADS; x++, tile_buf++)
+      get_map_tile(tile_buf, x, map.y - 1 + map_offset);
+  } else if (dx != 0) {
+    map.buffer_max = MAP_VERT_LOADS;
+    map.vram_d_col = 0;
+    map.vram_d_row = 2;
+
+    const int8_t vram_offset = dx < 0 ? 0 : 0x16;
+    map.vram_col = map.vram_x + vram_offset;
+    if (map.vram_col >= 0x20)
+      map.vram_col -= 0x20;
+    map.vram_row = map.vram_y;
+
+    const int8_t map_offset = dx < 0 ? -1 : 10;
+    for (int8_t y = map.y - 1; y < map.y + MAP_VERT_LOADS; y++, tile_buf++)
+      get_map_tile(tile_buf, map.x + map_offset, y);
+  }
+}
+
+void load_tile_buffer(void) {
+  MapTile *tile_buf = map.tile_buf;
+  map.buffer_pos = 0;
+
+  switch (map.move_direction) {
+  case UP:
+    move_buffer(0, -1);
+    break;
+  case DOWN:
+    move_buffer(0, 1);
+    break;
+  case LEFT:
+    move_buffer(-1, 0);
+    break;
+  case RIGHT:
+    move_buffer(1, 0);
+    break;
+  }
+}
+
+void draw_map_tile(uint8_t *vram, MapTile *map_tile) {
+  const uint8_t tile = map_tile->blank ? 0 : map_tile->tile;
+  const uint8_t attr = map_tile->blank ? 0 :  map_tile->attr;
+
+  // Set tilemap attributes
+  VBK_REG = VBK_ATTRIBUTES;
+  *vram = attr;
+  *(vram + 1) = attr;
+  *(vram + 0x20) = attr;
+  *(vram + 0x20 + 1) = attr;
+
+  // Set tile from data
+  VBK_REG = VBK_TILES;
+  *vram = tile;
+  *(vram + 0x20) = tile + 16;
+  *(vram + 1) = tile + 1;
+  *(vram + 0x20 + 1) = tile + 16 + 1;
+}
+
+void draw_initial_map_screen(void) {
+  uint8_t *vram = VRAM_BACKGROUND;
+  MapTile tile;
+
+  const int8_t screen_tiles_x = 10;
+  const int8_t screen_tiles_y = 9;
+
+  for (int8_t y = map.y - 1; y < map.y + screen_tiles_y + 1; y++) {
+    for (int8_t x = map.x - 1; x < map.x + screen_tiles_x + 1; x++) {
+      get_map_tile(&tile, x, y);
+      draw_map_tile(vram, &tile);
+      vram += 2;
+    }
+    vram += 32 + (32 - MAP_HORIZ_LOADS * 2);
+  }
+
+  map.scroll_x = 16;
+  map.scroll_y = 16;
+  map.vram_x = 0;
+  map.vram_y = 0;
+  move_bkg(map.scroll_x, map.scroll_y);
+}
+
+void start_move(Direction d) {
+  map.move_direction = d;
+  map.move_step = 0;
+  map.state = MAP_STATE_MOVING;
+  load_tile_buffer();
+}
+
+void update_map_move(void) {
+  switch (map.move_direction) {
+  case UP:
+    map.scroll_y--;
+    break;
+  case DOWN:
+    map.scroll_y++;
+    break;
+  case LEFT:
+    map.scroll_x--;
+    break;
+  case RIGHT:
+    map.scroll_x++;
+    break;
+  }
+
+  if (map.buffer_pos < map.buffer_max) {
+    MapTile *tile = map.tile_buf + map.buffer_pos;
+    uint8_t *vram = VRAM_BACKGROUND_XY(map.vram_col, map.vram_row);
+    draw_map_tile(vram, tile);
+
+    map.buffer_pos++;
+
+    map.vram_col += map.vram_d_col;
+    if (map.vram_col >= 32)
+      map.vram_col -= 32;
+    map.vram_row += map.vram_d_row;
+    if (map.vram_row >= 32)
+      map.vram_row -= 32;
+  }
+
+  move_bkg(map.scroll_x, map.scroll_y);
+
+  // Move complete
+  if (++map.move_step == 16) {
+    map.state = MAP_STATE_WAITING;
+    return;
+  }
+}
+
+void initialize_world_map(void) {
+  lcd_off();
+
+  // TODO: Remove at some point, just for debug
+  MapTile *tile = map.tile_buf;
+  for (uint8_t k = 0; k < MAP_HORIZ_LOADS; k++, tile++) {
+    tile->tile = 0xCC;
+    tile->attr = 0xDD;
+    tile->blank = 0xEE;
+    tile->map_attr = 0xFF;
+  }
+
+  map.bank = 9;
+  map.data = floor_test_data;
+  map.width = 32;
+  map.height = 32;
+  map.x = 0;
+  map.y = 0;
+  draw_initial_map_screen();
+
+  textbox.init();
+  core.load_font();
+  text_writer.auto_page = AUTO_PAGE_OFF;
+
+  // TODO Fix me
+  VBK_REG = VBK_BANK_0;
+  core.load_tileset(&dungeon_tileset, VRAM_BG_TILES);
+  core.load_object_tiles();
+  core.load_bg_palette(area0.palettes, 0, 4);
+  toggle_sprites();
+  active_area = &area0;
+  active_map = area0.maps;
+  init_hero();
+  // load_map(get_map(0));
+
+  // on_init();
+  map_state = MAP_STATE_WAITING;
+
+  lcd_on();
+}
+
+void init_world_map_new(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
+  initialize_world_map();
+}
+
+
+void update_world_map(void) {
+  switch (map.state) {
+  case MAP_STATE_WAITING:
+    if (was_pressed(J_UP))
+      start_move(UP);
+    else if (was_pressed(J_DOWN))
+      start_move(DOWN);
+    else if (was_pressed(J_LEFT))
+      start_move(LEFT);
+    else if (was_pressed(J_RIGHT))
+      start_move(RIGHT);
+    break;
+  case MAP_STATE_MOVING:
+    update_map_move();
+    break;
+  }
+}
+
+void draw_world_map(void) {
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------
+// END NEW CODE
+//------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void update_world_map_old(void) {
   if (
     map_state == MAP_STATE_START_BATTLE ||
     map_state == MAP_STATE_INACTIVE
@@ -572,7 +954,7 @@ void update_world_map(void) NONBANKED {
   on_update();
 }
 
-void draw_world_map(void) NONBANKED {
+void draw_world_map_old(void) {
   if (map_state == MAP_STATE_INACTIVE)
     return;
 
@@ -598,7 +980,7 @@ void draw_world_map(void) NONBANKED {
     break;
   case MAP_STATE_LOAD:
     lcd_off();
-    load_map(get_map(active_exit->to_map));
+    load_map_old(get_map(active_exit->to_map));
     map_col = active_exit->to_col;
     map_row = active_exit->to_row;
     hero_direction = active_exit->heading;
