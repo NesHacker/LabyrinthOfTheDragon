@@ -1,6 +1,6 @@
 #pragma bank 2
 
-#include "floors.h"
+#include "floor.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -10,12 +10,15 @@
 #define FLOOR_TEST_START_COL 0
 #define FLOOR_TEST_START_ROW 0
 
+//------------------------------------------------------------------------------
+// Maps
+//------------------------------------------------------------------------------
+
+#define FLOOR_TEST_NUM_MAPS 1
+
 const Map floor_test_maps[] = {
-  // id, bank, map data
-  { MAP_A, 8, NULL },
-  { MAP_B, 8, NULL },
-  { MAP_C, 8, NULL },
-  { MAP_D, 8, NULL },
+  // id, bank, data, width, height
+  { MAP_A, BANK_9, floor_test_data, 32, 32 },
 };
 
 //------------------------------------------------------------------------------
@@ -132,14 +135,13 @@ bool floor_test_on_move(void) {
 // Area Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
 const Area floor_test = {
-  FLOOR_TEST_ID,                   // Id
-  FLOOR_TEST_START_COL, FLOOR_TEST_START_ROW,
-  &dungeon_tileset,
-  floor_test_palettes,            // Palettes (always 4 palettes / area)
-  4, floor_test_maps,             // # of maps, maps
-  FLOOR_TEST_NUM_EXITS, floor_test_exits,    // # of exits, exits
-  FLOOR_TEST_NUM_CHESTS, floor_test_chests,  // # of chests, chests
-  2,
+  FLOOR_TEST_ID,                              // Id
+  FLOOR_TEST_START_COL, FLOOR_TEST_START_ROW, // Starting Col, Row
+  floor_test_palettes,                        // Palettes
+  FLOOR_TEST_NUM_MAPS, floor_test_maps,       // # of maps, maps
+  FLOOR_TEST_NUM_EXITS, floor_test_exits,     // # of exits, exits
+  FLOOR_TEST_NUM_CHESTS, floor_test_chests,   // # of chests, chests
+  BANK_2,
   floor_test_on_init,
   floor_test_on_update,
   floor_test_on_draw,

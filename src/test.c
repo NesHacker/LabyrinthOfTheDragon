@@ -89,12 +89,14 @@ void fill_inventory(uint8_t amt) {
     item->quantity = amt;
 }
 
-// TODO temp
-void init_world_map_new(void) NONBANKED;
+const Map big_map = { 1, 9, floor_test_data, 32, 32 };
 
 void test_big_map(void) {
+  set_map_position(1, 3);
+  set_active_map(&big_map);
+
   init_test_player(20);
-  init_world_map_new();
+  init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
 
@@ -109,7 +111,7 @@ void test_combat_general(MonsterLayout layout, TestDummyType type) {
 
 void test_flee(void) {
   init_test_player(20);
-  init_world_map(&area0);
+  init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 
   // update_world_map();

@@ -21,7 +21,7 @@ uint8_t joypad_released;
  */
 void initialize_game(void) {
   init_player(CLASS_DRUID);
-  init_world_map(&area0);
+  init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
 

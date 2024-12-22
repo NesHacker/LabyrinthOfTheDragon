@@ -1,5 +1,5 @@
-#ifndef _LEVELS_H
-#define _LEVELS_H
+#ifndef _FLOOR_H
+#define _FLOOR_H
 
 #include "core.h"
 #include "map.h"

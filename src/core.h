@@ -10,6 +10,30 @@
 #include "palette.h"
 
 /**
+ * Enumeration of all available ROM banks for the game. Use these instead of
+ * numbers to make it easier to understand constant data (map data, tilesets,
+ * etc.).
+ */
+typedef enum GameRomBank {
+  BANK_0,
+  BANK_1,
+  BANK_2,
+  BANK_3,
+  BANK_4,
+  BANK_5,
+  BANK_6,
+  BANK_7,
+  BANK_8,
+  BANK_9,
+  BANK_10,
+  BANK_11,
+  BANK_12,
+  BANK_13,
+  BANK_14,
+  BANK_15,
+} GameRomBank;
+
+/**
  * Tile offset where the font tiles begin.
  */
 #define FONT_OFFSET 0x80
@@ -354,7 +378,7 @@ typedef struct Tileset {
   /**
    * Bank on which the tileset resides.
    */
-  const uint8_t bank;
+  const GameRomBank bank;
   /**
    * Pointer to the data for the tileset.
    */
@@ -398,7 +422,7 @@ typedef struct Tilemap {
   /**
    * Bank where the data resides.
    */
-  const uint8_t bank;
+  const GameRomBank bank;
   /**
    * Data for the tilemap.
    */
@@ -506,6 +530,10 @@ typedef struct Core {
    */
   const void (*fill)(
     uint8_t *vram, uint8_t w, uint8_t h, uint8_t tile, uint8_t attr);
+  /**
+   * Loads the dungeon tileset.
+   */
+  const void (*load_dungeon_tiles)(void);
 } Core;
 
 /**

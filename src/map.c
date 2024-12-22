@@ -8,9 +8,8 @@
 
 #include "battle.h"
 #include "core.h"
-#include "floors.h"
+#include "floor.h"
 #include "map.h"
-
 
 Area *active_area;
 Map *active_map;
@@ -192,7 +191,7 @@ void update_map_positions(void) {
 
 void load_area_graphics(Area *a) {
   VBK_REG = VBK_BANK_0;
-  core.load_tileset(a->tileset, VRAM_BG_TILES);
+  // core.load_tileset(a->tileset, VRAM_BG_TILES);
   core.load_object_tiles();
   core.load_bg_palette(a->palettes, 0, 4);
 }
@@ -519,39 +518,7 @@ void return_from_battle(void) NONBANKED {
   lcd_on();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------------------------------------------------------------------
-// END NEW CODE
-//------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void init_world_map(Area *area) NONBANKED {
+void init_world_map_old(Area *area) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   lcd_off();
 
@@ -571,92 +538,52 @@ void init_world_map(Area *area) NONBANKED {
   lcd_on();
 }
 
-// inline void load_tile(uint8_t *map_data, uint8_t *vram, uint8_t *map_attr) {
-//   // TODO This is a data loader, refactor into a core data service
-//   uint8_t data = *map_data;
-//   uint8_t attr = *(map_data + 1);
-//   uint8_t tile = map_tile_lookup[data & MAP_TILE_MASK];
 
-//   // Set tilemap attributes
-//   VBK_REG = VBK_ATTRIBUTES;
-//   *vram = attr;
-//   *(vram + 1) = attr;
-//   *(vram + 0x20) = attr;
-//   *(vram + 0x20 + 1) = attr;
 
-//   // Set tile from data
-//   VBK_REG = VBK_TILES;
-//   *vram = tile;
-//   *(vram + 0x20) = tile + 16;
-//   *(vram + 1) = tile + 1;
-//   *(vram + 0x20 + 1) = tile + 16 + 1;
 
-//   // Load the tile type into main memory
-//   *map_attr = data >> 6;
-// }
 
-typedef struct MapTile {
-  bool blank;
-  uint8_t tile;
-  uint8_t attr;
-  uint8_t map_attr;
-} MapTile;
 
-typedef struct MapData {
-  uint8_t bank;
-  uint8_t *data;
-  int8_t width;
-  int8_t height;
-} MapData;
 
-#define MAP_HORIZ_LOADS 12
-#define MAP_VERT_LOADS 11
 
-typedef struct MapSystem {
-  // Global State
-  MapState state;
 
-  // Map position
-  int8_t x;
-  int8_t y;
 
-  // Movement
-  int8_t scroll_x;
-  int8_t scroll_y;
-  Direction move_direction;
-  uint8_t move_step;
 
-  // Progressive load
-  int8_t vram_x;
-  int8_t vram_y;
-  MapTile tile_buf[2 * MAP_HORIZ_LOADS];
-  uint8_t buffer_pos;
-  uint8_t buffer_max;
-  int8_t vram_col;
-  int8_t vram_row;
-  int8_t vram_d_col;
-  int8_t vram_d_row;
 
-  // Map data
-  uint8_t bank;
-  uint8_t *data;
-  int8_t width;
-  int8_t height;
-} MapSystem;
+
+
+
+//------------------------------------------------------------------------------
+// BEGIN NEW CODE
+//------------------------------------------------------------------------------
+
 
 MapSystem map = { MAP_STATE_WAITING };
 
 
+
+/**
+ * Loads a map data tile at the given position in the current map.
+ *
+ * Note: this routine can safely be used with coordinates outside the current
+ * map's dimensions. A blank tile will be returned in this case.
+ *
+ * @param tile Pointer to a map tile where the data should be loaded.
+ * @param x X-position in the map.
+ * @param y Y-position in the map.
+ */
 void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
-  if (x < 0 || y < 0 || x >= map.width || y >= map.height) {
+  const int8_t w = (int8_t)map.active_map->width;
+  const int8_t h = (int8_t)map.active_map->height;
+
+  if (x < 0 || y < 0 || x >= w || y >= h) {
     tile->blank = true;
     return;
   }
 
   uint8_t _prev_bank = _current_bank;
-  SWITCH_ROM(map.bank);
-  const uint16_t offset = (uint16_t)(2 * (x + y * map.width));
-  const uint8_t *data = map.data + offset;
+  SWITCH_ROM(map.active_map->bank);
+  const uint16_t offset = (uint16_t)(2 * (x + y * w));
+  const uint8_t *data = map.active_map->data + offset;
   const uint8_t t = *data++;
   const uint8_t a = *data;
   SWITCH_ROM(_prev_bank);
@@ -667,8 +594,34 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
   tile->map_attr = t >> 6;
 }
 
+/**
+ * Fills the progressive load tile buffer with data depending on the direction
+ * the player is currently moving.
+ */
+void load_tile_buffer(void) {
+  // Set horizontal and vertical deltas based on move direction
+  int8_t dx, dy;
+  switch (map.move_direction) {
+  case UP:
+    dx = 0;
+    dy = -1;
+    break;
+  case DOWN:
+    dx = 0;
+    dy = 1;
+    break;
+  case LEFT:
+    dx = -1;
+    dy = 0;
+    break;
+  case RIGHT:
+    dx = 1;
+    dy = 0;
+    break;
+  default:
+    return;
+  }
 
-void move_buffer(int8_t dx, int8_t dy) {
   // Reset the buffer position
   MapTile *tile_buf = map.tile_buf;
   map.buffer_pos = 0;
@@ -722,26 +675,11 @@ void move_buffer(int8_t dx, int8_t dy) {
   }
 }
 
-void load_tile_buffer(void) {
-  MapTile *tile_buf = map.tile_buf;
-  map.buffer_pos = 0;
-
-  switch (map.move_direction) {
-  case UP:
-    move_buffer(0, -1);
-    break;
-  case DOWN:
-    move_buffer(0, 1);
-    break;
-  case LEFT:
-    move_buffer(-1, 0);
-    break;
-  case RIGHT:
-    move_buffer(1, 0);
-    break;
-  }
-}
-
+/**
+ * Draws a map tile at the given location in VRAM.
+ * @param vram Position in VRAM where the tile should be drawn.
+ * @param map_tile Map tile data to draw.
+ */
 void draw_map_tile(uint8_t *vram, MapTile *map_tile) {
   const uint8_t tile = map_tile->blank ? 0 : map_tile->tile;
   const uint8_t attr = map_tile->blank ? 0 :  map_tile->attr;
@@ -761,7 +699,13 @@ void draw_map_tile(uint8_t *vram, MapTile *map_tile) {
   *(vram + 0x20 + 1) = tile + 16 + 1;
 }
 
-void draw_initial_map_screen(void) {
+/**
+ * Draws a full screen with a border of prebuffered tiles for the current map
+ * position. This needs to be called when loading a map, transition in and out
+ * of the map system, etc. as it sets initial positions and data required for
+ * progressive loading of tiles based on movement.
+ */
+void reset_map_screen(void) {
   uint8_t *vram = VRAM_BACKGROUND;
   MapTile tile;
 
@@ -784,6 +728,10 @@ void draw_initial_map_screen(void) {
   move_bkg(map.scroll_x, map.scroll_y);
 }
 
+/**
+ * Initiates player movement in the given direction.
+ * @param d Direction the player is to move.
+ */
 void start_move(Direction d) {
   map.move_direction = d;
   map.move_step = 0;
@@ -791,6 +739,9 @@ void start_move(Direction d) {
   load_tile_buffer();
 }
 
+/**
+ * Update handler for when the player is moving.
+ */
 void update_map_move(void) {
   switch (map.move_direction) {
   case UP:
@@ -831,50 +782,64 @@ void update_map_move(void) {
   }
 }
 
+
+/**
+ * Initializes the world map system.
+ */
 void initialize_world_map(void) {
   lcd_off();
 
-  // TODO: Remove at some point, just for debug
-  MapTile *tile = map.tile_buf;
-  for (uint8_t k = 0; k < MAP_HORIZ_LOADS; k++, tile++) {
-    tile->tile = 0xCC;
-    tile->attr = 0xDD;
-    tile->blank = 0xEE;
-    tile->map_attr = 0xFF;
-  }
-
-  map.bank = 9;
-  map.data = floor_test_data;
-  map.width = 32;
-  map.height = 32;
-  map.x = 0;
-  map.y = 0;
-  draw_initial_map_screen();
-
-  textbox.init();
   core.load_font();
+  core.load_object_tiles();
+  core.load_dungeon_tiles();
+
   text_writer.auto_page = AUTO_PAGE_OFF;
+  textbox.init();
+
+  reset_map_screen();
+  init_hero();
+
+  map.state = MAP_STATE_WAITING;
 
   // TODO Fix me
-  VBK_REG = VBK_BANK_0;
-  core.load_tileset(&dungeon_tileset, VRAM_BG_TILES);
-  core.load_object_tiles();
   core.load_bg_palette(area0.palettes, 0, 4);
   toggle_sprites();
-  active_area = &area0;
-  active_map = area0.maps;
-  init_hero();
-  // load_map(get_map(0));
-
-  // on_init();
-  map_state = MAP_STATE_WAITING;
 
   lcd_on();
 }
 
-void init_world_map_new(void) NONBANKED {
+
+
+
+void init_world_map(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   initialize_world_map();
+}
+
+void return_from_battle_new(void) NONBANKED {
+  // SWITCH_ROM(MAP_SYSTEM_BANK);
+
+  // text_writer.auto_page = AUTO_PAGE_OFF;
+
+  // textbox.init();
+  // core.load_font();
+  // text_writer.auto_page = AUTO_PAGE_OFF;
+
+  // init_hero();
+  // load_area_graphics(active_area);
+  // on_init();
+  // load_map_old(active_map);
+  // set_map_xy_from_col_row();
+
+  // // TODO It is weird these are decoupled. Is there a reason?
+  // update_map_positions();
+  // move_bkg(map_scroll_x, map_scroll_y);
+
+  // fade_in();
+  // map_state = MAP_STATE_FADE_IN;
+  // game_state = GAME_STATE_WORLD_MAP;
+
+  // lcd_on();
 }
 
 

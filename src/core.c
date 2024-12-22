@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include "core.h"
 
-// TODO NONE OF THESE BELONG HERE
-
 /**
  * Lookup table that converts map_tile ids into graphic tile ids. The graphics
  * for map tiles are laid out in a way that allows for easy editing, this makes
@@ -18,9 +16,6 @@ const uint8_t map_tile_lookup[64] = {
   0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
   0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
 };
-
-
-// --- These, however, do...
 
 uint8_t flags[32] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -48,6 +43,24 @@ const Tileset tileset_battle = { 5 * 16, 10, tile_battle };
  * Common objects tileset.
  */
 const Tileset objects_tileset = { 128, 10, tile_data_objects };
+
+/**
+ * Dungeon level tileset (page 1).
+ */
+const Tileset dungeon_tileset_page1 = {
+  128,
+  12,
+  tile_data_dungeon
+};
+
+/**
+ * Dungeon level tileset (page 2).
+ */
+const Tileset dungeon_tileset_page2 = {
+  128,
+  12,
+  tile_data_dungeon + BYTES_PER_TILE * 128
+};
 
 /**
  * Hero sprites tileset.
@@ -94,6 +107,13 @@ void load_battle_tiles(void) NONBANKED {
 void load_font(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
   load_tileset(&tileset_font, VRAM_FONT_TILES);
+}
+
+void load_dungeon_tiles(void) NONBANKED {
+  VBK_REG = VBK_BANK_0;
+  core.load_tileset(&dungeon_tileset_page1, VRAM_BG_TILES);
+  VBK_REG = VBK_BANK_1;
+  core.load_tileset(&dungeon_tileset_page2, VRAM_BG_TILES);
 }
 
 void load_hero_tiles(uint8_t player_class) NONBANKED {
@@ -226,4 +246,5 @@ const Core core = {
   print_fraction,
   hide_sprites,
   core_fill,
+  load_dungeon_tiles,
 };

@@ -88,6 +88,32 @@ typedef enum ExitType {
 } ExitType;
 
 /**
+ * Holds the bank and data pointer for a map page.
+ */
+typedef struct Map {
+  /**
+   * Id for the map. This must be the map's index in it's area's maps table.
+   */
+  uint8_t id;
+  /**
+   * Bank where the data for the map resides.
+   */
+  GameRomBank bank;
+  /**
+   * Pointer to the data for the map.
+   */
+  const uint8_t *data;
+  /**
+   * Width for the map (in map tiles).
+   */
+  uint8_t width;
+  /**
+   * Height for the map (in map tiles).
+   */
+  uint8_t height;
+} Map;
+
+/**
  * Represents a map exit and provides information about the destination for the
  * exit.
  */
@@ -129,26 +155,6 @@ typedef struct Exit {
    */
   ExitType exit;
 } Exit;
-
-/**
- * Holds the bank and data pointer for a map page.
- */
-typedef struct Map {
-  /**
-   * Id for the map. This must be the map's index in it's area's maps table.
-   */
-  uint8_t id;
-
-  /**
-   * Bank where the data for the map resides.
-   */
-  uint8_t bank;
-
-  /**
-   * Pointer to the data for the map.
-   */
-  uint8_t *data;
-} Map;
 
 /**
  * Data representation of a treasure chest in an area. Chests can be placed at
@@ -203,10 +209,6 @@ typedef struct Area {
    * via an exit from another map.
    */
   uint8_t default_start_row;
-  /**
-   * Tileset to use for the area.
-   */
-  Tileset *tileset;
   /**
    * Palettes to use for the dungeon.
    */
@@ -407,10 +409,103 @@ extern Direction hero_direction;
 extern uint8_t hero_x;
 extern uint8_t hero_y;
 
+
+
+
+
+
+
+
+
+
+
+
+
+// TODO Clean this mess up!
+
+
+#define MAP_HORIZ_LOADS 12
+#define MAP_VERT_LOADS 11
+
+typedef struct MapTile {
+  bool blank;
+  uint8_t tile;
+  uint8_t attr;
+  uint8_t map_attr;
+} MapTile;
+
+typedef struct MapData {
+  GameRomBank bank;
+  uint8_t *data;
+  int8_t width;
+  int8_t height;
+} MapData;
+
+typedef struct MapSystem {
+  // Global State
+  MapState state;
+
+  // Map position
+  int8_t x;
+  int8_t y;
+
+  // Movement
+  int8_t scroll_x;
+  int8_t scroll_y;
+  Direction move_direction;
+  uint8_t move_step;
+
+  // Progressive load
+  int8_t vram_x;
+  int8_t vram_y;
+  MapTile tile_buf[2 * MAP_HORIZ_LOADS];
+  uint8_t buffer_pos;
+  uint8_t buffer_max;
+  int8_t vram_col;
+  int8_t vram_row;
+  int8_t vram_d_col;
+  int8_t vram_d_row;
+
+  // Map data
+  const Map *active_map;
+} MapSystem;
+
+
+
+extern MapSystem map;
+
+
+
+
+/**
+ * Sets the position of the active map. Note this method will not re-render the
+ * map based on the position set. You must call `reset_map_screen()` to do this.
+ * @param x Horizontal position.
+ * @param y Vertical position.
+ */
+inline void set_map_position(int8_t x, int8_t y) {
+  map.x = x;
+  map.y = y;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Initialize the world map controller.
  */
-void init_world_map(Area *area) NONBANKED;
+void init_world_map(void) NONBANKED;
 
 /**
  * Update callback for the world map controller.
@@ -439,6 +534,10 @@ void start_battle(void);
  * Called when returning to the map system from the battle system.
  */
 void return_from_battle(void) NONBANKED;
+
+inline void set_active_map(const Map *m) NONBANKED {
+  map.active_map = m;
+}
 
 /**
  * Opens a textbox while on the world map.
