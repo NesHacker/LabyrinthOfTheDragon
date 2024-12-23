@@ -27,5 +27,7 @@ INCBIN_EXTERN(tile_dummy)
 INCBIN_EXTERN(floor_test_data)
 INCBIN_EXTERN(floor_test_mini)
 INCBIN_EXTERN(floor_test_17x12)
+INCBIN_EXTERN(floor_1_data)
+INCBIN_EXTERN(floor_2_data)
 
 #endif

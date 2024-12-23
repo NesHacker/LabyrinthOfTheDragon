@@ -109,7 +109,7 @@ void test_big_map(void) {
   init_test_player(20);
   fill_inventory(3);
 
-  set_active_floor(&floor_test);
+  set_active_floor(&floor_1);
   init_world_map();
 
   game_state = GAME_STATE_WORLD_MAP;

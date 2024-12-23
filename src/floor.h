@@ -7,6 +7,8 @@
 
 // IMPORTANT if you add a new floor, add an extern here
 extern const Floor floor_test;
+extern const Floor floor_1;
+extern const Floor floor_2;
 
 /**
  * Flags used to denote specific chests in a chest related bitfield.
