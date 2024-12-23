@@ -42,13 +42,13 @@ typedef struct Item {
    */
   ItemId id;
   /**
-   * Name for the item.
-   */
-  const char *name;
-  /**
    * How many of this item the player currently has.
    */
   uint8_t quantity;
+  /**
+   * Name for the item.
+   */
+  const char *name;
 } Item;
 
 /**

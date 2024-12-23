@@ -15,13 +15,12 @@
 // Maps
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_MAPS 3
-
 const Map floor_test_maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_9, floor_test_data, 32, 32 },
   { MAP_B, BANK_9, floor_test_mini, 8, 8 },
   { MAP_C, BANK_9, floor_test_17x12, 17, 12 },
+  { END },
 };
 
 //------------------------------------------------------------------------------
@@ -70,30 +69,75 @@ const uint16_t floor_test_palettes[] = {
 // Chests
 //------------------------------------------------------------------------------
 
-#define FLOOR_TEST_NUM_CHESTS 0
-
-typedef enum FLOOR_TEST_Chests {
-  FLOOR_TEST_CHEST_0,
-} FLOOR_TEST_Chests;
+bool floor_test_custom_chest(Chest *c) {
+  switch (c->id) {
+  case CHEST_5:
+    player.magic_keys++;
+    break;
+  }
+  return false;
+}
 
 const Chest floor_test_chests[] = {
   /*
   {
-    FLOOR_TEST_CHEST_0,   // id (use the enum above to define these)
-    MAP_A,                // Map where the chest is at
-    0, 0,                 // Column & row in that map
-    FLAGS_CHEST_OPEN,     // Global flag page for the open/closed flag.
-    CHEST_FLAG_1          // Open flag (the bit determines if it's been opened)
+    CHEST_1,    // Always use a CHEST_* here cause it acts like a flag
+    MAP_A,      // Map where the chest resides
+    0, 0,       // (x, y) location for the chest
+    false,      // Whether or not the chest is locked
+    false,      // If locked, can it be opened using a magic key?
+    "Nice!",    // Message to display when the chest is opened
+    NULL,       // Item list contents (optional)
+    NULL,       // Scripting "on open" callback (optional)
   }
   */
-  { 0 }, // Remove me when you add your first chest (pointers amirite?)
+  // Basic items chest, contains some stuffs
+  {
+    CHEST_1,
+    MAP_A, 10, 5, false, false,
+    str_chest_item_2pot_1eth,
+    chest_item_2pot_1eth
+  },
+  // A locked chest that can be unlocked using scripting
+  {
+    CHEST_2,
+    MAP_A, 12, 5, true, false,
+    str_chest_item_haste_pot,
+    chest_item_haste_pot,
+  },
+  // An empty chest, default behavior if you don't set any params
+  {
+    CHEST_3,
+    MAP_A, 14, 5, false, false,
+  },
+  // Can be unlocked using a magic key
+  {
+    CHEST_4,
+    MAP_A, 16, 5, true, true,
+    str_chest_item_haste_pot,
+    chest_item_haste_pot,
+  },
+  // Custom chest that gives a magic key using a scripting callback
+  {
+    CHEST_5,
+    MAP_A, 18, 5, false, false,
+    NULL,
+    NULL,
+    chest_add_key,
+  },
+  // Custom chest that is unlocked using a slightly more involved script
+  {
+    CHEST_6,
+    MAP_A, 20, 5, true, false,
+    str_chest_item_regen_pot,
+    chest_item_regen_pot,
+  },
+  { END },
 };
 
 //------------------------------------------------------------------------------
 // Exits
 //------------------------------------------------------------------------------
-
-#define FLOOR_TEST_NUM_EXITS 6
 
 const Exit floor_test_exits[] = {
   /*
@@ -108,21 +152,27 @@ const Exit floor_test_exits[] = {
   },
   */
 
- { MAP_A, 8, 1, MAP_B, 4, 1, DOWN, EXIT_STAIRS },
- { MAP_B, 4, 1, MAP_A, 8, 1, DOWN, EXIT_STAIRS },
+  { MAP_A, 8, 1, MAP_B, 4, 1, DOWN, EXIT_STAIRS },
+  { MAP_B, 4, 1, MAP_A, 8, 1, DOWN, EXIT_STAIRS },
 
- { MAP_A, 25, 27, MAP_B, 4, 5, DOWN, EXIT_STAIRS },
- { MAP_B, 4, 5, MAP_A, 25, 27, DOWN, EXIT_STAIRS },
+  { MAP_A, 25, 27, MAP_B, 4, 5, DOWN, EXIT_STAIRS },
+  { MAP_B, 4, 5, MAP_A, 25, 27, DOWN, EXIT_STAIRS },
 
- { MAP_A, 9, 27, MAP_C, 3, 3, DOWN, EXIT_STAIRS },
- { MAP_C, 3, 3, MAP_A, 9, 27, DOWN, EXIT_STAIRS },
+  { MAP_A, 9, 27, MAP_C, 3, 3, DOWN, EXIT_STAIRS },
+  { MAP_C, 3, 3, MAP_A, 9, 27, DOWN, EXIT_STAIRS },
+
+  { MAP_A, 14, 1, MAP_C, 4, 7, UP, EXIT_STAIRS },
+  { MAP_C, 4, 7, MAP_A, 14, 1, DOWN, EXIT_STAIRS },
+  { MAP_C, 3, 7, MAP_A, 14, 1, DOWN, EXIT_STAIRS },
+
+  { MAP_A, 19, 1, MAP_A, 2, 15, UP, EXIT_STAIRS, &floor_test2 },
+
+  { END },
 };
 
 //------------------------------------------------------------------------------
 // Exits
 //------------------------------------------------------------------------------
-
-#define FLOOR_TEST_NUM_SIGNS 2
 
 const Sign floor_test_signs[] = {
   /*
@@ -133,8 +183,98 @@ const Sign floor_test_signs[] = {
     "Hi there!" // The message to display
   }
   */
- { MAP_A, 4, 1, UP, "This skull\x60\nIs so metal." },
- { MAP_A, 7, 1, UP, "A pair of glowing\neyes peers back\x60" }
+  { MAP_A, 4, 1, UP, "This skull\x60\nIs so metal." },
+  { MAP_A, 7, 1, UP, "A pair of glowing\neyes peers back\x60" },
+
+  { END },
+};
+
+//------------------------------------------------------------------------------
+// Levers
+//------------------------------------------------------------------------------
+
+void floor_test_on_lever(const Lever *lever) {
+  if (lever->id == LEVER_1) {
+    map_textbox("You hear a click\x60");
+    set_chest_unlocked(CHEST_2);
+  }
+
+  if (lever->id == LEVER_2) {
+    if (is_lever_stuck(LEVER_3)) {
+      map_textbox("The other lever\ncreaks.");
+      unstick_lever(LEVER_3);
+    } else {
+      map_textbox("The other lever\ngroans.");
+      stick_lever(LEVER_3);
+    }
+  }
+
+  if (lever->id == LEVER_3) {
+    map_textbox("The chest clicks.");
+    set_chest_unlocked(CHEST_6);
+  }
+}
+
+const Lever floor_test_levers[] = {
+  /*
+  {
+    LEVER_1,  // Use the LEVER_* constants for ids (again, used as flags)
+    MAP_A,    // The map where the lever be
+    0, 0,     // (x, y) tile coordinates in the map
+    false,    // Can the lever only be pulled once?
+    false,    // Does the lever start stuck? (requires scripting to change)
+    NULL,     // Scripting callback for the lever
+  }
+  */
+  { LEVER_1, MAP_A, 12, 3, true, false, floor_test_on_lever },
+  { LEVER_2, MAP_A, 22, 3, false, false, floor_test_on_lever },
+  { LEVER_3, MAP_A, 20, 3, true, true, floor_test_on_lever },
+  { END },
+};
+
+//------------------------------------------------------------------------------
+// Doors (NOT YET IMPLEMENTED)
+//------------------------------------------------------------------------------
+
+const Door floor_test_doors[] = {
+  /*
+  {
+    DOOR_1,   // Use DOOR_* constants for ids.
+    MAP_A,    // Map for the door
+    0, 0      // (x, y) tile for the door
+  }
+  */
+  { END }
+};
+
+//------------------------------------------------------------------------------
+// Sconces (NOT YET IMPLEMENTED)
+//------------------------------------------------------------------------------
+
+const Sconce floor_test_sconces[] = {
+  /*
+  {
+    SCONCE_1, // Use SCONCE_* constants for ids.
+    MAP_A,    // Map for the sconce
+    0, 0      // (x, y) tile for the sconce
+  }
+  */
+  { END }
+};
+
+//------------------------------------------------------------------------------
+// Doors (NOT YET IMPLEMENTED)
+//------------------------------------------------------------------------------
+
+const NPC floor_test_npcs[] = {
+  /*
+  {
+    NPC_1,    // Use NPC_* constants for ids.
+    MAP_A,    // Map for the npc
+    0, 0      // (x, y) tile for the npc
+  }
+  */
+  { END }
 };
 
 //------------------------------------------------------------------------------
@@ -152,22 +292,6 @@ void floor_test_on_draw(void) {
 
 bool floor_test_on_action(void) {
   return false;
-}
-
-bool floor_test_before_chest(Chest *chest) {
-  return false;
-}
-
-void floor_test_on_enter(uint8_t from_id, uint8_t to_id) {
-}
-
-void floor_test_on_chest(Chest *chest) {
-  switch (chest->id) {
-  default:
-  case FLOOR_TEST_CHEST_0:
-    // ...
-    break;
-  }
 }
 
 bool floor_test_on_special(void) {
@@ -206,17 +330,18 @@ const Floor floor_test = {
   FLOOR_TEST_DEFAULT_MAP,                     // Default Map
   FLOOR_TEST_DEFAULT_X, FLOOR_TEST_DEFAULT_Y, // Default Starting (x, y)
   floor_test_palettes,                        // Palettes
-  FLOOR_TEST_NUM_MAPS, floor_test_maps,       // # of maps, maps
-  FLOOR_TEST_NUM_EXITS, floor_test_exits,     // # of exits, exits
-  FLOOR_TEST_NUM_CHESTS, floor_test_chests,   // # of chests, chests
-  FLOOR_TEST_NUM_SIGNS, floor_test_signs,     // # signs, signs
+  floor_test_maps,
+  floor_test_exits,
+  floor_test_chests,
+  floor_test_signs,
+  floor_test_levers,
+  floor_test_doors,
+  floor_test_sconces,
+  floor_test_npcs,
   floor_test_on_init,
   floor_test_on_update,
   floor_test_on_draw,
   floor_test_on_action,
-  floor_test_before_chest,
-  floor_test_on_chest,
-  floor_test_on_enter,
   floor_test_on_special,
   floor_test_on_exit,
   floor_test_on_move,

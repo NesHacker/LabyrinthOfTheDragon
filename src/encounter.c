@@ -444,11 +444,7 @@ void apply_rewards(void) {
     return;
   }
 
-  uint8_t *debug = (void *)0xA000;
-    *debug++ = player.level;
-
   if (level_up(encounter.xp_reward)) {
-    *debug++ = player.level;
     const char *format = "LEVEL UP! Welcome\nto level %u!";
     sprintf(rewards_buf, format, player.level);
     return;
@@ -622,10 +618,6 @@ StatusEffectInstance *get_effect_slot(
         return e;
     }
   }
-
-  uint8_t *debug = (void *)0xA000;
-  *debug++ = effect;
-  *debug++ = opposing;
 
   e = list;
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, e++) {

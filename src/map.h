@@ -34,6 +34,24 @@
 #define HERO_Y_OFFSET 4
 
 /**
+ * Use these values when denoting map ids instead of hard coded constants.
+ */
+typedef enum MapId {
+  MAP_A,
+  MAP_B,
+  MAP_C,
+  MAP_D,
+  MAP_E,
+  MAP_F,
+  MAP_G,
+  MAP_H,
+  MAP_I,
+  MAP_J,
+  MAP_K,
+  MAP_INVALID = 0xFF
+} MapId;
+
+/**
  * Enumeration of map attribute values. Map attributes are used by the engine to
  * handle common / high level interactions for map movement in addition to
  * determining specific map callbacks to execute during game logic.
@@ -80,6 +98,14 @@ typedef struct MapTile {
    * it a wall, etc.).
    */
   MapTileAttribute map_attr;
+  /**
+   * If the tile contains a chest, this will point to it.
+   */
+  const struct Chest *chest;
+  /**
+   * If the tile contains a lever, this will point to it.
+   */
+  const struct Lever *lever;
 } MapTile;
 
 /**
@@ -231,6 +257,10 @@ typedef struct Exit {
    * Type of exit.
    */
   ExitType exit;
+  /**
+   * Floor for the destination (optional).
+   */
+  struct Floor *to_floor;
 } Exit;
 
 /**
@@ -261,6 +291,20 @@ typedef struct Sign {
 } Sign;
 
 /**
+ * Ids/Flags used to denote specific chests.
+ */
+typedef enum ChestId {
+  CHEST_1 = FLAG(0),
+  CHEST_2 = FLAG(1),
+  CHEST_3 = FLAG(2),
+  CHEST_4 = FLAG(3),
+  CHEST_5 = FLAG(4),
+  CHEST_6 = FLAG(5),
+  CHEST_7 = FLAG(6),
+  CHEST_8 = FLAG(7),
+} ChestId;
+
+/**
  * Data representation of a treasure chest in an area. Chests can be placed at
  * any position in any map. Whether or not they have been opened is determined
  * by a global flag (so the state can be saved to SRAM).
@@ -269,7 +313,7 @@ typedef struct Chest {
   /**
    * Id for the chest. This should be the chest list array index.
    */
-  uint8_t id;
+  ChestId id;
   /**
    * Id for the map where the chest resides.
    */
@@ -277,35 +321,161 @@ typedef struct Chest {
   /**
    * Column for the chest.
    */
-  uint8_t col;
+  int8_t col;
   /**
    * Row for the chest.
    */
-  uint8_t row;
+  int8_t row;
   /**
-   * Flag page for the chest's "open state".
+   * Whether or not the chest starts as locked. (optional, default: false).
    */
-  FlagPage flag_page;
+  bool locked;
   /**
-   * Flag mask for the "opened" state.
+   * Can the chest be unlocked with a magic key? (optional, default: false).
    */
-  uint8_t open_flag;
+  bool magic_key_unlock;
+  /**
+   * Message to display when the chest is successfully opened (optional).
+   */
+  const char *open_msg;
+  /**
+   * Items the chest contains (optional).
+   */
+  const Item *items;
+  /**
+   * Custom callback to execute on open (for special scrited chests).
+   * @param chest The chest the player is attempting to open.
+   * @return `true` if the chest was opened.
+   */
+  const bool (*on_open)(const struct Chest *chest);
 } Chest;
 
 /**
- * Use these values when denoting map ids instead of hard coded constants.
+ * Ids/Flags used to denote specific levers.
  */
-typedef enum MapId {
-  MAP_A,
-  MAP_B,
-  MAP_C,
-  MAP_D,
-  MAP_E,
-  MAP_F,
-  MAP_G,
-  MAP_H,
-  MAP_I,
-} MapId;
+typedef enum LeverId {
+  LEVER_1 = FLAG(0),
+  LEVER_2 = FLAG(1),
+  LEVER_3 = FLAG(2),
+  LEVER_4 = FLAG(3),
+  LEVER_5 = FLAG(4),
+  LEVER_6 = FLAG(5),
+  LEVER_7 = FLAG(6),
+  LEVER_8 = FLAG(7),
+} LeverId;
+
+/**
+ * A lever that can be switched on/off.
+ */
+typedef struct Lever {
+  /**
+   * Id of the lever. Use `LEVER_*` constants as this will act as a lever's
+   * on/off state flag.
+   */
+  LeverId id;
+  /**
+   * Map id where the lever resides.
+   */
+  MapId map_id;
+  /**
+   * Column for the lever.
+   */
+  int8_t col;
+  /**
+   * Row for the lever.
+   */
+  int8_t row;
+  /**
+   * Set this to true if the lever can only be pulled once.
+   */
+  bool one_shot;
+  /**
+   * Set this to true if the level should begin as "stuck". Requires scripting
+   * to modify if this is set.
+   */
+  bool stuck;
+  /**
+   * Custom callback to execute when the lever is pulled.
+   * @param lever The lever being pulled.
+   */
+  const void (*on_pull)(const struct Lever *lever);
+} Lever;
+
+/**
+ * Ids/Flags used to denote specific doors.
+ */
+typedef enum DoorId {
+  DOOR_1 = FLAG(0),
+  DOOR_2 = FLAG(1),
+  DOOR_3 = FLAG(2),
+  DOOR_4 = FLAG(3),
+  DOOR_5 = FLAG(4),
+  DOOR_6 = FLAG(5),
+  DOOR_7 = FLAG(6),
+  DOOR_8 = FLAG(7),
+} DoorId;
+
+/**
+ * A door that can be opened, closed, and locked. WARNING: NOT IMPLEMENTED YET.
+ */
+typedef struct Door {
+  DoorId id;
+  MapId map_id;
+  int8_t col;
+  int8_t row;
+} Door;
+
+/**
+ * Ids/Flags used to denote specific sconces.
+ */
+typedef enum SconceId {
+  SCONCE_1 = FLAG(0),
+  SCONCE_2 = FLAG(1),
+  SCONCE_3 = FLAG(2),
+  SCONCE_4 = FLAG(3),
+  SCONCE_5 = FLAG(4),
+  SCONCE_6 = FLAG(5),
+  SCONCE_7 = FLAG(6),
+  SCONCE_8 = FLAG(7),
+  /**
+   * Denotes a sconce that starts lit.
+   */
+  SCONCE_LIT = 0xFF,
+} SconceId;
+
+/**
+ * A sconce that can be lit. WARNING: Not yet implemented.
+ */
+typedef struct Sconce {
+  SconceId id;
+  MapId map_id;
+  int8_t col;
+  int8_t row;
+} Sconce;
+
+/**
+ * Ids/Flags used to denote specific NPCs.
+ */
+typedef enum NpcId {
+  NPC_1 = FLAG(0),
+  NPC_2 = FLAG(1),
+  NPC_3 = FLAG(2),
+  NPC_4 = FLAG(3),
+  NPC_5 = FLAG(4),
+  NPC_6 = FLAG(5),
+  NPC_7 = FLAG(6),
+  NPC_8 = FLAG(7),
+} NpcId;
+
+/**
+ * An NPC that can inhabit a map. WARNING: not yet implemented.
+ */
+typedef struct NPC {
+  NpcId id;
+  MapId map_id;
+  int8_t col;
+  int8_t row;
+} NPC;
 
 /**
  * Defines a floor (level) for the game.
@@ -332,37 +502,37 @@ typedef struct Floor {
    */
   const palette_color_t *palettes;
   /**
-   * Number of maps.
-   */
-  uint8_t num_maps;
-  /**
    * List of all maps for the floor.
    */
   const Map *maps;
-  /**
-   * Number of exit entries for the floor.
-   */
-  uint8_t num_exits;
   /**
    * List of exits for all pages on the floor.
    */
   const Exit *exits;
   /**
-   * Number of chests in the area.
-   */
-  uint8_t num_chests;
-  /**
    * Array of treasure chests for the floor.
    */
   const Chest *chests;
   /**
-   * Number of signs for the floor.
-   */
-  uint8_t num_signs;
-  /**
    * Signs for the floor.
    */
   const Sign *signs;
+  /**
+   * Levers on the floor.
+   */
+  const Lever *levers;
+  /**
+   * Doors on a floor.
+   */
+  const Door *doors;
+  /**
+   * Sconces on a floor.
+   */
+  const Sconce *sconces;
+  /**
+   * NPCs on a floor.
+   */
+  const NPC *npcs;
   /**
    * Called when the map is initialized by the game engine.
    */
@@ -380,23 +550,6 @@ typedef struct Floor {
    * @return `true` to prevent the default action behavior.
    */
   const bool (*on_action)(void);
-  /**
-   * Called before a chest is opened.
-   * @param chest The chest being opened.
-   * @return `true` if the default behavior for chest should be overriden.
-   */
-  const bool (*before_chest)(Chest *chest);
-  /**
-   * Called after a chest has been opened.
-   * @param chest The chest that was opened.
-   */
-  const void (*on_chest)(Chest *chest);
-  /**
-   * Called when the player enters a map from another map.
-   * @param from_id Id of the map the player exited.
-   * @param to_id Id of the map the player is entering.
-   */
-  const void (*on_enter)(uint8_t from_id, uint8_t to_id);
   /**
    * Called when the map is active and the player moves into a special tile.
    * @return `true` if the map should prevent default behavior.
@@ -500,11 +653,11 @@ typedef struct MapSystem {
   /**
    * The active floor.
    */
-  Floor *active_floor;
+  const Floor *active_floor;
   /**
    * Active map in the active floor.
    */
-  Map *active_map;
+  const Map *active_map;
   /**
    * Map tile data for the tile the hero currently occupies and those in every
    * cardinal direction (index this with a `Direction`).
@@ -533,7 +686,23 @@ typedef struct MapSystem {
   /**
    * Reference to the exit prior to loading the destination for an exit.
    */
-  Exit *active_exit;
+  const Exit *active_exit;
+  /**
+   * Chest "opened" flags for the current floor.
+   */
+  uint8_t flags_chest_open;
+  /**
+   * Chest "locked" flags for the current floor.
+   */
+  uint8_t flags_chest_locked;
+  /**
+   * Lever on/off states for the current floor.
+   */
+  uint8_t flags_lever_on;
+  /**
+   * Lever stuck/unstuck states for the current floor.
+   */
+  uint8_t flags_lever_stuck;
 } MapSystem;
 
 /**
@@ -673,31 +842,6 @@ inline bool on_action(void) {
 }
 
 /**
- * Executes the active area's `before_chest` callback if one is set.
- */
-inline bool before_chest(Chest *chest) {
-  if (map.active_floor->before_chest)
-    return map.active_floor->before_chest(chest);
-  return true;
-}
-
-/**
- * Executes the active area's `on_chest` callback if one is set.
- */
-inline void on_chest(Chest *chest) {
-  if (map.active_floor->on_chest)
-    map.active_floor->on_chest(chest);
-}
-
-/**
- * Executes the active area's `on_enter` callback if one is set.
- */
-inline void on_enter(uint8_t from_id, uint8_t to_id) {
-  if (map.active_floor->on_enter)
-    map.active_floor->on_enter(from_id, to_id);
-}
-
-/**
  * Executes the active area's `on_special` callback if one is set.
  */
 inline bool on_special(void) {
@@ -723,5 +867,93 @@ inline bool on_move(void) {
     return map.active_floor->on_move();
   return false;
 }
+
+/**
+ * @return The x-position of the player in the current map.
+ */
+inline int8_t hero_x(void) {
+  return map.x + HERO_X_OFFSET;
+}
+
+/**
+ * @return The y-position of the player in the current map.
+ */
+inline int8_t hero_y(void) {
+  return map.y + HERO_Y_OFFSET;
+}
+
+/**
+ * Sets the chest as "opened" in the map system state.
+ * @param chest Chest to set as opened.
+ */
+inline void set_chest_open(ChestId id) {
+  map.flags_chest_open |= id;
+}
+
+/**
+ * Sets the chest as "locked" in the map system state.
+ * @param chest Chest to set as locked.
+ */
+inline void set_chest_locked(ChestId id) {
+  map.flags_chest_locked |= id;
+}
+
+/**
+ * Sets a chest as "unlocked" in the map system state.
+ * @param chest Chest to set as unlocked.
+ */
+inline void set_chest_unlocked(ChestId id) {
+  map.flags_chest_locked &= ~id;
+}
+
+/**
+ * @return `true` if the chest is locked.
+ * @param chest The chest to check.
+ */
+inline bool is_chest_locked(ChestId id) {
+  return map.flags_chest_locked & id;
+}
+
+/**
+ * @return `true` if the lever is on.
+ * @param level The lever to test.
+ */
+inline bool is_lever_on(const Lever *lever) {
+  return map.flags_lever_on & lever->id;
+}
+
+/**
+ * Changes the state of the lever to "on". This has no effect on the graphics
+ * for the level.
+ * @param lever The lever to toggle.
+ */
+inline bool toggle_lever_state(LeverId id) {
+  map.flags_lever_on ^= id;
+}
+
+/**
+ * @return `true` if the lever is stuck.
+ * @param lever The lever to check.
+ */
+inline bool is_lever_stuck(LeverId id) {
+  return map.flags_lever_stuck & id;
+}
+
+/**
+ * Sets the lever "stuck" state to "on". Has no effect on graphics.
+ * @param lever The lever to stick.
+ */
+inline void stick_lever(LeverId id) {
+  map.flags_lever_stuck |= id;
+}
+
+/**
+ * Sets the lever "stuck" state to "off". Has no effect on graphics.
+ * @param lever The lever to unstick.
+ */
+inline void unstick_lever(LeverId id) {
+  map.flags_lever_stuck &= ~id;
+}
+
 
 #endif

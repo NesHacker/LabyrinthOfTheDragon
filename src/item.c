@@ -178,12 +178,12 @@ void use_item(ItemId id) {
 }
 
 Item inventory[8] = {
-  { ITEM_POTION, str_misc_potion, 0 },
-  { ITEM_ETHER, str_misc_ether, 0 },
-  { ITEM_REMEDY, str_misc_remedy, 0 },
-  { ITEM_ATK_UP, str_misc_atk_up_potion, 0 },
-  { ITEM_DEF_UP, str_misc_def_up_potion, 0 },
-  { ITEM_ELIXER, str_misc_elixer, 0 },
-  { ITEM_REGEN, str_misc_regen_pot, 0 },
-  { ITEM_HASTE, str_misc_haste_pot, 0 },
+  { ITEM_POTION, 0, str_misc_potion },
+  { ITEM_ETHER, 0, str_misc_ether },
+  { ITEM_REMEDY, 0, str_misc_remedy },
+  { ITEM_ATK_UP, 0, str_misc_atk_up_potion },
+  { ITEM_DEF_UP, 0, str_misc_def_up_potion },
+  { ITEM_ELIXER, 0, str_misc_elixer },
+  { ITEM_REGEN, 0, str_misc_regen_pot },
+  { ITEM_HASTE, 0, str_misc_haste_pot },
 };

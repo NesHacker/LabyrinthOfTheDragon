@@ -191,6 +191,11 @@ typedef enum GameRomBank {
 #define hide_window() move_win(0, 144)
 
 /**
+ * Used to define an end of list: `{ END }`
+ */
+#define END 0xFF
+
+/**
  * Universal direction type.
  */
 typedef enum Direction {
@@ -442,7 +447,7 @@ typedef struct Core {
    * @param s Tileset to load.
    * @param dst Destination pointer in VRAM.
    */
-  const void (*load_tileset)(Tileset *s, uint8_t *dst);
+  const void (*load_tileset)(const Tileset *s, uint8_t *dst);
   /**
    * Loads a number of tiles from a tileset.
    * @param s Tileset to load.
@@ -450,7 +455,7 @@ typedef struct Core {
    * @param o Tile data offset (in tiles).
    * @param n Number of tiles to write.
    */
-  const void (*load_tiles)(Tileset *s, uint8_t *dst, uint8_t o, uint8_t n);
+  const void (*load_tiles)(const Tileset *s, uint8_t *dst, uint8_t o, uint8_t n);
   /**
    * Loads the core battle tileset.
    */
@@ -483,14 +488,16 @@ typedef struct Core {
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_bg_palette)(palette_color_t *data, uint8_t index, uint8_t n);
+  const void (*load_bg_palette)(
+    const palette_color_t *data, uint8_t index, uint8_t n);
   /**
    * Loads the given palette into the foreground palette set.
    * @param data Palette data to load.
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_sprite_palette)(palette_color_t *data, uint8_t index, uint8_t n);
+  const void (*load_sprite_palette)(
+    const palette_color_t *data, uint8_t index, uint8_t n);
 
   /**
    * Clears the 32x32 tile background and fills tiles and attribute bytes with 0s.
@@ -542,8 +549,16 @@ typedef struct Core {
 extern const Core core;
 
 /**
- * Map tile lookup. Used by map code but placed in bank 0 for flexible access.
+ * Lookup table that converts map_tile ids into graphic tile ids. The graphics
+ * for map tiles are laid out in a way that allows for easy editing, this makes
+ * it easy to compute the position for a tile given a 6-bit tile id.
  */
 extern const uint8_t map_tile_lookup[];
+
+/**
+ * Debug address. Provides a way to write data values to a known memory location
+ * when debugging code.
+ */
+extern uint8_t *debug;
 
 #endif

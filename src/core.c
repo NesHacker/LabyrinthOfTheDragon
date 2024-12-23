@@ -1,20 +1,17 @@
 #include <stdio.h>
 #include "core.h"
 
-/**
- * Lookup table that converts map_tile ids into graphic tile ids. The graphics
- * for map tiles are laid out in a way that allows for easy editing, this makes
- * it easy to compute the position for a tile given a 6-bit tile id.
- */
+uint8_t *debug = (void *)0xB000;
+
 const uint8_t map_tile_lookup[64] = {
   0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
   0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
   0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
   0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
-  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
-  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
-  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
-  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
+  0x80, 0x82, 0x84, 0x86, 0x88, 0x8A, 0x8C, 0x8E,
+  0xA0, 0xA2, 0xA4, 0xA6, 0xA8, 0xAA, 0xAC, 0xAE,
+  0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE,
+  0xE0, 0xE2, 0xE4, 0xE6, 0xE8, 0xEA, 0xEC, 0xEE,
 };
 
 uint8_t flags[32] = {
@@ -63,6 +60,15 @@ const Tileset dungeon_tileset_page2 = {
 };
 
 /**
+ * Dungeon level tileset (page 2).
+ */
+const Tileset dungeon_tileset_page3 = {
+  128,
+  12,
+  tile_data_dungeon + BYTES_PER_TILE * 128 * 2
+};
+
+/**
  * Hero sprites tileset.
  */
 Tileset hero_tileset = { 12 * 8, 10, tile_data_hero };
@@ -82,7 +88,7 @@ void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
 }
 
 void core_load_tiles(
-  Tileset *s,
+  const Tileset *s,
   uint8_t *dst,
   uint8_t o,
   uint8_t n
@@ -112,8 +118,10 @@ void load_font(void) NONBANKED {
 void load_dungeon_tiles(void) NONBANKED {
   VBK_REG = VBK_BANK_0;
   core.load_tileset(&dungeon_tileset_page1, VRAM_BG_TILES);
+  VBK_REG = VBK_BANK_0;
+  core.load_tileset(&dungeon_tileset_page2, VRAM_SHARED_TILES);
   VBK_REG = VBK_BANK_1;
-  core.load_tileset(&dungeon_tileset_page2, VRAM_BG_TILES);
+  core.load_tileset(&dungeon_tileset_page3, VRAM_BG_TILES);
 }
 
 void load_hero_tiles(uint8_t player_class) NONBANKED {
@@ -161,11 +169,11 @@ void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
   SWITCH_ROM(_prev_bank);
 }
 
-void load_bg_palette(palette_color_t *data, uint8_t index, uint8_t n) {
+void load_bg_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
   update_bg_palettes(index, n, data);
 }
 
-void load_sprite_palette(palette_color_t *data, uint8_t index, uint8_t n) {
+void load_sprite_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
   update_sprite_palettes(index, n, data);
 }
 

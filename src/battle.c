@@ -134,7 +134,7 @@ void load_monster_graphics(MonsterPosition p, MonsterInstance *m) {
   if (!m->active || !m->monster)
     return;
 
-  Tileset *tileset = m->monster->tileset;
+  const Tileset *tileset = m->monster->tileset;
 
   switch (p) {
   case MONSTER_POSITION1:

@@ -4,24 +4,33 @@
 #include "core.h"
 #include "encounter.h"
 #include "map.h"
+#include "strings.h"
 
 // IMPORTANT if you add a new floor, add an extern here
 extern const Floor floor_test;
+extern const Floor floor_test2;
 extern const Floor floor_1;
 extern const Floor floor_2;
 
 /**
- * Flags used to denote specific chests in a chest related bitfield.
+ * Set this as a custom chest handler to have the chest give the player a
+ * magic key (see CHEST_5 example in `floor_test.c`).
+ *
+ * This will check to see if the chest is locked and if it isn't will cause
+ * the chest to be opened and the player to gain a magic key.
+ *
+ * @param chest The chest being opened.
+ * @return `true` If the chest was opened.
  */
-typedef enum ChestFlags {
-  CHEST_FLAG_1 = FLAG(0),
-  CHEST_FLAG_2 = FLAG(1),
-  CHEST_FLAG_3 = FLAG(2),
-  CHEST_FLAG_4 = FLAG(3),
-  CHEST_FLAG_5 = FLAG(4),
-  CHEST_FLAG_6 = FLAG(5),
-  CHEST_FLAG_7 = FLAG(6),
-  CHEST_FLAG_8 = FLAG(7),
-} ChestFlags;
+bool chest_add_key(Chest *chest);
+
+// Chest contents: two potions and an ether
+extern const Item chest_item_2pot_1eth[];
+
+// Chest contents: one haste potion
+extern const Item chest_item_haste_pot[];
+
+// Chest contents: one regen potion
+extern const Item chest_item_regen_pot[];
 
 #endif

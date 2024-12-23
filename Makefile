@@ -10,7 +10,7 @@ endif
 
 # These are used to control the number of banks of each type in the LCC flags
 # down below
-ROM_BANKS=16
+ROM_BANKS=32
 RAM_BANKS=4
 CART_TYPE=0x1B
 

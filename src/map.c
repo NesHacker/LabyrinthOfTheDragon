@@ -5,13 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "battle.h"
 #include "core.h"
 #include "floor.h"
 #include "map.h"
-
-uint8_t *debug = (void *)0xA000;
 
 MapSystem map = { MAP_STATE_WAITING };
 
@@ -146,6 +145,10 @@ void map_fade_in(MapState to_state) {
  * Note: this routine can safely be used with coordinates outside the current
  * map's dimensions. A blank tile will be returned in this case.
  *
+ * Optimization: This method should not be used during rendering as it's
+ * fairly slow. If you need to render based on its results create a buffer
+ * of map tiles and draw them progressively instead.
+ *
  * @param tile Pointer to a map tile where the data should be loaded.
  * @param x X-position in the map.
  * @param y Y-position in the map.
@@ -164,9 +167,40 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
 
   uint8_t _prev_bank = _current_bank;
   SWITCH_ROM(map.active_map->bank);
-  const uint8_t t = *data++;
+  uint8_t t = *data++;
   const uint8_t a = *data;
   SWITCH_ROM(_prev_bank);
+
+  // Check if the tile contains a chest
+  tile->chest = NULL;
+  const Chest *chest;
+  for (chest = map.active_floor->chests; chest->id != END; chest++) {
+    if (chest->map_id != map.active_map->id)
+      continue;
+    if (chest->col != x || chest->row != y)
+      continue;
+    tile->chest = chest;
+
+    // If the chest is open, increment the tile to the "open" graphic
+    if (map.flags_chest_open & chest->id)
+      t++;
+
+    break;
+  }
+
+  // Check for levers
+  tile->lever = NULL;
+  const Lever *lever;
+  for (lever = map.active_floor->levers; lever->id != END; lever++) {
+    if (lever->map_id != map.active_map->id)
+      continue;
+    if (lever->col != x || lever->row != y)
+      continue;
+    tile->lever = lever;
+
+    if (map.flags_lever_on & lever->id)
+      t++;
+  }
 
   tile->blank = false;
   tile->tile = map_tile_lookup[t & MAP_TILE_MASK];
@@ -309,15 +343,101 @@ void refresh_map_screen(void) {
 }
 
 /**
+ * Determines a VRAM address for the upper-left graphic tile in a given
+ * direction relative to where the player is on the screen.
+ * @param d Direction relative to the hero. Use `HERE` for the tile beneath.
+ * @return A pointer in bg VRAM for the tile relative to the hero's posiiton.
+ */
+uint8_t *get_local_vram(Direction d) {
+  int8_t col = (int8_t)((map.scroll_x + 16 * HERO_X_OFFSET) >> 3);
+  int8_t row = (int8_t)((map.scroll_y + 16 * HERO_Y_OFFSET) >> 3);
+
+  switch (d) {
+  case UP:
+    row -= 2;
+    break;
+  case DOWN:
+    row += 2;
+    break;
+  case LEFT:
+    col -= 2;
+    break;
+  case RIGHT:
+    col += 2;
+    break;
+  }
+
+  if (col < 0)
+    col += 32;
+  else if (col >= 32)
+    col -= 32;
+
+  if (row < 0)
+    row += 32;
+  else if (row >= 32)
+    row -= 32;
+
+
+  *debug++ = map.scroll_x;
+  *debug++ = map.scroll_y;
+  *debug++ = col;
+  *debug++ = row;
+
+  return VRAM_BACKGROUND_XY(col, row);
+}
+
+/**
+ * Updates the local tiles state based on the current map position.
+ */
+void update_local_tiles(void) {
+  uint8_t x = map.x + HERO_X_OFFSET;
+  uint8_t y = map.y + HERO_Y_OFFSET;
+  get_map_tile(map.local_tiles + HERE, x, y);
+  get_map_tile(map.local_tiles + UP, x, y - 1);
+  get_map_tile(map.local_tiles + DOWN, x, y + 1);
+  get_map_tile(map.local_tiles + LEFT, x - 1, y);
+  get_map_tile(map.local_tiles + RIGHT, x + 1, y);
+}
+
+/**
+ * Resets all stateful objects on the flooor (chests, doors, npc, levers, etc.)
+ */
+void reset_chests(void) {
+  // Chests
+  map.flags_chest_open = 0;
+  map.flags_chest_locked = 0;
+
+  const Chest *chest;
+  for (chest = map.active_floor->chests; chest->id != END; chest++)
+    if (chest->locked)
+      set_chest_locked(chest->id);
+
+  // Levers
+  map.flags_lever_on = 0;
+  map.flags_lever_stuck = 0;
+
+  const Lever *lever;
+  for (lever = map.active_floor->levers; lever->id != END; lever++)
+    if (lever->stuck)
+      stick_lever(lever->id);
+}
+
+/**
  * Initiates a progressive screen reload based on the active exit being taken
  * by the player.
  */
 void load_exit(void) {
   lcd_off();
-  Exit *exit = map.active_exit;
+  const Exit *exit = map.active_exit;
+
+  if (exit->to_floor)
+    set_active_floor(exit->to_floor);
+
   map.active_map = map.active_floor->maps + exit->to_map;
   map.hero_direction = exit->heading;
+
   set_hero_position(exit->to_col, exit->to_row);
+  update_local_tiles();
   refresh_map_screen();
   map_fade_in(MAP_STATE_EXIT_LOADED);
   lcd_on();
@@ -331,15 +451,14 @@ bool handle_exit(void) {
   uint8_t x = map.x + HERO_X_OFFSET;
   uint8_t y = map.y + HERO_Y_OFFSET;
 
-  Exit *exit = map.active_floor->exits;
-  for (uint8_t k = 0; k < map.active_floor->num_exits; k++, exit++) {
+  const Exit *exit;
+  for (exit = map.active_floor->exits; exit->map_id != END; exit++) {
+    if (exit->map_id == 0xFF)
+      break;
     if (exit->map_id != map.active_map->id)
       continue;
     if (exit->col != x || exit->row != y)
       continue;
-
-    *debug++ = 0xAC;
-    *debug++ = 0xDC;
 
     map.active_exit = exit;
     map_fade_out(MAP_STATE_LOAD_EXIT);
@@ -382,19 +501,6 @@ void check_map_move(void) {
     start_move(LEFT);
   else if (is_down(J_RIGHT))
     start_move(RIGHT);
-}
-
-/**
- * Updates the local tiles state based on the current map position.
- */
-void update_local_tiles(void) {
-  uint8_t x = map.x + HERO_X_OFFSET;
-  uint8_t y = map.y + HERO_Y_OFFSET;
-  get_map_tile(map.local_tiles + HERE, x, y);
-  get_map_tile(map.local_tiles + UP, x, y - 1);
-  get_map_tile(map.local_tiles + DOWN, x, y + 1);
-  get_map_tile(map.local_tiles + LEFT, x - 1, y);
-  get_map_tile(map.local_tiles + RIGHT, x + 1, y);
 }
 
 /**
@@ -468,11 +574,11 @@ void update_map_move(void) {
  * @return `true` if a sign was found and is being opened.
  */
 bool check_signs(void) {
-  uint8_t x = map.x + HERO_X_OFFSET;
-  uint8_t y = map.y + HERO_Y_OFFSET;
+  int8_t x = hero_x();
+  int8_t y = hero_y();
 
-  Sign *sign = map.active_floor->signs;
-  for (uint8_t k = 0; k < map.active_floor->num_signs; k++, sign++) {
+  const Sign *sign;
+  for (sign = map.active_floor->signs; sign->map_id != END; sign++) {
     if (sign->map_id != map.active_map->id)
       continue;
 
@@ -502,13 +608,156 @@ bool check_signs(void) {
       break;
     }
 
-    if (x != hero_x || y != hero_y)
+    if (x != (int8_t)hero_x || y != (int8_t)hero_y)
       continue;
 
     map_textbox(sign->message);
     return true;
   }
   return false;
+}
+
+/**
+ * Swaps a tile to its "ON" state based on it's root tileset. This is used to
+ * toggle chests open, switch lever graphics, etc.
+ * @param tile Map tile to swap.
+ * @param vram Place in bg VRAM to perform the swap.
+ */
+void tile_to_state_on(const MapTile *tile, uint8_t *vram) {
+  *vram = tile->tile + 2;
+  *(vram + 1) = tile->tile + 3;
+  *(vram + 0x20) = tile->tile + 0x12;
+  *(vram + 0x20 + 1) = tile->tile + 0x12 + 1;
+}
+
+/**
+ * Swaps a tile to its "OFF" state based on it's root tileset.
+ * @param tile Map tile to swap.
+ * @param vram Place in bg VRAM to perform the swap.
+ */
+void tile_to_state_off(const MapTile *tile, uint8_t *vram) {
+  *vram = tile->tile;
+  *(vram + 1) = tile->tile + 1;
+  *(vram + 0x20) = tile->tile + 0x10;
+  *(vram + 0x20 + 1) = tile->tile + 0x10 + 1;
+}
+
+/**
+ * Sets a chest as open and updates the graphics.
+ * @param tile Map tile containing the chest.
+ */
+void open_chest(const MapTile *tile) {
+  const Chest *chest = tile->chest;
+  if (!chest)
+    return;
+  set_chest_open(chest->id);
+  tile_to_state_on(tile, get_local_vram(map.hero_direction));
+}
+
+/**
+ * Checks for chests and handles chest interactions at the current location.
+ * @return `true` to prevent the default behavior of the action handler.
+ */
+bool check_chests(void) {
+  const MapTile *tile = map.local_tiles + map.hero_direction;
+  const Chest *chest = tile->chest;
+
+  if (!chest)
+    return false;
+
+  if (map.flags_chest_open & chest->id)
+    return false;
+
+
+  if (chest->on_open) {
+    if (chest->on_open(chest))
+      open_chest(tile);
+    return true;
+  }
+
+  const bool locked = map.flags_chest_locked & chest->id;
+  const bool has_keys = player.magic_keys > 0;
+  bool used_key = false;
+
+  if (locked && chest->magic_key_unlock) {
+    if (player.magic_keys == 0) {
+      map_textbox(str_maps_chest_key_locked);
+      return true;
+    }
+    player.magic_keys--;
+    used_key = true;
+    map.flags_chest_locked &= ~chest->id;
+  } else if (locked) {
+    map_textbox(str_maps_chest_locked);
+    return true;
+  }
+
+  open_chest(tile);
+
+  if (chest->items) {
+    for (const Item *item = chest->items; item->id != END; item++)
+      add_items(item->id, item->quantity);
+  }
+
+  const char *message = (chest->open_msg) ?
+    chest->open_msg :
+    str_maps_chest_open;
+
+  if (used_key) {
+    char buf[96];
+    sprintf(buf, "%s\f%s", str_maps_chest_unlock_key, message);
+    map_textbox(buf);
+  } else {
+    map_textbox(message);
+  }
+
+  return true;
+}
+
+/**
+ * Toggles a lever on and off and updates the graphics.
+ * @param tile Map tile containing the lever.
+ */
+void toggle_lever(const MapTile *tile) {
+  const Lever *lever = tile->lever;
+  if (!lever)
+    return;
+
+  toggle_lever_state(lever->id);
+
+  uint8_t *vram = get_local_vram(map.hero_direction);
+  if (is_lever_on(lever))
+    tile_to_state_on(tile, vram);
+  else
+    tile_to_state_off(tile, vram);
+}
+
+/**
+ * Checks for a lever in front of the player and handles its logic.
+ */
+bool check_levers(void) {
+  const MapTile *tile = map.local_tiles + map.hero_direction;
+  const Lever *lever = tile->lever;
+
+  if (!lever)
+    return false;
+
+  if (lever->one_shot && is_lever_on(lever)) {
+    map_textbox(str_maps_lever_one_way);
+    return true;
+  }
+
+  if (is_lever_stuck(lever->id)) {
+    map_textbox(str_maps_lever_stuck);
+    return true;
+  }
+
+  toggle_lever(tile);
+
+  if (lever->on_pull)
+    lever->on_pull(lever);
+
+  return true;
 }
 
 /**
@@ -522,9 +771,9 @@ bool check_action(void) {
       return true;
     if (check_signs())
       return true;
-    // if (check_chests())
-    //   return;
-    return true;
+    if (check_chests())
+      return true;
+    return check_levers();
   }
   return false;
 }
@@ -533,6 +782,8 @@ void set_active_floor(Floor *floor) BANKED {
   map.active_floor = floor;
   map.active_map = &floor->maps[floor->default_map];
   set_hero_position(floor->default_x, floor->default_y);
+  core.load_bg_palette(map.active_floor->palettes, 0, 7);
+  reset_chests();
 }
 
 /**
@@ -617,112 +868,3 @@ void update_world_map(void) NONBANKED {
 
 void draw_world_map(void) {
 }
-
-//------------------------------------------------------------------------------
-// BEGIN OLD CODE
-//------------------------------------------------------------------------------
-
-
-
-
-// /**
-//  * Determines if a player is attempting to open a chest and handles the logic
-//  * if they are.
-//  */
-// void check_chests(void) {
-//   Chest *chest = active_area->chests;
-//   for (uint8_t k = 0; k < active_area->num_chests; k++, chest++) {
-//     if (active_map->id != chest->map_id)
-//       continue;
-//     if (check_flags(chest->flag_page, chest->open_flag))
-//       continue;
-//     if (!player_facing(chest->col, chest->row))
-//       continue;
-//     if (before_chest(chest)) {
-//       set_flags(chest->flag_page, chest->open_flag);
-//       set_chest_open_graphics(chest);
-//       on_chest(chest);
-//     }
-//     return;
-//   }
-// }
-
-// void start_battle(void) {
-//   // TODO "Cool" battle starting animation
-//   map_fade_out();
-//   map_state = MAP_STATE_START_BATTLE;
-// }
-
-// void update_world_map_old(void) {
-//   if (
-//     map_state == MAP_STATE_START_BATTLE ||
-//     map_state == MAP_STATE_INACTIVE
-//   ) {
-//     // Important, don't remove.
-//     return;
-//   }
-
-//   switch (map_state) {
-//   case MAP_STATE_WAITING:
-//     if (!check_action()) {
-//       check_move();
-//     }
-//     update_hero();
-//     move_bkg(map_scroll_x, map_scroll_y);
-//     break;
-//   case MAP_STATE_MOVING:
-//     update_map_move();
-//     break;
-//   }
-//   on_update();
-// }
-
-// void draw_world_map_old(void) {
-//   if (map_state == MAP_STATE_INACTIVE)
-//     return;
-
-//   switch (map_state) {
-//   case MAP_STATE_TEXTBOX:
-//     textbox.update();
-//     if (textbox.state == TEXT_BOX_CLOSED) {
-//       map_state = MAP_STATE_WAITING;
-//     }
-//     break;
-//   case MAP_STATE_START_BATTLE:
-//     if (fade_update()) {
-//       lcd_off();
-//       map_state = MAP_STATE_INACTIVE;
-//       init_battle();
-//       return;
-//     }
-//     break;
-//   case MAP_STATE_FADE_OUT:
-//     if (fade_update()) {
-//       map_state = MAP_STATE_LOAD;
-//     }
-//     break;
-//   case MAP_STATE_LOAD:
-//     lcd_off();
-//     load_map_old(get_map(active_exit->to_map));
-//     map_col = active_exit->to_col;
-//     map_row = active_exit->to_row;
-//     hero_direction = active_exit->heading;
-//     set_map_xy_from_col_row();
-//     update_map_positions();
-//     update_hero();
-//     move_bkg(map_scroll_x, map_scroll_y);
-//     map_state = MAP_STATE_FADE_IN;
-//     fade_in();
-//     lcd_on();
-//     break;
-//   case MAP_STATE_FADE_IN:
-//     if (fade_update()) {
-//       // TODO Animate the character based on exit type and heading
-//       map_state = MAP_STATE_WAITING;
-//       LCDC_REG ^= LCDCF_OBJON;
-//     }
-//     break;
-//   }
-//   on_draw();
-// }
-
