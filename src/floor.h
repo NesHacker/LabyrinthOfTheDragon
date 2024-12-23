@@ -22,7 +22,7 @@ extern const Floor floor_2;
  * @param chest The chest being opened.
  * @return `true` If the chest was opened.
  */
-bool chest_add_key(Chest *chest);
+bool chest_add_magic_key(Chest *chest);
 
 // Chest contents: two potions and an ether
 extern const Item chest_item_2pot_1eth[];

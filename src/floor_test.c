@@ -123,7 +123,7 @@ const Chest floor_test_chests[] = {
     MAP_A, 18, 5, false, false,
     NULL,
     NULL,
-    chest_add_key,
+    chest_add_magic_key,
   },
   // Custom chest that is unlocked using a slightly more involved script
   {

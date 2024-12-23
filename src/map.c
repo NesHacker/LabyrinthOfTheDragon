@@ -377,12 +377,6 @@ uint8_t *get_local_vram(Direction d) {
   else if (row >= 32)
     row -= 32;
 
-
-  *debug++ = map.scroll_x;
-  *debug++ = map.scroll_y;
-  *debug++ = col;
-  *debug++ = row;
-
   return VRAM_BACKGROUND_XY(col, row);
 }
 
@@ -624,10 +618,11 @@ bool check_signs(void) {
  * @param vram Place in bg VRAM to perform the swap.
  */
 void tile_to_state_on(const MapTile *tile, uint8_t *vram) {
-  *vram = tile->tile + 2;
-  *(vram + 1) = tile->tile + 3;
-  *(vram + 0x20) = tile->tile + 0x12;
-  *(vram + 0x20 + 1) = tile->tile + 0x12 + 1;
+  const uint8_t t = tile->tile + 2;
+  set_vram_byte(vram, t);
+  set_vram_byte(vram + 1, t + 1);
+  set_vram_byte(vram + 0x20, t + 0x10);
+  set_vram_byte(vram + 0x20 + 1, t + 0x10 + 1);
 }
 
 /**
@@ -636,10 +631,11 @@ void tile_to_state_on(const MapTile *tile, uint8_t *vram) {
  * @param vram Place in bg VRAM to perform the swap.
  */
 void tile_to_state_off(const MapTile *tile, uint8_t *vram) {
-  *vram = tile->tile;
-  *(vram + 1) = tile->tile + 1;
-  *(vram + 0x20) = tile->tile + 0x10;
-  *(vram + 0x20 + 1) = tile->tile + 0x10 + 1;
+  const uint8_t t = tile->tile;
+  set_vram_byte(vram, t);
+  set_vram_byte(vram + 1, t + 1);
+  set_vram_byte(vram + 0x20, t + 0x10);
+  set_vram_byte(vram + 0x20 + 1, t + 0x10 + 1);
 }
 
 /**
@@ -670,8 +666,9 @@ bool check_chests(void) {
 
 
   if (chest->on_open) {
-    if (chest->on_open(chest))
+    if (chest->on_open(chest)) {
       open_chest(tile);
+    }
     return true;
   }
 

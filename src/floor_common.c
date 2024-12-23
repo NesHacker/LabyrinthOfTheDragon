@@ -4,7 +4,7 @@
 
 // Add custom chest handlers here
 
-bool chest_add_key(Chest *chest) {
+bool chest_add_magic_key(Chest *chest) {
   if (is_chest_locked(chest->id)) {
     map_textbox(str_maps_chest_locked);
     return false;
