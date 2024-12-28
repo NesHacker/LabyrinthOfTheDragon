@@ -9,8 +9,8 @@
 // IMPORTANT if you add a new floor, add an extern here
 extern const Floor floor_test;
 extern const Floor floor_test2;
-extern const Floor floor_1;
-extern const Floor floor_2;
+extern const Floor floor_one;
+extern const Floor floor_two;
 
 /**
  * Set this as a custom chest handler to have the chest give the player a
@@ -44,5 +44,8 @@ extern const Item chest_item_haste_pot[];
 
 // Chest contents: one regen potion
 extern const Item chest_item_regen_pot[];
+
+// Chest contents: potion
+extern const Item chest_item_1pot[];
 
 #endif

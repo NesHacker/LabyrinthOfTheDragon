@@ -119,6 +119,7 @@ addNamespace('maps', 2, {
 
 addNamespace('chest_item', 2, {
   '2pot_1eth': 'You get 2 potions and an ether!',
+  '1pot': 'You get a potion!',
   'haste_pot': 'You get a haste potion!',
   'regen_pot': 'You get a regen potion!',
 });

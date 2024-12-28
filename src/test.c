@@ -119,8 +119,8 @@ void test_flee(void) {
 void test_big_map(void) {
   init_test_player(CLASS_TEST, 20);
 
-  set_active_floor(&floor_test);
-  // set_active_floor(&floor_test2);
+  player.has_torch = true;
+  set_active_floor(&floor_one);
   init_world_map();
 
   game_state = GAME_STATE_WORLD_MAP;

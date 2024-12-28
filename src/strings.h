@@ -421,6 +421,11 @@ extern const char str_maps_sconce_torch_not_lit[];
 extern const char str_chest_item_2pot_1eth[];
 
 /**
+ * "You get a potion!"
+ */
+extern const char str_chest_item_1pot[];
+
+/**
  * "You get a haste potion!"
  */
 extern const char str_chest_item_haste_pot[];

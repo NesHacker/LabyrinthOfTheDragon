@@ -40,3 +40,8 @@ extern const Item chest_item_regen_pot[] = {
   { ITEM_REGEN, 1 },
   { END },
 };
+
+extern const Item chest_item_1pot[] = {
+  { ITEM_POTION, 1 },
+  { END },
+};
