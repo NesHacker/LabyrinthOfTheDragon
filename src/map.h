@@ -1263,7 +1263,7 @@ inline bool is_locked_door(DoorId id) {
  * @param id Id of the sconce to test.
  */
 inline bool is_sconce_lit(SconceId id) {
-  return map.flags_sconce_lit & id;
+  return id == SCONCE_STATIC ? true : map.flags_sconce_lit & id;
 }
 
 /**

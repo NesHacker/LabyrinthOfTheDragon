@@ -1475,6 +1475,7 @@ void set_active_floor(Floor *floor) BANKED {
   set_hero_position(floor->default_x, floor->default_y);
   core.load_bg_palette(map.active_floor->palettes, 0, 7);
   reset_map_objects();
+  on_init();
 }
 
 /**
