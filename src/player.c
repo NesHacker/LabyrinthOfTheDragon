@@ -333,7 +333,7 @@ void test_class_ability1(void) {
 void test_class_ability2(void) {
   sprintf(battle_pre_message, "SUPERKILL!!!");
   skip_post_message = true;
-  damage_all(1000, 200, false, DAMAGE_PHYSICAL);
+  damage_all(5000, 200, false, DAMAGE_PHYSICAL);
 }
 
 void test_class_ability3(void) {
