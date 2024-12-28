@@ -20,3 +20,4 @@ const char str_maps_door_unlock_key[] = "You unlock the \ndoor with a magic\n ke
 const char str_maps_sconce_lit_no_torch[] = "The sconce burns \nbrightly.";
 const char str_maps_sconce_no_torch[] = "Hmm\x60 how do you \nlight this?";
 const char str_maps_sconce_torch_not_lit[] = "Your torch lacks a\n flame.";
+const char str_maps_sign_monster_no_fire[] = "Monsters fear \nfire!";

@@ -416,6 +416,11 @@ extern const char str_maps_sconce_no_torch[];
 extern const char str_maps_sconce_torch_not_lit[];
 
 /**
+ * "Monsters fear fire!"
+ */
+extern const char str_maps_sign_monster_no_fire[];
+
+/**
  * "You get 2 potions and an ether!"
  */
 extern const char str_chest_item_2pot_1eth[];

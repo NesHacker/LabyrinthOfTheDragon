@@ -120,6 +120,7 @@ void test_big_map(void) {
   init_test_player(CLASS_TEST, 20);
 
   player.has_torch = true;
+  grant_ability(ABILITY_ALL);
   set_active_floor(&floor_one);
   init_world_map();
 

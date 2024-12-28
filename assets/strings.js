@@ -115,6 +115,7 @@ addNamespace('maps', 2, {
   'sconce_lit_no_torch': 'The sconce burns brightly.',
   'sconce_no_torch': 'Hmm... how do you light this?',
   'sconce_torch_not_lit': 'Your torch lacks a flame.',
+  'sign_monster_no_fire': 'Monsters fear fire!',
 });
 
 addNamespace('chest_item', 2, {

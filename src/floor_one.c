@@ -8,7 +8,7 @@
 
 #define FLOOR_TEST_ID 99
 #define FLOOR_TEST_DEFAULT_X 7
-#define FLOOR_TEST_DEFAULT_Y 31
+#define FLOOR_TEST_DEFAULT_Y 30
 #define FLOOR_TEST_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
@@ -151,6 +151,7 @@ const Sign floor_one_signs[] = {
     "Hi there!" // The message to display
   }
   */
+  { MAP_A, 4, 25, UP, str_maps_sign_monster_no_fire },
   { END },
 };
 
@@ -160,7 +161,7 @@ const Sign floor_one_signs[] = {
 
 void floor_one_on_lever(const Lever *lever) {
   if (lever->id == LEVER_1) {
-    map_textbox("You hear a ka-thunk\x60");
+    map_textbox("You hear a\nka-thunk\x60");
     open_door_by_id(DOOR_3);
   }
 }
@@ -269,6 +270,16 @@ bool floor_one_on_action(void) {
 }
 
 bool floor_one_on_special(void) {
+  // 21, 19
+  if (player_at(21, 19)) {
+    Monster *monster = encounter.monsters;
+    reset_encounter(MONSTER_LAYOUT_1);
+    kobold_generator(monster, player.level, C_TIER);
+    monster->id = 'A';
+    start_battle();
+    return true;
+  }
+
   return false;
 }
 
@@ -276,8 +287,31 @@ bool floor_one_on_exit(void) {
   return false;
 }
 
+uint8_t enc_step = 0;
+uint8_t enc_chance = 1;
+
 bool floor_one_on_move(void) {
-  return false;
+  enc_step++;
+  if (player.torch_gauge > 0)
+    return false;
+
+  if (enc_step < 4)
+    return false;
+
+  if (d64() >= enc_chance) {
+    enc_chance++;
+    return false;
+  }
+
+  enc_step = 0;
+  enc_chance = 1;
+
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  beholder_generator(monster, player.level, C_TIER);
+  monster->id = 'A';
+  start_battle();
+  return true;
 }
 
 //------------------------------------------------------------------------------
