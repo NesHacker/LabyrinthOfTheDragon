@@ -1,3 +1,5 @@
+#pragma bank 1
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <stdint.h>
@@ -6,7 +8,7 @@
 /**
  * The main menu uses most of the 8 available palettes for specific graphics
  * elements on both the title screen, save select, and new game screens.
- * 
+ *
  * - Palettes 0-3: These four palettes are used for core "background" colors
  *   for the title screen art, etc.
  * - Palettes 4-6: Save game select palettes. The colors for each of these are

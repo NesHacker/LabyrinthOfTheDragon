@@ -1,3 +1,10 @@
+# Emulator sram SAV files
+*.sav
+
+# Ignore all build files
+obj/
+*.ihx
+
 # Prerequisites
 *.d
 

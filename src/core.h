@@ -80,22 +80,6 @@ typedef enum GameRomBank {
 #define FONT_BORDER_TOP 0x91
 
 /**
- * Disables interrupts, turns of the LCD.
- */
-#define lcd_off() do { \
-    disable_interrupts(); \
-    DISPLAY_OFF; \
-  } while (0)
-
-/**
- * Enables interrupts and turns the LCD on.
- */
-#define lcd_on() do { \
-    DISPLAY_ON; \
-    enable_interrupts(); \
-  } while (0)
-
-/**
  * Creates a pointer to VRAM at the given offset.
  * @param offset Offset in VRAM for the pointer.
  */

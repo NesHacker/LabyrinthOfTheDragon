@@ -24,6 +24,18 @@ extern const Floor floor_2;
  */
 bool chest_add_magic_key(Chest *chest);
 
+/**
+ * Set this as a custom chest handler to have the chest give the player the
+ * torch (see CHEST_7 example in `floor_test.c`).
+ *
+ * This will check to see if the chest is locked and if it isn't will cause
+ * the chest to be opened and the player to gain the torch.
+ *
+ * @param chest The chest being opened.
+ * @return `true` If the chest was opened.
+ */
+bool chest_add_torch(Chest *chest);
+
 // Chest contents: two potions and an ether
 extern const Item chest_item_2pot_1eth[];
 

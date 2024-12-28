@@ -77,7 +77,7 @@ typedef struct Encounter {
   /**
    * Monster instances for the encounter.
    */
-  MonsterInstance monsters[3];
+  Monster monsters[3];
   /**
    * The turn order for the encounter.
    */
@@ -109,7 +109,7 @@ typedef struct Encounter {
   /**
    * If the player is targeting a monster, this is the index for that monster.
    */
-  MonsterInstance *target;
+  Monster *target;
   /**
    * Accumulated xp to reward upon finishing battle.
    */
@@ -147,20 +147,19 @@ extern Encounter encounter;
  * Sets the player's next action to a basic attack.
  * @param target Target for the basic attack.
  */
-void set_player_fight(MonsterInstance *target);
+void set_player_fight(Monster *target);
 
 /**
  * Sets the player's next action to using an ability.
  * @param a Ability to use.
  * @param target Target for the ability (if applicable).
  */
-void set_player_ability(const Ability *a, MonsterInstance *target);
+void set_player_ability(const Ability *a, Monster *target);
 
 /**
  * Sets the player's next action to fleeing.
  */
 void set_player_flee(void);
-
 
 /**
  * Sets the player's next action to using an item.
@@ -209,34 +208,10 @@ bool is_battle_over(void);
 void reset_encounter(MonsterLayout layout);
 
 /**
- * Applies damage to the target monster. Takes immunities, etc. into account and
- * handles battle result messages.
- * @param base_damage Base damage for the attack.
- * @param type Aspect for the damage.
- */
-void damage_monster(uint16_t base_damage, DamageAspect type);
-
-/**
- * Applies damage to all active monsters in the encounter. Takes immmunities,
- * etc. into account. Does **NOT** handle battle result messages.
- * @param base_damage Base damage for the attack.
- * @param atk ATK of the attacker.
- * @param use_mdef Whether or not to use DEF or MDEF when checking attack roll.
- * @param type Aspect type for the damage.
- * @return Number of monsters hit by the attack.
- */
-uint8_t damage_all(
-  uint8_t base_damage,
-  uint8_t atk,
-  bool use_mdef,
-  DamageAspect type
-);
-
-/**
  * @return The monster at the given index.
  * @param idx Index for the monster in the battle.
  */
-inline MonsterInstance *get_monster(uint8_t idx) {
+inline Monster *get_monster(uint8_t idx) {
   return encounter.monsters + idx;
 }
 
@@ -252,11 +227,6 @@ inline void heal_player(uint16_t hp) {
 }
 
 /**
- * Handles battle system calls for an ability that has yet to be implemented.
- */
-void ability_placeholder(void);
-
-/**
  * Resets player combat stats and flags at the start of each round.
  */
 void reset_player_stats(void) NONBANKED;
@@ -265,7 +235,7 @@ void reset_player_stats(void) NONBANKED;
  * Resets a monster's combat stats and flags at the start of each round.
  * @param m Monster instance to reset.
  */
-void monster_reset_stats(MonsterInstance *m) NONBANKED;
+void monster_reset_stats(Monster *m) NONBANKED;
 
 /**
  * Handles status effect updates for the player.
@@ -276,7 +246,7 @@ void update_player_status_effects(void);
  * Handles status effect updates for a monster.
  * @param monster Monster for which to handle the effects.
  */
-void update_monster_status_effects(MonsterInstance *monster);
+void update_monster_status_effects(Monster *monster);
 
 /**
  * Applies a status effect and adds it to the given list.
@@ -294,20 +264,13 @@ StatusEffectResult apply_status_effect(
   PowerTier tier,
   uint8_t duration,
   uint8_t immune
-);
+) BANKED;
 
 /**
  * Handles the player "flee" action.
  * @return Whether or not the player could flee.
  */
 void player_flee(void);
-
-/**
- * Handle the "flee" action for a monster.
- * @param monster Monster who is trying to flee.
- * @return Whether or not the monster could flee.
- */
-void monster_flee(MonsterInstance *monster);
 
 /**
  * Applies rewards after a successful encounter. Handles XP, leveling, etc.

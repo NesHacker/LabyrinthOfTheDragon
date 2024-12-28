@@ -1,10 +1,12 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "battle.h"
 #include "core.h"
 #include "floor.h"
 #include "item.h"
 #include "map.h"
+#include "sound.h"
 #include "stats.h"
 
 uint8_t *_test = (void *)0xA000;
@@ -15,6 +17,15 @@ void reset_test(void) {
     *_test++ = 0xFF;
   }
   _test = (void *)0xA000;
+}
+
+void init_test_player(PlayerClass c, uint8_t level) {
+  init_player(c);
+  // init_player(CLASS_SORCERER);
+  // grant_ability(ABILITY_ALL);
+  set_player_level(level);
+  sprintf(player.name, "Tester");
+  player.message_speed = AUTO_PAGE_FAST;
 }
 
 void test_battle_init(void) {
@@ -59,7 +70,7 @@ void test_stats(void) {
 void test_setup_encounter(MonsterLayout layout, TestDummyType type) {
   reset_encounter(layout);
 
-  MonsterInstance *monster = encounter.monsters;
+  Monster *monster = encounter.monsters;
 
   switch (layout) {
   case MONSTER_LAYOUT_1:
@@ -91,7 +102,7 @@ void fill_inventory(uint8_t amt) {
 }
 
 void test_combat_general(MonsterLayout layout, TestDummyType type) {
-  init_test_player(20);
+  init_test_player(CLASS_TEST, 20);
   fill_inventory(3);
   test_setup_encounter(layout, type);
   // player.exp = get_exp(player.level + 1) - 1;
@@ -100,15 +111,16 @@ void test_combat_general(MonsterLayout layout, TestDummyType type) {
 }
 
 void test_flee(void) {
-  init_test_player(20);
+  init_test_player(CLASS_TEST, 20);
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
 
 void test_big_map(void) {
-  init_test_player(20);
+  init_test_player(CLASS_TEST, 20);
 
-  set_active_floor(&floor_1);
+  set_active_floor(&floor_test);
+  // set_active_floor(&floor_test2);
   init_world_map();
 
   game_state = GAME_STATE_WORLD_MAP;

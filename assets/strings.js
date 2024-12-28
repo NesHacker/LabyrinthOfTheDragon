@@ -21,9 +21,6 @@ function addNamespace(name, bank, strings) {
   namespaces[name] = { bank, strings };
 }
 
-/**
- * Misc. game text strings used in various places.
- */
 addNamespace('misc', 0, {
   'empty': 'EMPTY...',
   'physical': '',
@@ -41,37 +38,20 @@ addNamespace('misc', 0, {
   'def_up_potion': 'DEF ^ ',
   'elixer':        'Elixer',
   'regen_pot':     'Regen ',
-  'haste_pot':     'Haste '
-})
-
-addNamespace('maps', 2, {
-  'chest_locked': "The chest is locked.",
-  'chest_open': "You opened the chest!",
-  "chest_empty": "The chest was empty.",
-  'chest_key_locked': "You need a magic key to unlock this chest...",
-  'chest_unlock_key': "You unlock the chest with a magic key!",
-  'get_magic_key': "You get a magic key!",
-  'lever_stuck': "It's stuck!",
-  'lever_one_way': "Seems this lever was one and done.",
-});
-
-addNamespace('chest_item', 2, {
-  '2pot_1eth': 'You get 2 potions and an ether!',
-  'haste_pot': 'You get a haste potion!',
-  'regen_pot': 'You get a regen potion!',
-});
-
-addNamespace('items', 3, {
-  'use_potion': '%damage HP healed!',
-  'use_ether_sp': '%damage SP restored!',
-  'use_ether_mp': '%damage MP restored!',
-  'use_remedy': 'You remedy what ails you!',
-  'use_atkup': 'Your attack increases!',
-  'use_defup': 'Your defense increases!',
-  'use_elixer': 'You fully heal!',
-  'use_regen': 'You begin regenerating!',
-  'use_haste': 'The world slows down!',
-  'use_failed': "The item didn't work!",
+  'haste_pot':     'Haste ',
+  'dummy': 'Dummy',
+  'kobold': 'Kobold',
+  'goblin': 'Goblin',
+  'zombie': 'Zombie',
+  'bugbear': 'Bugbear',
+  'owlbear': 'Owlbear',
+  'gelatinous_cube': 'G.Cube',
+  'displacer_beast': 'D.Beast',
+  'will_o_wisp': 'W.O.Wisp',
+  'death_knight': 'D.Knight',
+  'mind_flayer': 'M.Flayer',
+  'beholder': 'Beholder',
+  'dragon': 'Dragon',
 })
 
 addNamespace('ability', 0, {
@@ -84,10 +64,7 @@ addNamespace('ability', 0, {
   'druid_regen':         'Regenerate   ',
 });
 
-/**
- * General battle strings
- */
-addNamespace('battle', 3, {
+addNamespace('battle', 0, {
   'poison_spray': 'Poison gas erupts from your palm!',
   'cure_wounds': "You're enveloped in blue light...",
   'bark_skin': 'Your skin grows hard as wood.',
@@ -95,18 +72,6 @@ addNamespace('battle', 3, {
   'heal': 'Radiant blue light falls upon you...',
   'insect_plague': 'Locusts swarm your enemies!',
   'regen': 'You surge with vitality!',
-  'monster_attack': '%monster %c attacks!',
-  'monster_miss': 'But they miss!',
-  'monster_magic_miss': 'But it has no effect!',
-  'monster_hit': 'You take %damage damage!',
-  'monster_hit_aspect': 'You take %damage %aspect damage!',
-  'monster_hit_immune': "But you're completely immune!",
-  'monster_hit_resist': 'You resist, only %damage damage',
-  'monster_hit_vuln': "It's SUPER BAD! %damage damage!",
-  'monster_hit_crit': 'CRITICAL HIT! You take %damage damage!',
-  'monster_flee': '%monster %c makes a run for it...',
-  'monster_flee_failure': 'But they cannot get away!',
-  'monster_flee_success': 'And they get away!',
   'monster_scared_frozen': '%monster %c shivers in fear...',
   'monster_paralyzed': "%monster %c can't move!",
   'monster_poison_death': '%monster %c succumbs to the poison!',
@@ -132,10 +97,59 @@ addNamespace('battle', 3, {
   'level_up': 'LEVEL UP! You reach %level!',
 })
 
-/**
- * Monster specific battle strings
- */
-addNamespace('monster', 3, {
+
+
+addNamespace('maps', 2, {
+  'chest_locked': "The chest is locked.",
+  'chest_open': "You opened the chest!",
+  "chest_empty": "The chest was empty.",
+  'chest_key_locked': "You need a magic key to unlock this chest...",
+  'chest_unlock_key': "You unlock the chest with a magic key!",
+  'get_magic_key': "You get a magic key!",
+  'get_torch': "You find a torch!",
+  'lever_stuck': "It's stuck!",
+  'lever_one_way': "Seems this lever was one and done.",
+  'door_locked': 'The door is locked.',
+  'door_locked_key': 'You need a magic key to unlock this door...',
+  'door_unlock_key': 'You unlock the door with a magic key!',
+  'sconce_lit_no_torch': 'The sconce burns brightly.',
+  'sconce_no_torch': 'Hmm... how do you light this?',
+  'sconce_torch_not_lit': 'Your torch lacks a flame.',
+});
+
+addNamespace('chest_item', 2, {
+  '2pot_1eth': 'You get 2 potions and an ether!',
+  'haste_pot': 'You get a haste potion!',
+  'regen_pot': 'You get a regen potion!',
+});
+
+addNamespace('items', 3, {
+  'use_potion': '%damage HP healed!',
+  'use_ether_sp': '%damage SP restored!',
+  'use_ether_mp': '%damage MP restored!',
+  'use_remedy': 'You remedy what ails you!',
+  'use_atkup': 'Your attack increases!',
+  'use_defup': 'Your defense increases!',
+  'use_elixer': 'You fully heal!',
+  'use_regen': 'You begin regenerating!',
+  'use_haste': 'The world slows down!',
+  'use_failed': "The item didn't work!",
+})
+
+addNamespace('monster', 6, {
+  'flee': '%monster %c makes a run for it...',
+  'flee_failure': 'But they cannot get away!',
+  'flee_success': 'And they get away!',
+  'attack': '%monster %c attacks!',
+  'miss': 'But they miss!',
+  'magic_miss': 'But it has no effect!',
+  'hit': 'You take %damage damage!',
+  'hit_aspect': 'You take %damage %aspect damage!',
+  'hit_immune': "But you're completely immune!",
+  'hit_resist': 'You resist, only %damage damage',
+  'hit_vuln': "It's SUPER BAD! %damage damage!",
+  'hit_crit': 'CRITICAL HIT! You take %damage damage!',
+  'does_nothing': '%monster %c does nothing.',
   'dummy_pre': 'Dummy %c stands still.',
   'dummy_post_heal': '"I will never die..."',
   'kobold_axe': 'Kobold %c raises a tiny axe...',

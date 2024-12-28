@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "core.h"
+#include "item.h"
 #include "textbox.h"
 
 /**
@@ -34,6 +35,155 @@
 #define HERO_Y_OFFSET 4
 
 /**
+ * Mask used to isolate a map data byte's "tile id".
+ */
+#define MAP_TILE_MASK 0b00111111
+
+/**
+ * Mask used to isolate a map data byte's "attribute".
+ */
+#define MAP_ATTR_MASK 0b11000000
+
+/**
+ * Tile id for the torch gauge "zero" sprite.
+ */
+#define TORCH_GAUGE_ZERO 0x20
+
+/**
+ * Tile id for the torch gauge cap.
+ */
+#define TORCH_GAUGE_CAP 0x29
+
+/**
+ * Sprite id for the torch gauge "flame"
+ */
+#define TORCH_GAUGE_FLAME 24
+
+/**
+ * Sprite id for the torch gauge body positon 1.
+ */
+#define TORCH_GAUGE_BODY_1 25
+
+/**
+ * Sprite id for the torch gauge body positon 2.
+ */
+#define TORCH_GAUGE_BODY_2 26
+
+/**
+ * Sprite id for the torch gauge body positon 3.
+ */
+#define TORCH_GAUGE_BODY_3 27
+
+/**
+ * Sprite id for the torch gauge body positon 4.
+ */
+#define TORCH_GAUGE_BODY_4 28
+
+/**
+ * Sprite property for all torch gauge sprites.
+ */
+#define TORCH_GAUGE_PROP 0b00001100
+
+/**
+ * X position for the torch gauge on the screen.
+ */
+#define TORCH_GAUGE_X 16
+
+/**
+ * Y position for the torch gauge on the screen
+ */
+#define TORCH_GAUGE_Y 24
+
+/**
+ * Flame tile animation frame 1.
+ */
+#define FLAME_TILE_1 0x04
+
+/**
+ * Flame tile animation frame 2.
+ */
+#define FLAME_TILE_2 0x14
+
+/**
+ * Clear tile for sprites.
+ */
+#define SPRITE_TILE_CLEAR 0x74
+
+/**
+ * Number of frames before reducing the torch gauge by 1.
+ */
+#define TORCH_GAUGE_SPEED 10
+
+/**
+ * Palette index for the torch gauge.
+ */
+#define TORCH_GAUGE_PALETTE 4
+
+/**
+ * Horizontal position of the magic keys HUD sprites.
+ */
+#define MAGIC_KEYS_X 16 + 8 * 6
+
+/**
+ * Vertical position for the magic keys HUD sprites.
+ */
+#define MAGIC_KEYS_Y 22
+
+/**
+ * Sprite id for the top "key" graphic sprite.
+ */
+#define MAGIC_KEY_SPRITE_1 29
+
+/**
+ * Sprite id for the bottom "key" graphic sprite.
+ */
+#define MAGIC_KEY_SPRITE_2 30
+
+/**
+ * Sprite id for the quantity of keys
+ */
+#define MAGIC_KEY_QTY 31
+
+/**
+ * Attribute to use for all magic key HUD sprites.
+ */
+#define MAGIC_KEY_HUD_ATTR 0b00001101
+
+/**
+ * Tile id for the top portion of the magic key.
+ */
+#define MAGIC_KEY_TOP_TILE 0x05
+
+/**
+ * Tile id for the bottom porition of the magic key.
+ */
+#define MAGIC_KEY_BOTTOM_TILE 0x15
+
+/**
+ * Tile id for the number 0 for the key quantity.
+ */
+#define MAGIC_KEY_NUM_0 0x30
+
+/**
+ * Palette to use for the magic keys hud.
+ */
+#define MAGIC_KEY_HUD_PALETTE 5
+
+/**
+ * Sconce flame sprite ids.
+ */
+typedef enum SconceFlames {
+  FLAME_1 = 32,
+  FLAME_2 = 33,
+  FLAME_3 = 34,
+  FLAME_4 = 35,
+  FLAME_5 = 36,
+  FLAME_6 = 37,
+  FLAME_7 = 38,
+  FLAME_8 = 39,
+} SconceFlames;
+
+/**
  * Use these values when denoting map ids instead of hard coded constants.
  */
 typedef enum MapId {
@@ -44,10 +194,6 @@ typedef enum MapId {
   MAP_E,
   MAP_F,
   MAP_G,
-  MAP_H,
-  MAP_I,
-  MAP_J,
-  MAP_K,
   MAP_INVALID = 0xFF
 } MapId;
 
@@ -106,6 +252,23 @@ typedef struct MapTile {
    * If the tile contains a lever, this will point to it.
    */
   const struct Lever *lever;
+  /**
+   * If the tile contains a door, this will point to it.
+   */
+  const struct Door *door;
+  /**
+   * If the tile contains a sign, this will point to it.
+   */
+  const struct Sign *sign;
+  /**
+   * If the tile contains a sconce, this will point to it.
+   */
+  const struct Sconce *sconce;
+  /**
+   * Whether or not the tile was marked as BG priority for rendering in the tile
+   * source data.
+   */
+  bool bg_priority;
 } MapTile;
 
 /**
@@ -416,6 +579,16 @@ typedef enum DoorId {
 } DoorId;
 
 /**
+ * Type for the door.
+ */
+typedef enum DoorType {
+  DOOR_NORMAL = 0x4E,
+  DOOR_STAIRS_UP = 0x60,
+  DOOR_STAIRS_DOWN = 0x88,
+  DOOR_NEXT_LEVEL = 0x82,
+} DoorType;
+
+/**
  * A door that can be opened, closed, and locked. WARNING: NOT IMPLEMENTED YET.
  */
 typedef struct Door {
@@ -423,6 +596,8 @@ typedef struct Door {
   MapId map_id;
   int8_t col;
   int8_t row;
+  DoorType type;
+  bool magic_key_unlock;
 } Door;
 
 /**
@@ -437,20 +612,50 @@ typedef enum SconceId {
   SCONCE_6 = FLAG(5),
   SCONCE_7 = FLAG(6),
   SCONCE_8 = FLAG(7),
-  /**
-   * Denotes a sconce that starts lit.
-   */
-  SCONCE_LIT = 0xFF,
 } SconceId;
+
+/**
+ * Used to define the flame color for a sconce.
+ */
+typedef enum FlameColor {
+  FLAME_NONE,
+  FLAME_RED,
+  FLAME_GREEN,
+  FLAME_BLUE,
+} FlameColor;
 
 /**
  * A sconce that can be lit. WARNING: Not yet implemented.
  */
 typedef struct Sconce {
+  /**
+   * Id of the sconce.
+   */
   SconceId id;
+  /**
+   * Map where the sconce resides.
+   */
   MapId map_id;
+  /**
+   * Column for the sconce.
+   */
   int8_t col;
+  /**
+   * Row for the sconce.
+   */
   int8_t row;
+  /**
+   * Whether or not the sconce starts lit.
+   */
+  bool is_lit;
+  /**
+   * Color of the sconce's flame if it started lit.
+   */
+  FlameColor color;
+  /**
+   * Callback to execute when the sconce is lit.
+   */
+  void (*on_lit)(const struct Sconce *sconce);
 } Sconce;
 
 /**
@@ -570,14 +775,51 @@ typedef struct Floor {
 } Floor;
 
 /**
- * Mask used to isolate a map data byte's "tile id".
+ * Number of entries in the map object hash table.
  */
-#define MAP_TILE_MASK 0b00111111
+#define TILE_HASHTABLE_SIZE 64
 
 /**
- * Mask used to isolate a map data byte's "attribute".
+ * Denotes the type of data stored in a hash entry.
  */
-#define MAP_ATTR_MASK 0b11000000
+typedef enum TileHashType {
+  HASH_TYPE_CHEST,
+  HASH_TYPE_LEVER,
+  HASH_TYPE_DOOR,
+  HASH_TYPE_SIGN,
+  HASH_TYPE_SCONCE,
+} TileHashType;
+
+/**
+ * Entry for the tile objects hash table.
+ */
+typedef struct TileHashEntry {
+  /**
+   * Map id for the associated tile in the map.
+   */
+  uint8_t map_id;
+  /**
+   * Horizontal position for the associated tile in the map.
+   */
+  int8_t x;
+  /**
+   * Vertical positon for the associated tile in the map.
+   */
+  int8_t y;
+  /**
+   * Type of data being hashed.
+   */
+  TileHashType type;
+  /**
+   * Pointer to the data associated with the tile.
+   */
+  void *data;
+  /**
+   * Pointer to the next entry in the bucket. This will only be set if there is
+   * a hashing coflict between two positions.
+   */
+  struct TileHashEntry *next;
+} TileHashEntry;
 
 /**
  * Map system main state. Holds all global memory values used in the system.
@@ -620,11 +862,6 @@ typedef struct MapSystem {
    */
   int8_t vram_y;
   /**
-   * Tile buffer containing all map tiles to be progressively loaded while
-   * scrolling the map during a move.
-   */
-  MapTile tile_buf[2 * MAP_HORIZ_LOADS];
-  /**
    * Position in the buffer for the next map tile to be loaded.
    */
   uint8_t buffer_pos;
@@ -658,11 +895,6 @@ typedef struct MapSystem {
    * Active map in the active floor.
    */
   const Map *active_map;
-  /**
-   * Map tile data for the tile the hero currently occupies and those in every
-   * cardinal direction (index this with a `Direction`).
-   */
-  MapTile local_tiles[5];
   /**
    * State of the hero sprites.
    */
@@ -703,6 +935,30 @@ typedef struct MapSystem {
    * Lever stuck/unstuck states for the current floor.
    */
   uint8_t flags_lever_stuck;
+  /**
+   * Door locked open/closed state.
+   */
+  uint8_t flags_door_locked;
+  /**
+   * Whether or not particular sconces are lit.
+   */
+  uint8_t flags_sconce_lit;
+  /**
+   * Timer for animating the sconce flame sprites.
+   */
+  Timer flame_timer;
+  /**
+   * The current flame sprite frame.
+   */
+  uint8_t flame_frame;
+  /**
+   * Timer used to slowly reduce the amount of torch guage remaining.
+   */
+  Timer torch_timer;
+  /**
+   * Whether or not the BG priority was set for the destination during a move.
+   */
+  bool bg_priority_set;
 } MapSystem;
 
 /**
@@ -764,6 +1020,12 @@ void start_battle(void);
  * Called when returning to the map system from the battle system.
  */
 void return_from_battle(void) NONBANKED;
+
+/**
+ * Opens a door with the given id.
+ * @param id Id of the door to open.
+ */
+void open_door_by_id(DoorId id);
 
 /**
  * Opens a textbox while on the world map.
@@ -891,6 +1153,14 @@ inline void set_chest_open(ChestId id) {
 }
 
 /**
+ * @return `true` if the chest with the given id is open.
+ * @param id Id of the chest to check.
+ */
+inline bool is_chest_open(ChestId id) {
+  return map.flags_chest_open & id;
+}
+
+/**
  * Sets the chest as "locked" in the map system state.
  * @param chest Chest to set as locked.
  */
@@ -918,8 +1188,8 @@ inline bool is_chest_locked(ChestId id) {
  * @return `true` if the lever is on.
  * @param level The lever to test.
  */
-inline bool is_lever_on(const Lever *lever) {
-  return map.flags_lever_on & lever->id;
+inline bool is_lever_on(LeverId id) {
+  return map.flags_lever_on & id;
 }
 
 /**
@@ -955,5 +1225,59 @@ inline void unstick_lever(LeverId id) {
   map.flags_lever_stuck &= ~id;
 }
 
+/**
+ * Sets a door to open. Has no effect on graphics.
+ * @param id Id for the door to open.
+ */
+inline void set_door_open(DoorId id) {
+  map.flags_door_locked &= ~id;
+}
+
+/**
+ * @return If a door is open or not.
+ * @param id Id of the door to test.
+ */
+inline bool is_door_open(DoorId id) {
+  return ~map.flags_door_locked & id;
+}
+
+/**
+ * Sets a door to be locked. Has no effect on graphics.
+ * @param id Id for the door to lock.
+ */
+inline void set_door_locked(DoorId id) {
+  map.flags_door_locked |= id;
+}
+
+/**
+ * @return `true` if the door with the given id is locked.
+ * @param id Id of the door to test.
+ */
+inline bool is_locked_door(DoorId id) {
+  return map.flags_door_locked & id;
+}
+
+/**
+ * @return `true` if the sconce with the given id is lit.
+ * @param id Id of the sconce to test.
+ */
+inline bool is_sconce_lit(SconceId id) {
+  return map.flags_sconce_lit & id;
+}
+
+/**
+ * Lights a sconce.
+ * @param id Id of the sconce to light.
+ * @param color Color of the flame.
+ */
+void light_sconce(SconceId id, FlameColor color);
+
+/**
+ * Extinguishes a sconce.
+ * @param id Id of the sconce to extinguish.
+ */
+inline void extinguish_sconce(SconceId id) {
+  map.flags_sconce_lit &= ~id;
+}
 
 #endif

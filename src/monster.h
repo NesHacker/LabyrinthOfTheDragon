@@ -15,35 +15,44 @@
 #define MONSTER_TILES 7 * 7 * 2
 
 /**
- * Defines a monster and its behaviors.
+ * Monster ids for all the monsters in the game.
  */
-typedef struct Monster {
-  /**
-   * Unique identifier for the monster.
-   */
-  const uint8_t id;
-  /**
-   * Nine character display name for the monster.
-   */
-  const char name[9];
-  /**
-   * Tileset for the monster.
-   */
-  const Tileset *tileset;
-} Monster;
+typedef enum MonsterType {
+  MONSTER_KOBOLD,
+  MONSTER_GOBLIN,
+  MONSTER_ZOMBIE,
+  MONSTER_BUGBEAR,
+  MONSTER_OWLBEAR,
+  MONSTER_GELATINOUS_CUBE,
+  MONSTER_DISPLACER_BEAST,
+  MONSTER_WILL_O_WISP,
+  MONSTER_DEATHKNIGHT,
+  MONSTER_MINDFLAYER,
+  MONSTER_BEHOLDER,
+  MONSTER_DRAGON,
+  MONSTER_DUMMY = 0xFF,
+} MonsterType;
 
 /**
  * An instance of a monster that is used for battle.
  */
-typedef struct MonsterInstance {
+typedef struct Monster {
+  /**
+   * The id for the type of monster.
+   */
+  MonsterType type;
+  /**
+   * The tileset used by the instance.
+   */
+  const Tileset *tileset;
+  /**
+   * Name for the monster.
+   */
+  const char *name;
   /**
    * Whether or not the monster is active in combat and can take a turn.
    */
   bool active;
-  /**
-   * Monster definition that generated this instance.
-   */
-  const Monster *monster;
   /**
    * Palette colors for the instance.
    */
@@ -163,23 +172,15 @@ typedef struct MonsterInstance {
    */
   uint8_t parameter;
   /**
-   * Takes a turn for the given monster instance.
-   * @param m Monster instance for which to take a turn.
+   * Routine to determine how the monster acts on its turn.
    */
-  void (*take_turn)(struct MonsterInstance *m);
-} MonsterInstance;
-
-/**
- * Initializes a monster instance for a monster generator.
- * @param i Monster instance to reset.
- * @param m Base monster for the instance.
- */
-void monster_init_instance(MonsterInstance *i, Monster *m);
+  void (*take_turn)(struct Monster *m);
+} Monster;
 
 /**
  * Deactivates a monster instance and removes it from combat.
  */
-inline void monster_deactivate(MonsterInstance *monster) {
+inline void monster_deactivate(Monster *monster) {
   monster->active = false;
 }
 
@@ -199,13 +200,157 @@ typedef enum TestDummyType {
  * @param level Level for the dummy.
  * @param invincible Whether or not the dummy is invincible.
  */
-void dummy_generator(MonsterInstance *m, uint8_t level, TestDummyType type);
+void dummy_generator(
+  Monster *m, uint8_t level, TestDummyType type) BANKED;
 
 /**
- * Basic kobold generator.
- * @param level Level for the kobold to generate.
+ * Generates a Kobold.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
  */
-void kobold_generator(MonsterInstance *m, uint8_t level, PowerTier tier);
+void kobold_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
 
+/**
+ * Generates a Goblin.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void goblin_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a zombie.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void zombie_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a bugbear.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void bugbear_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a owlbear.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void owlbear_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a gelatinous_cube.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void gelatinous_cube_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a displacer beast.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void displacer_beast_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a will-o-wisp.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void will_o_wisp_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a death knight.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void deathknight_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a mind flayer.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void mindflayer_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a beholder.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void beholder_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Generates a dragon.
+ * @param m Monster instance to populate.
+ * @param level Level for the monster.
+ * @param tier Power tier.
+ */
+void dragon_generator(
+  Monster *m, uint8_t level, PowerTier tier) BANKED;
+
+/**
+ * Handle the "flee" action for a monster.
+ * @param monster Monster who is trying to flee.
+ * @return Whether or not the monster could flee.
+ */
+void monster_flee(Monster *monster) BANKED;
+
+/**
+ * Performs a battle turn for the given monster.
+ */
+void monster_take_turn(Monster *monster) BANKED;
+
+// Data externs (see: monster.data.c, stored on bank 0)
+
+extern const Tileset test_dummy_tileset;
+extern const Tileset kobold_tileset;
+extern const Tileset goblin_tileset;
+extern const Tileset zombie_tileset;
+extern const Tileset bugbear_tileset;
+extern const Tileset owlbear_tileset;
+extern const Tileset gelatinous_cube_tileset;
+extern const Tileset displacer_beast_tileset;
+extern const Tileset will_o_wisp_tileset;
+extern const Tileset deathknight_tileset;
+extern const Tileset mindflayer_tileset;
+extern const Tileset beholder_tileset;
+extern const Tileset dragon_tileset;
+
+extern const palette_color_t dummy_palette[];
+extern const palette_color_t kobold_palettes[];
+extern const palette_color_t goblin_palettes[];
+extern const palette_color_t zombie_palettes[];
+extern const palette_color_t bugbear_palettes[];
+extern const palette_color_t owlbear_palettes[];
+extern const palette_color_t gelatinous_cube_palettes[];
+extern const palette_color_t displacer_beast_palettes[];
+extern const palette_color_t will_o_wisp_palettes[];
+extern const palette_color_t deathknight_palettes[];
+extern const palette_color_t mindflayer_palettes[];
+extern const palette_color_t beholder_palettes[];
+extern const palette_color_t dragon_palettes[];
 
 #endif

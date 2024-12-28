@@ -91,109 +91,69 @@ extern const char str_misc_regen_pot[];
 extern const char str_misc_haste_pot[];
 
 /**
- * "The chest is locked."
+ * "Dummy"
  */
-extern const char str_maps_chest_locked[];
+extern const char str_misc_dummy[];
 
 /**
- * "You opened the chest!"
+ * "Kobold"
  */
-extern const char str_maps_chest_open[];
+extern const char str_misc_kobold[];
 
 /**
- * "The chest was empty."
+ * "Goblin"
  */
-extern const char str_maps_chest_empty[];
+extern const char str_misc_goblin[];
 
 /**
- * "You need a magic key to unlock this chest..."
+ * "Zombie"
  */
-extern const char str_maps_chest_key_locked[];
+extern const char str_misc_zombie[];
 
 /**
- * "You unlock the chest with a magic key!"
+ * "Bugbear"
  */
-extern const char str_maps_chest_unlock_key[];
+extern const char str_misc_bugbear[];
 
 /**
- * "You get a magic key!"
+ * "Owlbear"
  */
-extern const char str_maps_get_magic_key[];
+extern const char str_misc_owlbear[];
 
 /**
- * "It's stuck!"
+ * "G.Cube"
  */
-extern const char str_maps_lever_stuck[];
+extern const char str_misc_gelatinous_cube[];
 
 /**
- * "Seems this lever was one and done."
+ * "D.Beast"
  */
-extern const char str_maps_lever_one_way[];
+extern const char str_misc_displacer_beast[];
 
 /**
- * "You get 2 potions and an ether!"
+ * "W.O.Wisp"
  */
-extern const char str_chest_item_2pot_1eth[];
+extern const char str_misc_will_o_wisp[];
 
 /**
- * "You get a haste potion!"
+ * "D.Knight"
  */
-extern const char str_chest_item_haste_pot[];
+extern const char str_misc_death_knight[];
 
 /**
- * "You get a regen potion!"
+ * "M.Flayer"
  */
-extern const char str_chest_item_regen_pot[];
+extern const char str_misc_mind_flayer[];
 
 /**
- * "%damage HP healed!"
+ * "Beholder"
  */
-extern const char str_items_use_potion[];
+extern const char str_misc_beholder[];
 
 /**
- * "%damage SP restored!"
+ * "Dragon"
  */
-extern const char str_items_use_ether_sp[];
-
-/**
- * "%damage MP restored!"
- */
-extern const char str_items_use_ether_mp[];
-
-/**
- * "You remedy what ails you!"
- */
-extern const char str_items_use_remedy[];
-
-/**
- * "Your attack increases!"
- */
-extern const char str_items_use_atkup[];
-
-/**
- * "Your defense increases!"
- */
-extern const char str_items_use_defup[];
-
-/**
- * "You fully heal!"
- */
-extern const char str_items_use_elixer[];
-
-/**
- * "You begin regenerating!"
- */
-extern const char str_items_use_regen[];
-
-/**
- * "The world slows down!"
- */
-extern const char str_items_use_haste[];
-
-/**
- * "The item didn't work!"
- */
-extern const char str_items_use_failed[];
+extern const char str_misc_dragon[];
 
 /**
  * "Poison Spray "
@@ -264,66 +224,6 @@ extern const char str_battle_insect_plague[];
  * "You surge with vitality!"
  */
 extern const char str_battle_regen[];
-
-/**
- * "%monster %c attacks!"
- */
-extern const char str_battle_monster_attack[];
-
-/**
- * "But they miss!"
- */
-extern const char str_battle_monster_miss[];
-
-/**
- * "But it has no effect!"
- */
-extern const char str_battle_monster_magic_miss[];
-
-/**
- * "You take %damage damage!"
- */
-extern const char str_battle_monster_hit[];
-
-/**
- * "You take %damage %aspect damage!"
- */
-extern const char str_battle_monster_hit_aspect[];
-
-/**
- * "But you're completely immune!"
- */
-extern const char str_battle_monster_hit_immune[];
-
-/**
- * "You resist, only %damage damage"
- */
-extern const char str_battle_monster_hit_resist[];
-
-/**
- * "It's SUPER BAD! %damage damage!"
- */
-extern const char str_battle_monster_hit_vuln[];
-
-/**
- * "CRITICAL HIT! You take %damage damage!"
- */
-extern const char str_battle_monster_hit_crit[];
-
-/**
- * "%monster %c makes a run for it..."
- */
-extern const char str_battle_monster_flee[];
-
-/**
- * "But they cannot get away!"
- */
-extern const char str_battle_monster_flee_failure[];
-
-/**
- * "And they get away!"
- */
-extern const char str_battle_monster_flee_success[];
 
 /**
  * "%monster %c shivers in fear..."
@@ -439,6 +339,211 @@ extern const char str_battle_victory_no_xp[];
  * "LEVEL UP! You reach %level!"
  */
 extern const char str_battle_level_up[];
+
+/**
+ * "The chest is locked."
+ */
+extern const char str_maps_chest_locked[];
+
+/**
+ * "You opened the chest!"
+ */
+extern const char str_maps_chest_open[];
+
+/**
+ * "The chest was empty."
+ */
+extern const char str_maps_chest_empty[];
+
+/**
+ * "You need a magic key to unlock this chest..."
+ */
+extern const char str_maps_chest_key_locked[];
+
+/**
+ * "You unlock the chest with a magic key!"
+ */
+extern const char str_maps_chest_unlock_key[];
+
+/**
+ * "You get a magic key!"
+ */
+extern const char str_maps_get_magic_key[];
+
+/**
+ * "You find a torch!"
+ */
+extern const char str_maps_get_torch[];
+
+/**
+ * "It's stuck!"
+ */
+extern const char str_maps_lever_stuck[];
+
+/**
+ * "Seems this lever was one and done."
+ */
+extern const char str_maps_lever_one_way[];
+
+/**
+ * "The door is locked."
+ */
+extern const char str_maps_door_locked[];
+
+/**
+ * "You need a magic key to unlock this door..."
+ */
+extern const char str_maps_door_locked_key[];
+
+/**
+ * "You unlock the door with a magic key!"
+ */
+extern const char str_maps_door_unlock_key[];
+
+/**
+ * "The sconce burns brightly."
+ */
+extern const char str_maps_sconce_lit_no_torch[];
+
+/**
+ * "Hmm... how do you light this?"
+ */
+extern const char str_maps_sconce_no_torch[];
+
+/**
+ * "Your torch lacks a flame."
+ */
+extern const char str_maps_sconce_torch_not_lit[];
+
+/**
+ * "You get 2 potions and an ether!"
+ */
+extern const char str_chest_item_2pot_1eth[];
+
+/**
+ * "You get a haste potion!"
+ */
+extern const char str_chest_item_haste_pot[];
+
+/**
+ * "You get a regen potion!"
+ */
+extern const char str_chest_item_regen_pot[];
+
+/**
+ * "%damage HP healed!"
+ */
+extern const char str_items_use_potion[];
+
+/**
+ * "%damage SP restored!"
+ */
+extern const char str_items_use_ether_sp[];
+
+/**
+ * "%damage MP restored!"
+ */
+extern const char str_items_use_ether_mp[];
+
+/**
+ * "You remedy what ails you!"
+ */
+extern const char str_items_use_remedy[];
+
+/**
+ * "Your attack increases!"
+ */
+extern const char str_items_use_atkup[];
+
+/**
+ * "Your defense increases!"
+ */
+extern const char str_items_use_defup[];
+
+/**
+ * "You fully heal!"
+ */
+extern const char str_items_use_elixer[];
+
+/**
+ * "You begin regenerating!"
+ */
+extern const char str_items_use_regen[];
+
+/**
+ * "The world slows down!"
+ */
+extern const char str_items_use_haste[];
+
+/**
+ * "The item didn't work!"
+ */
+extern const char str_items_use_failed[];
+
+/**
+ * "%monster %c makes a run for it..."
+ */
+extern const char str_monster_flee[];
+
+/**
+ * "But they cannot get away!"
+ */
+extern const char str_monster_flee_failure[];
+
+/**
+ * "And they get away!"
+ */
+extern const char str_monster_flee_success[];
+
+/**
+ * "%monster %c attacks!"
+ */
+extern const char str_monster_attack[];
+
+/**
+ * "But they miss!"
+ */
+extern const char str_monster_miss[];
+
+/**
+ * "But it has no effect!"
+ */
+extern const char str_monster_magic_miss[];
+
+/**
+ * "You take %damage damage!"
+ */
+extern const char str_monster_hit[];
+
+/**
+ * "You take %damage %aspect damage!"
+ */
+extern const char str_monster_hit_aspect[];
+
+/**
+ * "But you're completely immune!"
+ */
+extern const char str_monster_hit_immune[];
+
+/**
+ * "You resist, only %damage damage"
+ */
+extern const char str_monster_hit_resist[];
+
+/**
+ * "It's SUPER BAD! %damage damage!"
+ */
+extern const char str_monster_hit_vuln[];
+
+/**
+ * "CRITICAL HIT! You take %damage damage!"
+ */
+extern const char str_monster_hit_crit[];
+
+/**
+ * "%monster %c does nothing."
+ */
+extern const char str_monster_does_nothing[];
 
 /**
  * "Dummy %c stands still."

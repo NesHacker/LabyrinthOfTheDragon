@@ -27,7 +27,7 @@ void roll_initiative(void) {
   rolls[0] = d32() + player.agl + 1;
 
   // Roll for the monsters that currently live
-  MonsterInstance *mon = encounter.monsters;
+  Monster *mon = encounter.monsters;
   for (uint8_t m = 1; m < 4; m++, mon++) {
     if (mon->active) {
       encounter.order[m] = TURN_PLAYER + m;
@@ -103,7 +103,7 @@ void reset_player_stats(void) NONBANKED {
   encounter.player_died = false;
 }
 
-void monster_reset_stats(MonsterInstance *m) NONBANKED {
+void monster_reset_stats(Monster *m) NONBANKED {
   m->agl = m->agl_base;
   m->atk = m->atk_base;
   m->def = m->def_base;
@@ -164,7 +164,7 @@ void update_player_status_effects(void) {
   }
 }
 
-void update_monster_status_effects(MonsterInstance *monster) {
+void update_monster_status_effects(Monster *monster) {
   StatusEffectInstance *effect = monster->status_effects;
 
   monster->buffs = 0;
@@ -268,7 +268,7 @@ inline void player_turn(void) {
   case PLAYER_ACTION_ABILITY:
     // No sp bounds checking here, should be handled in battle UI
     player.sp -= encounter.player_ability->sp_cost;
-    encounter.player_ability->execute();
+    player_use_ability(encounter.player_ability);
     break;
   case PLAYER_ACTION_ITEM:
     use_item(encounter.item_id);
@@ -281,7 +281,7 @@ inline void player_turn(void) {
 
 inline void monster_turn(void) {
   const uint8_t offset = encounter.turn - TURN_MONSTER1;
-  MonsterInstance *monster = encounter.monsters + offset;
+  Monster *monster = encounter.monsters + offset;
 
   if (!monster->active)
     return;
@@ -298,7 +298,7 @@ inline void monster_turn(void) {
         return;
       } else if (fear_shiver_roll(effect->tier)) {
         sprintf(battle_pre_message, str_battle_monster_scared_frozen,
-          monster->monster->name, monster->id);
+          monster->name, monster->id);
         skip_post_message = true;
         return;
       }
@@ -306,7 +306,7 @@ inline void monster_turn(void) {
     case DEBUFF_PARALYZED:
       if (paralyzed_roll(effect->tier)) {
         sprintf(battle_pre_message, str_battle_monster_paralyzed,
-          monster->monster->name, monster->id);
+          monster->name, monster->id);
         skip_post_message = true;
         return;
       }
@@ -320,15 +320,15 @@ inline void monster_turn(void) {
 
       if (monster->target_hp == 0) {
         sprintf(battle_pre_message, str_battle_monster_poison_death,
-          monster->monster->name, monster->id);
+          monster->name, monster->id);
         skip_post_message = true;
         return;
       }
       break;
     case DEBUFF_CONFUSED:
       if (confused_attack(effect->tier)) {
-        MonsterInstance *target = monster;
-        MonsterInstance *list = encounter.monsters;
+        Monster *target = monster;
+        Monster *list = encounter.monsters;
         for (uint8_t k = 0; k < 3; k++, list++) {
           if (!list->active)
             continue;
@@ -350,16 +350,16 @@ inline void monster_turn(void) {
 
         if (target == monster) {
           sprintf(battle_pre_message, str_battle_monster_confuse_attack_self,
-            monster->monster->name, monster->id);
+            monster->name, monster->id);
         } else {
           sprintf(battle_pre_message, str_battle_monster_confuse_attack_other,
-            monster->monster->name, monster->id);
+            monster->name, monster->id);
         }
         skip_post_message = true;
         return;
       } else {
         sprintf(battle_pre_message, str_battle_monster_confuse_stupor,
-          monster->monster->name, monster->id);
+          monster->name, monster->id);
         skip_post_message = true;
         return;
       }
@@ -374,7 +374,7 @@ inline void monster_turn(void) {
     }
   }
 
-  monster->take_turn(monster);
+  monster_take_turn(monster);
 }
 
 void take_action(void) {
@@ -383,7 +383,7 @@ void take_action(void) {
   else
     monster_turn();
 
-  MonsterInstance *monster = encounter.monsters;
+  Monster *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++, monster++) {
     if (monster->target_hp != monster->hp)
       monster->hp_delta = monster->target_hp - monster->hp;
@@ -398,7 +398,7 @@ void after_action(void) {
   }
 
   bool monster_active = false;
-  MonsterInstance *monster = encounter.monsters;
+  Monster *monster = encounter.monsters;
   for (uint8_t pos = 0; pos < 3; pos++, monster++) {
     if (!monster->active)
       continue;
@@ -418,12 +418,12 @@ void after_action(void) {
   encounter.victory = !encounter.player_died && !monster_active;
 }
 
-void set_player_fight(MonsterInstance *target) {
+void set_player_fight(Monster *target) {
   encounter.player_action = PLAYER_ACTION_FIGHT;
   encounter.target = target;
 }
 
-void set_player_ability(const Ability *a, MonsterInstance *target) {
+void set_player_ability(const Ability *a, Monster *target) {
   encounter.player_action = PLAYER_ACTION_ABILITY;
   encounter.player_ability = a;
   encounter.target = target;
@@ -483,89 +483,11 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
   encounter.victory = false;
   reset_status_effects(encounter.player_status_effects);
 
-  MonsterInstance *monster = encounter.monsters;
+  Monster *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++, monster++) {
     reset_status_effects(monster->status_effects);
     monster_deactivate(monster);
   }
-}
-
-void damage_monster(uint16_t base_damage, DamageAspect type) {
-  MonsterInstance *monster = encounter.target;
-
-  if (!monster)
-    return;
-
-  if (monster->aspect_immune & type) {
-    sprintf(battle_post_message, str_battle_player_hit_immune);
-    return;
-  }
-
-  uint8_t roll = d16();
-  uint16_t damage = calc_damage(roll, base_damage);
-  bool critical = is_critical(roll);
-
-  if (critical) {
-    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
-  } else if (monster->aspect_resist & type) {
-    damage >>= 1;
-    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
-  } else if (monster->aspect_vuln & type) {
-    damage <<= 1;
-  } else {
-    sprintf(battle_post_message, str_battle_player_hit, damage);
-  }
-
-  if (monster->target_hp < damage)
-    monster->target_hp = 0;
-  else
-    monster->target_hp -= damage;
-}
-
-uint8_t damage_all(
-  uint8_t base_damage,
-  uint8_t atk,
-  bool use_mdef,
-  DamageAspect type
-) {
-  uint8_t dam_roll = d16();
-  uint16_t damage = calc_damage(dam_roll, base_damage);
-
-  MonsterInstance *monster = encounter.monsters;
-  uint8_t atk_roll = d256();
-  uint8_t hits = 0;
-
-  for (uint8_t k = 0; k < 3; k++, monster++) {
-    if (!monster->active)
-      continue;
-    if (monster->aspect_immune & type)
-      continue;
-
-    const uint8_t def = use_mdef ? monster->mdef : monster->def;
-    if (!check_attack(atk_roll, atk, def))
-      continue;
-
-    hits++;
-
-    uint16_t d = damage;
-    if (monster->aspect_resist & type) {
-      d = damage >> 1;
-    } else if (monster->aspect_vuln & type) {
-      d = damage << 1;
-    }
-
-    if (monster->target_hp < d)
-      monster->target_hp = 0;
-    else
-      monster->target_hp -= d;
-  }
-
-  return hits;
-}
-
-void ability_placeholder(void) {
-  sprintf(battle_pre_message, "You try a thing.");
-  sprintf(battle_post_message, "It doesn't work.");
 }
 
 /**
@@ -666,7 +588,7 @@ StatusEffectResult apply_status_effect(
   PowerTier tier,
   uint8_t duration,
   uint8_t immune
-) {
+) BANKED {
   if (immune & flag)
     return STATUS_RESULT_IMMUNE;
 
@@ -688,7 +610,7 @@ void player_flee(void) {
   sprintf(battle_pre_message, str_battle_player_flee_attempt);
 
   uint8_t max_def_agl = 0;
-  MonsterInstance *monster = encounter.monsters;
+  Monster *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++, monster++) {
     if (!monster->active)
       continue;
@@ -701,23 +623,6 @@ void player_flee(void) {
     sprintf(battle_post_message, str_battle_player_flee_success);
   else
     sprintf(battle_post_message, str_battle_player_flee_failure);
-}
-
-void monster_flee(MonsterInstance *monster) {
-  sprintf(
-    battle_pre_message,
-    str_battle_monster_flee,
-    monster->monster->name,
-    monster->id
-  );
-
-  if (roll_flee(monster->agl, player.agl)) {
-    sprintf(battle_post_message, str_battle_monster_flee_success);
-    monster->fled = true;
-  } else {
-    sprintf(battle_post_message, str_battle_monster_flee_failure);
-    monster->fled = false;
-  }
 }
 
 Encounter encounter = {

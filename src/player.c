@@ -1,3 +1,5 @@
+#pragma bank 4
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <rand.h>
@@ -12,13 +14,27 @@
 #include "strings.h"
 
 Player player = { "", CLASS_DRUID };
-
 const Ability *class_abilities[6];
 const Ability *player_abilities[6];
 uint8_t player_num_abilities = 0;
 
 const Ability null_ability = { 0 };
 
+void ability_placeholder(void) {
+  sprintf(battle_pre_message, "You try a thing.");
+  sprintf(battle_post_message, "It doesn't work.");
+}
+
+/**
+ * Updates player stats based on the given power tiers.
+ * @param hp Power tier for hp.
+ * @param sp Power tier for sp.
+ * @param atk Power tier for atk.
+ * @param def Power tier for def.
+ * @param matk Power tier for matk.
+ * @param mdef Power tier for mdef.
+ * @param agl Power tier for agl.
+ */
 void update_stats(
   PowerTier hp,
   PowerTier sp,
@@ -35,6 +51,94 @@ void update_stats(
   player.matk_base = get_player_atk(player.level, matk);
   player.mdef_base = get_player_def(player.level, mdef);
   player.agl_base = get_agl(player.level, agl);
+}
+
+/**
+ * Applies damage to the target monster. Takes immunities, etc. into account and
+ * handles battle result messages.
+ * @param base_damage Base damage for the attack.
+ * @param type Aspect for the damage.
+ */
+void damage_monster(uint16_t base_damage, DamageAspect type) {
+  Monster *monster = encounter.target;
+
+  if (!monster)
+    return;
+
+  if (monster->aspect_immune & type) {
+    sprintf(battle_post_message, str_battle_player_hit_immune);
+    return;
+  }
+
+  uint8_t roll = d16();
+  uint16_t damage = calc_damage(roll, base_damage);
+  bool critical = is_critical(roll);
+
+  if (critical) {
+    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
+  } else if (monster->aspect_resist & type) {
+    damage >>= 1;
+    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
+  } else if (monster->aspect_vuln & type) {
+    damage <<= 1;
+  } else {
+    sprintf(battle_post_message, str_battle_player_hit, damage);
+  }
+
+  if (monster->target_hp < damage)
+    monster->target_hp = 0;
+  else
+    monster->target_hp -= damage;
+}
+
+/**
+ * Applies damage to all active monsters in the encounter. Takes immmunities,
+ * etc. into account. Does **NOT** handle battle result messages.
+ * @param base_damage Base damage for the attack.
+ * @param atk ATK of the attacker.
+ * @param use_mdef Whether or not to use DEF or MDEF when checking attack roll.
+ * @param type Aspect type for the damage.
+ * @return Number of monsters hit by the attack.
+ */
+uint8_t damage_all(
+  uint8_t base_damage,
+  uint8_t atk,
+  bool use_mdef,
+  DamageAspect type
+) {
+  uint8_t dam_roll = d16();
+  uint16_t damage = calc_damage(dam_roll, base_damage);
+
+  Monster *monster = encounter.monsters;
+  uint8_t atk_roll = d256();
+  uint8_t hits = 0;
+
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    if (!monster->active)
+      continue;
+    if (monster->aspect_immune & type)
+      continue;
+
+    const uint8_t def = use_mdef ? monster->mdef : monster->def;
+    if (!check_attack(atk_roll, atk, def))
+      continue;
+
+    hits++;
+
+    uint16_t d = damage;
+    if (monster->aspect_resist & type) {
+      d = damage >> 1;
+    } else if (monster->aspect_vuln & type) {
+      d = damage << 1;
+    }
+
+    if (monster->target_hp < d)
+      monster->target_hp = 0;
+    else
+      monster->target_hp -= d;
+  }
+
+  return hits;
 }
 
 //------------------------------------------------------------------------------
@@ -56,7 +160,7 @@ void druid_update_stats(void) {
 void druid_base_attack(void) {
   sprintf(battle_pre_message, str_battle_poison_spray);
 
-  MonsterInstance *target = encounter.target;
+  Monster *target = encounter.target;
   if (!roll_attack(player.matk, target->mdef)) {
     sprintf(battle_post_message, str_battle_player_miss);
     return;
@@ -110,36 +214,6 @@ void druid_regen(void) {
   ability_placeholder();
 }
 
-const Ability druid0 = {
-  1, str_ability_druid_cure_wounds,
-  TARGET_SELF, 4, druid_cure_wounds,
-};
-
-const Ability druid1 = {
-  2, str_ability_druid_bark_skin,
-  TARGET_SELF, 12, druid_bark_skin,
-};
-
-const Ability druid2 = {
-  3, str_ability_druid_ligtning,
-  TARGET_SINGLE, 18, druid_lightning,
-};
-
-const Ability druid3 = {
-   4, str_ability_druid_heal,
-   TARGET_SELF, 20, druid_heal,
-};
-
-const Ability druid4 = {
-   5, str_ability_druid_insect_plague,
-   TARGET_ALL, 45, druid_insect_plague,
-};
-
-const Ability druid5 = {
-   6, str_ability_druid_regen,
-   TARGET_SELF, 30, druid_regen
-};
-
 
 //------------------------------------------------------------------------------
 // Class: Fighter
@@ -161,13 +235,6 @@ void fighter_base_attack(void) {
   // Sword
 }
 
-const Ability fighter0 = { 1 };
-const Ability fighter1 = { 2 };
-const Ability fighter2 = { 3 };
-const Ability fighter3 = { 4 };
-const Ability fighter4 = { 5 };
-const Ability fighter5 = { 6 };
-
 //------------------------------------------------------------------------------
 // Class: Monk
 //------------------------------------------------------------------------------
@@ -187,13 +254,6 @@ void monk_update_stats(void) {
 void monk_base_attack(void) {
   // Fist
 }
-
-const Ability monk0 = { 1 };
-const Ability monk1 = { 2 };
-const Ability monk2 = { 3 };
-const Ability monk3 = { 4 };
-const Ability monk4 = { 5 };
-const Ability monk5 = { 6 };
 
 //------------------------------------------------------------------------------
 // Class: Sorcerer
@@ -215,17 +275,8 @@ void sorcerer_base_attack(void) {
   // Fist
 }
 
-const Ability sorcerer0 = { 1 };
-const Ability sorcerer1 = { 2 };
-const Ability sorcerer2 = { 3 };
-const Ability sorcerer3 = { 4 };
-const Ability sorcerer4 = { 5 };
-const Ability sorcerer5 = { 6 };
-
 //------------------------------------------------------------------------------
 // Class: Test Class
-//------------------------------------------------------------------------------
-// Use this to test various combat abilities without modifying the core classes.
 //------------------------------------------------------------------------------
 
 void test_class_update_stats(void) {
@@ -270,7 +321,7 @@ void test_class_ability1(void) {
 
   // player.hp = 1;
 
-  // MonsterInstance *monster = encounter.monsters;
+  // Monster *monster = encounter.monsters;
   // for (uint8_t k = 0; k < 3; k++, monster++) {
   //   if (!monster->active)
   //     continue;
@@ -296,30 +347,6 @@ void test_class_ability4(void) {
 void test_class_ability5(void) {
   ability_placeholder();
 }
-
-const Ability test_class0 = {
-  1, "Damage All", TARGET_SELF, 0, test_class_ability0
-};
-
-const Ability test_class1 = {
-  2, "(De)buff", TARGET_SELF, 0, test_class_ability1
-};
-
-const Ability test_class2 = {
-  3, "SUPERKILL", TARGET_SELF, 0, test_class_ability2
-};
-
-const Ability test_class3 = {
-  4, "Test 4", TARGET_SELF, 0, test_class_ability3
-};
-
-const Ability test_class4 = {
-  5, "Test 5", TARGET_SELF, 0, test_class_ability4
-};
-
-const Ability test_class5 = {
-  6, "Test 6", TARGET_SELF, 0, test_class_ability5
-};
 
 //------------------------------------------------------------------------------
 // Common functions
@@ -348,6 +375,9 @@ void update_player_stats(void) {
   }
 }
 
+/**
+ * Sets class abilities based on the current player class.
+ */
 void set_class_abilities(void) {
   switch (player.player_class) {
   case CLASS_DRUID:
@@ -393,6 +423,9 @@ void set_class_abilities(void) {
   }
 }
 
+/**
+ * Sets abilities based on the player's current class.
+ */
 void set_player_abilities(void) {
   uint8_t flags = player.ability_flags;
   player_num_abilities = 0;
@@ -404,7 +437,22 @@ void set_player_abilities(void) {
   }
 }
 
-void init_player(PlayerClass player_class) {
+// -----------------------------------------------------------------------------
+
+void grant_ability(AbilityFlag flag) BANKED {
+  player.ability_flags |= flag;
+  set_player_abilities();
+}
+
+void set_player_level(uint8_t level) BANKED {
+  player.level = level;
+  player.exp = get_exp(player.level);
+  player.next_level_exp = get_exp(player.level + 1);
+  update_player_stats();
+  full_heal_player();
+}
+
+void init_player(PlayerClass player_class) BANKED {
   player.player_class = player_class;
   set_class_abilities();
   player.ability_flags = 0;
@@ -418,33 +466,7 @@ void init_player(PlayerClass player_class) {
 
 }
 
-void init_test_player(uint8_t level) {
-  init_player(CLASS_TEST);
-  grant_ability(ABILITY_ALL);
-  set_player_level(level);
-  sprintf(player.name, "Tester");
-  player.message_speed = AUTO_PAGE_FAST;
-}
-
-void grant_ability(AbilityFlag flag) {
-  player.ability_flags |= flag;
-  set_player_abilities();
-}
-
-void full_heal_player(void) {
-  player.hp = player.max_hp;
-  player.sp = player.max_sp;
-}
-
-void set_player_level(uint8_t level) {
-  player.level = level;
-  player.exp = get_exp(player.level);
-  player.next_level_exp = get_exp(player.level + 1);
-  update_player_stats();
-  full_heal_player();
-}
-
-bool level_up(uint16_t xp) {
+bool level_up(uint16_t xp) BANKED {
   bool level_up = false;
   player.exp += xp;
 
@@ -462,7 +484,7 @@ bool level_up(uint16_t xp) {
   return level_up;
 }
 
-void player_base_attack(void) {
+void player_base_attack(void) BANKED {
   switch (player.player_class) {
   case CLASS_DRUID:
     druid_base_attack();
@@ -480,4 +502,8 @@ void player_base_attack(void) {
     test_class_base_attack();
     break;
   }
+}
+
+void player_use_ability(const Ability *ability) BANKED {
+  ability->execute();
 }

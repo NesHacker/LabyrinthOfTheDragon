@@ -23,6 +23,7 @@
     "main.h": "c",
     "textbox.h": "c",
     "text_writer.h": "c",
-    "encounter.h": "c"
+    "encounter.h": "c",
+    "tables.h": "c"
   }
 }

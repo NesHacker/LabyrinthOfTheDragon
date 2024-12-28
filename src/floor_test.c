@@ -72,6 +72,7 @@ const uint16_t floor_test_palettes[] = {
 bool floor_test_custom_chest(Chest *c) {
   switch (c->id) {
   case CHEST_5:
+    player.got_magic_key = true;
     player.magic_keys++;
     break;
   }
@@ -132,6 +133,7 @@ const Chest floor_test_chests[] = {
     str_chest_item_regen_pot,
     chest_item_regen_pot,
   },
+  { CHEST_7, MAP_A, 10, 2, false, false, NULL, NULL, chest_add_torch },
   { END },
 };
 
@@ -239,11 +241,14 @@ const Lever floor_test_levers[] = {
 const Door floor_test_doors[] = {
   /*
   {
-    DOOR_1,   // Use DOOR_* constants for ids.
-    MAP_A,    // Map for the door
-    0, 0      // (x, y) tile for the door
+    DOOR_1,           // Use DOOR_* constants for ids.
+    MAP_A,            // Map for the door
+    0, 0              // (x, y) tile for the door
+    DOOR_STAIRS_UP    // Kind of door
+    true              // Magic key required to unlock
   }
   */
+  { DOOR_1, MAP_A, 14, 1, DOOR_STAIRS_UP, true },
   { END }
 };
 
@@ -254,11 +259,18 @@ const Door floor_test_doors[] = {
 const Sconce floor_test_sconces[] = {
   /*
   {
-    SCONCE_1, // Use SCONCE_* constants for ids.
-    MAP_A,    // Map for the sconce
-    0, 0      // (x, y) tile for the sconce
+    SCONCE_1,   // Use SCONCE_* constants for ids.
+    MAP_A,      // Map for the sconce
+    0, 0,       // (x, y) tile for the sconce
+    true,       // Should the sconce start lit
+    FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
+  { SCONCE_1, MAP_A, 7, 5, true, FLAME_RED },
+  { SCONCE_2, MAP_A, 11, 1, true, FLAME_GREEN },
+  { SCONCE_3, MAP_A, 16, 1, true, FLAME_BLUE },
+  { SCONCE_4, MAP_A, 23, 1, true, FLAME_RED },
+  { SCONCE_5, MAP_A, 6, 1, false, FLAME_NONE },
   { END }
 };
 
@@ -298,14 +310,12 @@ bool floor_test_on_special(void) {
   switch (map.active_map->id) {
   case MAP_A:
     if (player_at(3, 8)) {
-      MonsterInstance *monster = encounter.monsters;
-      reset_encounter(MONSTER_LAYOUT_3S);
-      dummy_generator(monster, player.level, DUMMY_COWARD);
+      Monster *monster = encounter.monsters;
+      reset_encounter(MONSTER_LAYOUT_2);
+      beholder_generator(monster, player.level, C_TIER);
       monster->id = 'A';
-      dummy_generator(++monster, player.level, DUMMY_COWARD);
-      monster->id = 'B';
-      dummy_generator(++monster, player.level, DUMMY_COWARD);
-      monster->id = 'C';
+      dragon_generator(++monster, player.level, C_TIER);
+      monster->id = 'A';
       start_battle();
       return true;
     }

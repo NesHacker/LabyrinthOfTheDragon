@@ -3,10 +3,7 @@
 
 #include <stdint.h>
 
-#include "monster.h"
-#include "stats.h"
-#include "tables.h"
-#include "text_writer.h"
+#include "map.h"
 
 /**
  * Maximum number of abilities a player can acquire.
@@ -217,9 +214,17 @@ typedef struct Player {
    */
   uint8_t torch_gauge;
   /**
+   * The color of the flame with which the torch is lit.
+   */
+  FlameColor torch_color;
+  /**
    * Number of magic keys the player currently posesses.
    */
   uint8_t magic_keys;
+  /**
+   * Whether or not the player has collected their first magic key (for UI).
+   */
+  bool got_magic_key;
 } Player;
 
 /**
@@ -249,53 +254,47 @@ extern uint8_t player_num_abilities;
 extern const Ability null_ability;
 
 /**
- * Initializes a new player with the given class.
- */
-void init_player(PlayerClass player_class);
-
-/**
- * Initializes the player using the test class.
- * @param level Level for the test player.
- */
-void init_test_player(uint8_t level);
-
-/**
  * Grants the player a new ability.
  * @param flag The flag for the ability.
  */
-void grant_ability(AbilityFlag flag);
+void grant_ability(AbilityFlag flag) BANKED;
 
 /**
- * Sets class abilities based on the current player class.
+ * Sets the player's level to a specific value.
+ * @param level Level to set.
  */
-void set_class_abilities(void);
+void set_player_level(uint8_t level) BANKED;
 
 /**
- * Sets player abilities based on current ability flags.
+ * Initializes a new player with the given class.
  */
-void set_player_abilities(void);
-
-/**
- * Performs a basic attack against the the targeted monster.
- */
-void player_base_attack(void);
+void init_player(PlayerClass player_class) BANKED;
 
 /**
  * Adds the given experience points and performs a level up if applicable.
  * @param xp Experience points to add.
  * @return `true` if the player leveled up.
  */
-bool level_up(uint16_t xp);
+bool level_up(uint16_t xp) BANKED;
+
+/**
+ * Performs a basic attack against the the targeted monster.
+ */
+void player_base_attack(void) BANKED;
+
+/**
+ * Executes a player ability.
+ * @param ability Ability to execute.
+ */
+void player_use_ability(const Ability *ability) BANKED;
 
 /**
  * Full heals the player, setting HP and SP to their max values.
  */
-void full_heal_player(void);
-
-/**
- * Sets the player's level to a specific value.
- */
-void set_player_level(uint8_t level);
+inline void full_heal_player(void) {
+  player.hp = player.max_hp;
+  player.sp = player.max_sp;
+}
 
 /**
  * @return `true` if the player has a magic combat class.
@@ -318,5 +317,69 @@ inline bool is_martial_class(void) {
 inline bool has_leveled(void) {
   return player.next_level_exp >= player.exp;
 }
+
+/**
+ * Palettes for each of the hero classes.
+ */
+extern const palette_color_t hero_colors[];
+
+// Ability prototypes and externs
+
+void druid_base_attack(void);
+void druid_cure_wounds(void);
+void druid_bark_skin(void);
+void druid_lightning(void);
+void druid_heal(void);
+void druid_insect_plague(void);
+void druid_regen(void);
+
+extern const Ability druid0;
+extern const Ability druid1;
+extern const Ability druid2;
+extern const Ability druid3;
+extern const Ability druid4;
+extern const Ability druid5;
+
+void fighter_base_attack(void);
+
+extern const Ability fighter0;
+extern const Ability fighter1;
+extern const Ability fighter2;
+extern const Ability fighter3;
+extern const Ability fighter4;
+extern const Ability fighter5;
+
+void monk_base_attack(void);
+
+extern const Ability monk0;
+extern const Ability monk1;
+extern const Ability monk2;
+extern const Ability monk3;
+extern const Ability monk4;
+extern const Ability monk5;
+
+void sorcerer_base_attack(void);
+
+extern const Ability sorcerer0;
+extern const Ability sorcerer1;
+extern const Ability sorcerer2;
+extern const Ability sorcerer3;
+extern const Ability sorcerer4;
+extern const Ability sorcerer5;
+
+void test_class_base_attack(void);
+void test_class_ability0(void);
+void test_class_ability1(void);
+void test_class_ability2(void);
+void test_class_ability3(void);
+void test_class_ability4(void);
+void test_class_ability5(void);
+
+extern const Ability test_class0;
+extern const Ability test_class1;
+extern const Ability test_class2;
+extern const Ability test_class3;
+extern const Ability test_class4;
+extern const Ability test_class5;
 
 #endif

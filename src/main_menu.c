@@ -1,3 +1,5 @@
+#pragma bank 1
+
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <stdint.h>
@@ -24,7 +26,7 @@ Tilemap save_select_tilemap = { 20, 18, 1, tilemap_save_select };
  * Initializes the save select screen.
  */
 void init_save_select(void) {
-  lcd_off();
+  DISPLAY_OFF;
 
   // TODO Need to load data from Save RAM and update graphics appropriately
 
@@ -92,7 +94,7 @@ void init_save_select(void) {
 
   init_timer(menu_walk_timer, 12);
 
-  lcd_on();
+  DISPLAY_ON;
 }
 
 void move_save_select_cursor(void) {
@@ -182,8 +184,7 @@ void update_save_select_sprites(void) {
 }
 
 void init_main_menu(void) {
-  lcd_off();
-
+  DISPLAY_OFF;
 
   // Load tiles
   core.load_font();
@@ -198,7 +199,7 @@ void init_main_menu(void) {
   // Initialize menu state
   cursor = 0;
 
-  lcd_on();
+  DISPLAY_ON;
 }
 
 void update_main_menu(void) {

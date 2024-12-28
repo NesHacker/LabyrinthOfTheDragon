@@ -6,13 +6,131 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "battle.h"
 #include "core.h"
 #include "floor.h"
 #include "map.h"
+#include "sound.h"
 
 MapSystem map = { MAP_STATE_WAITING };
+
+/**
+ * Whether or not to initiate the wall hit sound effect.
+ */
+bool play_wall_hit = true;
+
+/**
+ * Map tile data for the tile the hero currently occupies and those in every
+ * cardinal direction (index this with a `Direction`).
+ */
+MapTile local_tiles[5];
+
+/**
+ * Stores a buffer of tiles to be progressively loaded over the animation frames
+ * of a move.
+ */
+MapTile tile_buf[2 * MAP_HORIZ_LOADS];
+
+/**
+ * Map game object hashtable. Makes it easy to lookup game objects based on the
+ * map and tile position in the map.
+ */
+TileHashEntry tile_object_hashtable[TILE_HASHTABLE_SIZE];
+
+/**
+ * Holds the color of the flames for the sconces in the current floor.
+ */
+FlameColor sconce_colors[8] = {
+  FLAME_RED, FLAME_RED, FLAME_RED, FLAME_RED,
+  FLAME_RED, FLAME_RED, FLAME_RED, FLAME_RED,
+};
+
+/**
+ * Hash function for positions in floor maps.
+ * @param map_id Id of the map for the position.
+ * @param x X position in the map.
+ * @param y Y position in the map.
+ */
+uint8_t hash(uint8_t map_id, int8_t x, int8_t y) {
+  uint8_t k = map_id;
+  k ^= ((uint8_t)x << 1);
+  k ^= ((uint8_t)y << 2);
+  return k & (TILE_HASHTABLE_SIZE - 1);
+}
+
+/**
+ * Adds an entry for the given object to the tile objects hashtable.
+ * @param type Type of object being added.
+ * @param object Pointer to the object.
+ * @param map_id Map on which the object resides.
+ * @param x Horizontal position for the object.
+ * @param y Vertical position for the object.
+ */
+void hash_object(
+  TileHashType type,
+  void *object,
+  uint8_t map_id,
+  int8_t x,
+  int8_t y
+) {
+  TileHashEntry *entry = tile_object_hashtable + hash(map_id, x, y);
+
+  if (entry->data) {
+    while (entry->next) {
+      entry = entry->next;
+    }
+
+    TileHashEntry *next = (TileHashEntry *)malloc(sizeof(TileHashEntry));
+    entry->next = next;
+    entry = next;
+    entry->next = NULL;
+  }
+
+  entry->map_id = map_id;
+  entry->x = x;
+  entry->y = y;
+  entry->type = type;
+  entry->data = object;
+}
+
+TileHashEntry *get_hash_entry(int8_t x, int8_t y) {
+  const uint8_t map_id = map.active_map->id;
+  const uint8_t hash_idx = hash(map_id, x, y);
+  TileHashEntry *entry = tile_object_hashtable + hash_idx;
+
+  while (entry && entry->data) {
+    if (entry->map_id == map_id && entry->x == x && entry->y == y)
+      return entry;
+    entry = entry->next;
+  }
+
+  return NULL;
+}
+
+/**
+ * Resets the object hash and frees allocated bucket items.
+ */
+void reset_object_hash(void) {
+  TileHashEntry *entry = tile_object_hashtable;
+
+  for (uint8_t k = 0; k < TILE_HASHTABLE_SIZE; k++, entry++) {
+    entry->data = NULL;
+    entry->map_id = 0xFF;
+    entry->x = (int8_t)0xFF;
+    entry->y = (int8_t)0xFF;
+
+    TileHashEntry *sibling = entry->next;
+    entry->next = NULL;
+
+    while (sibling) {
+      TileHashEntry *tmp = sibling;
+      free(tmp);
+      sibling = sibling->next;
+    }
+  }
+}
 
 /**
  * Initializes the hero character sprites.
@@ -40,15 +158,11 @@ void init_hero(void) {
   move_sprite(2, hero_x + 8, hero_y + 8 + 16);
   move_sprite(3, hero_x + 8 + 8, hero_y + 8 + 16);
 
-  // TODO Load palettes/hero sprites based on class
-  core.load_hero_tiles(1);
-  const uint16_t hpal[4] = {
-    RGB(0, 0, 0),
-    RGB8(245, 213, 135),
-    RGB8(167, 75, 0),
-    RGB8(8, 46, 54),
-  };
-  core.load_sprite_palette(hpal, 0, 1);
+  PlayerClass pc = (player.player_class == CLASS_TEST) ?
+    CLASS_DRUID :
+    player.player_class;
+  core.load_hero_tiles(pc);
+  core.load_sprite_palette(hero_colors + 4 * pc, 0, 1);
 }
 
 /**
@@ -119,6 +233,303 @@ void clear_hero(void) {
 }
 
 /**
+ * Palettes used for flames.
+ */
+const palette_color_t flame_palettes[] = {
+  // Red flame
+  RGB_BLACK,
+  RGB8(213, 200, 89),
+  RGB8(132, 88, 32),
+  RGB8(72, 21, 13),
+  // Green flame
+  RGB_BLACK,
+  RGB8(89, 213, 200),
+  RGB8(32, 132, 88),
+  RGB8(13, 72, 21),
+  // Blue flame
+  RGB_BLACK,
+  RGB8(200, 89, 213),
+  RGB8(88, 32, 132),
+  RGB8(21, 13, 72),
+};
+
+const palette_color_t torch_gauge_palettes[] = {
+  // Extinguished
+  RGB_BLACK,
+  RGB8(80, 80, 80),
+  RGB8(140, 140, 140),
+  RGB8(200, 200, 200),
+  // Red Flame
+  RGB_BLACK,
+  RGB8(72, 21, 13),
+  RGB8(132, 88, 32),
+  RGB8(213, 200, 89),
+  // Green Flame
+  RGB_BLACK,
+  RGB8(13, 72, 21),
+  RGB8(32, 132, 88),
+  RGB8(89, 213, 200),
+  // Blue Flame
+  RGB_BLACK,
+  RGB8(21, 13, 72),
+  RGB8(88, 32, 132),
+  RGB8(200, 89, 213),
+};
+
+const palette_color_t magic_keys_palette[] = {
+  // Extinguished
+  RGB_BLACK,
+  RGB8(88, 32, 132),
+  RGB8(200, 89, 213),
+  RGB8(240, 240, 240),
+};
+
+/**
+ * @return The flame sprite id for the given sconce.
+ * @param s The id of the sconce.
+ */
+uint8_t get_sconce_flame_sprite(SconceId s) {
+  switch (s) {
+  case SCONCE_1: return FLAME_1;
+  case SCONCE_2: return FLAME_2;
+  case SCONCE_3: return FLAME_3;
+  case SCONCE_4: return FLAME_4;
+  case SCONCE_5: return FLAME_5;
+  case SCONCE_6: return FLAME_6;
+  case SCONCE_7: return FLAME_7;
+  default: return FLAME_8;
+  }
+}
+
+/**
+ * @return Index for the sconce with the given id.
+ * @param id Id of the sconce.
+ */
+uint8_t get_sconce_index(SconceId s) {
+  switch (s) {
+  case SCONCE_1: return 0;
+  case SCONCE_2: return 1;
+  case SCONCE_3: return 2;
+  case SCONCE_4: return 3;
+  case SCONCE_5: return 4;
+  case SCONCE_6: return 5;
+  case SCONCE_7: return 6;
+  default: return 7;
+  }
+}
+
+/**
+ * Initializes sconce flame sprites.
+ */
+void init_flames(void) {
+  init_timer(map.flame_timer, 20);
+  map.flame_frame = 0;
+  core.load_sprite_palette(flame_palettes, 1, 3);
+
+  for (uint8_t k = FLAME_1; k <= FLAME_8; k++) {
+    set_sprite_tile(k, FLAME_TILE_1);
+    set_sprite_prop(k, 0b00001001);
+    move_sprite(k, 0, 0);
+  }
+
+  const Sconce *sconce;
+  for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
+    const uint8_t sprite_id = get_sconce_flame_sprite(sconce->id);
+    sconce_colors[get_sconce_index(sconce->id)] = sconce->color;
+    switch (sconce->color) {
+    case FLAME_GREEN:
+      set_sprite_prop(sprite_id, 0b00001010);
+      break;
+    case FLAME_BLUE:
+      set_sprite_prop(sprite_id, 0b00001011);
+      break;
+    }
+  }
+}
+
+/**
+ * Updates flame sprites and animation.
+ */
+void update_flames(void) {
+  if (update_timer(map.flame_timer)) {
+    reset_timer(map.flame_timer);
+    map.flame_frame ^= 1;
+    const uint8_t tile = map.flame_frame ? FLAME_TILE_2 : FLAME_TILE_1;
+    for (uint8_t k = FLAME_1; k <= FLAME_8; k++) {
+      set_sprite_tile(k, tile);
+    }
+  }
+
+  const Sconce *sconce;
+  for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
+    const uint8_t sprite_id = get_sconce_flame_sprite(sconce->id);
+    if (
+      is_sconce_lit(sconce->id) &&
+      sconce->map_id == map.active_map->id &&
+      sconce->col >= map.x - 1 &&
+      sconce->col < map.x + MAP_HORIZ_LOADS &&
+      sconce->row >= map.y - 1 &&
+      sconce->row < map.y + MAP_VERT_LOADS
+    ) {
+      // Sconce is on the active screen.
+      uint8_t x = ((sconce->col - map.x + 1) << 4) - 4;
+      uint8_t y = ((sconce->row - map.y + 1) << 4) + 2;
+
+      if (map.state == MAP_STATE_MOVING) {
+        switch (map.move_direction) {
+        case UP:
+          y += map.move_step - 15;
+          break;
+        case DOWN:
+          y -= map.move_step - 15;
+          break;
+        case LEFT:
+          x += map.move_step - 15;
+          break;
+        case RIGHT:
+          x -= map.move_step - 15;
+          break;
+        }
+      }
+
+      move_sprite(sprite_id, x, y);
+    } else {
+      // Sconce is offscreen
+      move_sprite(sprite_id, 0, 0);
+    }
+  }
+}
+
+/**
+ * Clears all flame sprites.
+ */
+void clear_flames(void) {
+  for (uint8_t k = FLAME_1; k <= FLAME_8; k++)
+    move_sprite(k, 0, 0);
+}
+
+
+/**
+ * Initializes the player hud (torch gauge, keys, floor, etc.).
+ */
+void init_hud(void) {
+  core.load_sprite_palette(torch_gauge_palettes, TORCH_GAUGE_PALETTE, 1);
+  core.load_sprite_palette(magic_keys_palette, MAGIC_KEY_HUD_PALETTE, 1);
+
+  init_timer(map.torch_timer, TORCH_GAUGE_SPEED);
+
+  set_sprite_tile(TORCH_GAUGE_FLAME, FLAME_TILE_1);
+  set_sprite_prop(TORCH_GAUGE_FLAME, TORCH_GAUGE_PROP);
+  move_sprite(TORCH_GAUGE_FLAME, TORCH_GAUGE_X, TORCH_GAUGE_Y);
+
+  for (uint8_t k = TORCH_GAUGE_BODY_1; k <= TORCH_GAUGE_BODY_4; k++) {
+    set_sprite_tile(k, TORCH_GAUGE_ZERO);
+    set_sprite_prop(k, TORCH_GAUGE_PROP);
+    switch (k) {
+    case TORCH_GAUGE_BODY_1:
+      move_sprite(k, TORCH_GAUGE_X + 10, TORCH_GAUGE_Y);
+      break;
+    case TORCH_GAUGE_BODY_2:
+      move_sprite(k, TORCH_GAUGE_X + 18, TORCH_GAUGE_Y);
+      break;
+    case TORCH_GAUGE_BODY_3:
+      move_sprite(k, TORCH_GAUGE_X + 26, TORCH_GAUGE_Y);
+      break;
+    case TORCH_GAUGE_BODY_4:
+      move_sprite(k, TORCH_GAUGE_X + 34, TORCH_GAUGE_Y);
+      break;
+    }
+  }
+
+  set_sprite_tile(MAGIC_KEY_SPRITE_1, MAGIC_KEY_TOP_TILE);
+  set_sprite_tile(MAGIC_KEY_SPRITE_2, MAGIC_KEY_BOTTOM_TILE);
+  set_sprite_tile(MAGIC_KEY_QTY, MAGIC_KEY_NUM_0);
+
+  set_sprite_prop(MAGIC_KEY_SPRITE_1, MAGIC_KEY_HUD_ATTR);
+  set_sprite_prop(MAGIC_KEY_SPRITE_2, MAGIC_KEY_HUD_ATTR);
+  set_sprite_prop(MAGIC_KEY_QTY, MAGIC_KEY_HUD_ATTR);
+
+  move_sprite(MAGIC_KEY_SPRITE_1, MAGIC_KEYS_X, MAGIC_KEYS_Y - 1);
+  move_sprite(MAGIC_KEY_SPRITE_2, MAGIC_KEYS_X, MAGIC_KEYS_Y + 7);
+  move_sprite(MAGIC_KEY_QTY, MAGIC_KEYS_X + 9, MAGIC_KEYS_Y);
+}
+
+/**
+ * Updates the player hud.
+ */
+void update_hud(void) {
+  if (player.has_torch) {
+    if (player.torch_gauge > 0) {
+      set_sprite_tile(TORCH_GAUGE_FLAME,
+        map.flame_frame ? FLAME_TILE_1 : FLAME_TILE_2);
+
+      if (player.torch_gauge > 24) {
+        const uint8_t t = TORCH_GAUGE_ZERO + (player.torch_gauge - 24);
+        set_sprite_tile(TORCH_GAUGE_BODY_1, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_2, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_3, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_4, t);
+      } else if (player.torch_gauge > 16) {
+        const uint8_t t = TORCH_GAUGE_ZERO + (player.torch_gauge - 16);
+        set_sprite_tile(TORCH_GAUGE_BODY_1, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_2, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_3, t);
+        set_sprite_tile(TORCH_GAUGE_BODY_4, TORCH_GAUGE_ZERO);
+      } else if (player.torch_gauge > 8) {
+        const uint8_t t = TORCH_GAUGE_ZERO + (player.torch_gauge - 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_1, TORCH_GAUGE_ZERO + 8);
+        set_sprite_tile(TORCH_GAUGE_BODY_2, t);
+        set_sprite_tile(TORCH_GAUGE_BODY_3, TORCH_GAUGE_ZERO);
+        set_sprite_tile(TORCH_GAUGE_BODY_4, TORCH_GAUGE_ZERO);
+      } else {
+        const uint8_t t = TORCH_GAUGE_ZERO + player.torch_gauge;
+        set_sprite_tile(TORCH_GAUGE_BODY_1, t);
+        set_sprite_tile(TORCH_GAUGE_BODY_2, TORCH_GAUGE_ZERO);
+        set_sprite_tile(TORCH_GAUGE_BODY_3, TORCH_GAUGE_ZERO);
+        set_sprite_tile(TORCH_GAUGE_BODY_4, TORCH_GAUGE_ZERO);
+      }
+    } else {
+      set_sprite_tile(TORCH_GAUGE_FLAME, FLAME_TILE_1);
+      set_sprite_tile(TORCH_GAUGE_BODY_1, TORCH_GAUGE_ZERO);
+      set_sprite_tile(TORCH_GAUGE_BODY_2, TORCH_GAUGE_ZERO);
+      set_sprite_tile(TORCH_GAUGE_BODY_3, TORCH_GAUGE_ZERO);
+      set_sprite_tile(TORCH_GAUGE_BODY_4, TORCH_GAUGE_ZERO);
+    }
+  } else {
+    set_sprite_tile(TORCH_GAUGE_FLAME, SPRITE_TILE_CLEAR);
+    set_sprite_tile(TORCH_GAUGE_BODY_1, SPRITE_TILE_CLEAR);
+    set_sprite_tile(TORCH_GAUGE_BODY_2, SPRITE_TILE_CLEAR);
+    set_sprite_tile(TORCH_GAUGE_BODY_3, SPRITE_TILE_CLEAR);
+    set_sprite_tile(TORCH_GAUGE_BODY_4, SPRITE_TILE_CLEAR);
+  }
+
+  if (player.got_magic_key) {
+    move_sprite(MAGIC_KEY_SPRITE_1, MAGIC_KEYS_X, MAGIC_KEYS_Y);
+    move_sprite(MAGIC_KEY_SPRITE_2, MAGIC_KEYS_X, MAGIC_KEYS_Y + 8);
+    move_sprite(MAGIC_KEY_QTY, MAGIC_KEYS_X + 9, MAGIC_KEYS_Y + 1);
+    set_sprite_tile(MAGIC_KEY_QTY, MAGIC_KEY_NUM_0 + player.magic_keys);
+  } else {
+    move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
+    move_sprite(MAGIC_KEY_SPRITE_2, 0, 0);
+    move_sprite(MAGIC_KEY_QTY, 0, 0);
+  }
+}
+
+/**
+ * Clears the player HUD sprites.
+ */
+void clear_hud(void) {
+  move_sprite(TORCH_GAUGE_FLAME, 0, 0);
+  move_sprite(TORCH_GAUGE_BODY_1, 0, 0);
+  move_sprite(TORCH_GAUGE_BODY_2, 0, 0);
+  move_sprite(TORCH_GAUGE_BODY_3, 0, 0);
+  move_sprite(TORCH_GAUGE_BODY_4, 0, 0);
+  move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
+  move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
+  move_sprite(MAGIC_KEY_QTY, 0, 0);
+}
+
+/**
  * Initiates a fade out to state transition.
  * @param to_state Map state to enter once the fade out completes.
  */
@@ -153,7 +564,7 @@ void map_fade_in(MapState to_state) {
  * @param x X-position in the map.
  * @param y Y-position in the map.
  */
-void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
+void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED CRITICAL {
   const int8_t w = (int8_t)map.active_map->width;
   const int8_t h = (int8_t)map.active_map->height;
 
@@ -165,47 +576,66 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
   const uint16_t offset = (uint16_t)(2 * (x + y * w));
   const uint8_t *data = map.active_map->data + offset;
 
+  // Fetch banked tile & attribute data
   uint8_t _prev_bank = _current_bank;
   SWITCH_ROM(map.active_map->bank);
   uint8_t t = *data++;
-  const uint8_t a = *data;
+  uint8_t attr = *data;
   SWITCH_ROM(_prev_bank);
 
-  // Check if the tile contains a chest
+  uint8_t map_tile = map_tile_lookup[t & MAP_TILE_MASK];
+  uint8_t map_attr = t >> 6;
+
   tile->chest = NULL;
-  const Chest *chest;
-  for (chest = map.active_floor->chests; chest->id != END; chest++) {
-    if (chest->map_id != map.active_map->id)
-      continue;
-    if (chest->col != x || chest->row != y)
-      continue;
-    tile->chest = chest;
-
-    // If the chest is open, increment the tile to the "open" graphic
-    if (map.flags_chest_open & chest->id)
-      t++;
-
-    break;
-  }
-
-  // Check for levers
+  tile->door = NULL;
   tile->lever = NULL;
-  const Lever *lever;
-  for (lever = map.active_floor->levers; lever->id != END; lever++) {
-    if (lever->map_id != map.active_map->id)
-      continue;
-    if (lever->col != x || lever->row != y)
-      continue;
-    tile->lever = lever;
+  tile->sign = NULL;
+  tile->sconce = NULL;
 
-    if (map.flags_lever_on & lever->id)
-      t++;
+  TileHashEntry *entry = get_hash_entry(x, y);
+  if (entry) {
+    switch(entry->type) {
+    case HASH_TYPE_CHEST:
+      Chest *chest = (Chest *)entry->data;
+      tile->chest = chest;
+      if (is_chest_open(chest->id))
+        map_tile += 2;
+      break;
+    case HASH_TYPE_LEVER:
+      Lever *lever = (Lever *)entry->data;
+      tile->lever = lever;
+      if (is_lever_on(lever->id))
+        map_tile += 2;
+      break;
+    case HASH_TYPE_DOOR:
+      Door *door = (Door *)entry->data;
+      tile->door = door;
+      if (is_locked_door(door->id))
+        map_attr = MAP_WALL;
+      else {
+        map_tile = door->type;
+        map_attr = MAP_EXIT;
+      }
+      break;
+    case HASH_TYPE_SIGN:
+      Sign *sign = (Sign *)entry->data;
+      tile->sign = sign;
+      break;
+    case HASH_TYPE_SCONCE:
+      Sconce *sconce = (Sconce *)entry->data;
+      tile->sconce = sconce;
+      break;
+    default:
+    }
   }
+
+  tile->bg_priority = attr & 0b10000000;
+  attr &= 0b01111111;
 
   tile->blank = false;
-  tile->tile = map_tile_lookup[t & MAP_TILE_MASK];
-  tile->attr = a;
-  tile->map_attr = t >> 6;
+  tile->tile = map_tile;
+  tile->attr = attr;
+  tile->map_attr = map_attr;
 }
 
 /**
@@ -237,7 +667,7 @@ void load_tile_buffer(void) {
   }
 
   // Reset the buffer position
-  MapTile *tile_buf = map.tile_buf;
+  MapTile *t = tile_buf;
   map.buffer_pos = 0;
 
   // Update world coordinates
@@ -270,8 +700,8 @@ void load_tile_buffer(void) {
       map.vram_row -= 0x20;
 
     const int8_t map_offset = dy < 0 ? 0 : 10;
-    for (int8_t x = map.x - 1; x < map.x + MAP_HORIZ_LOADS; x++, tile_buf++)
-      get_map_tile(tile_buf, x, map.y - 1 + map_offset);
+    for (int8_t x = map.x - 1; x < map.x + MAP_HORIZ_LOADS; x++, t++)
+      get_map_tile(t, x, map.y - 1 + map_offset);
   } else if (dx != 0) {
     map.buffer_max = MAP_VERT_LOADS;
     map.vram_d_col = 0;
@@ -284,8 +714,8 @@ void load_tile_buffer(void) {
     map.vram_row = map.vram_y;
 
     const int8_t map_offset = dx < 0 ? -1 : 10;
-    for (int8_t y = map.y - 1; y < map.y + MAP_VERT_LOADS; y++, tile_buf++)
-      get_map_tile(tile_buf, map.x + map_offset, y);
+    for (int8_t y = map.y - 1; y < map.y + MAP_VERT_LOADS; y++, t++)
+      get_map_tile(t, map.x + map_offset, y);
   }
 }
 
@@ -294,7 +724,7 @@ void load_tile_buffer(void) {
  * @param vram Position in VRAM where the tile should be drawn.
  * @param map_tile Map tile data to draw.
  */
-void draw_map_tile(uint8_t *vram, MapTile *map_tile) {
+void draw_map_tile(uint8_t *vram, MapTile *map_tile) CRITICAL {
   const uint8_t tile = map_tile->blank ? 0 : map_tile->tile;
   const uint8_t attr = map_tile->blank ? 0 :  map_tile->attr;
 
@@ -381,39 +811,120 @@ uint8_t *get_local_vram(Direction d) {
 }
 
 /**
+ * Sets background priority on at the move destination.
+ */
+void set_move_vram_bg_priority(uint8_t attr) {
+  uint8_t *vram = get_local_vram(map.move_direction);
+  const uint8_t a = attr | 0b10000000;
+
+  VBK_REG = VBK_ATTRIBUTES;
+  set_vram_byte(vram, a);
+  set_vram_byte(vram + 1, a);
+  set_vram_byte(vram + 0x20, a);
+  set_vram_byte(vram + 0x20 + 1, a);
+}
+
+/**
+ * Clears the background priority in VRAM for the given tile.
+ * @param tile Tile to clear.
+ */
+void clear_vram_bg_priority(void) {
+  MapTile *tile;
+  uint8_t *vram;
+
+  switch (map.move_direction) {
+  case UP:
+    vram = get_local_vram(DOWN);
+    tile = local_tiles + DOWN;
+    break;
+  case DOWN:
+    vram = get_local_vram(UP);
+    tile = local_tiles + UP;
+    break;
+  case LEFT:
+    vram = get_local_vram(RIGHT);
+    tile = local_tiles + RIGHT;
+    break;
+  default:
+  // case RIGHT:
+    vram = get_local_vram(LEFT);
+    tile = local_tiles + LEFT;
+    break;
+  }
+
+  const uint8_t attr = tile->attr;
+  VBK_REG = VBK_ATTRIBUTES;
+  set_vram_byte(vram, attr);
+  set_vram_byte(vram + 1, attr);
+  set_vram_byte(vram + 0x20, attr);
+  set_vram_byte(vram + 0x20 + 1, attr);
+}
+
+/**
  * Updates the local tiles state based on the current map position.
  */
 void update_local_tiles(void) {
   uint8_t x = map.x + HERO_X_OFFSET;
   uint8_t y = map.y + HERO_Y_OFFSET;
-  get_map_tile(map.local_tiles + HERE, x, y);
-  get_map_tile(map.local_tiles + UP, x, y - 1);
-  get_map_tile(map.local_tiles + DOWN, x, y + 1);
-  get_map_tile(map.local_tiles + LEFT, x - 1, y);
-  get_map_tile(map.local_tiles + RIGHT, x + 1, y);
+  get_map_tile(local_tiles + HERE, x, y);
+  get_map_tile(local_tiles + UP, x, y - 1);
+  get_map_tile(local_tiles + DOWN, x, y + 1);
+  get_map_tile(local_tiles + LEFT, x - 1, y);
+  get_map_tile(local_tiles + RIGHT, x + 1, y);
 }
 
 /**
  * Resets all stateful objects on the flooor (chests, doors, npc, levers, etc.)
  */
-void reset_chests(void) {
+void reset_map_objects(void) {
+  reset_object_hash();
+
   // Chests
   map.flags_chest_open = 0;
   map.flags_chest_locked = 0;
 
   const Chest *chest;
-  for (chest = map.active_floor->chests; chest->id != END; chest++)
+  for (chest = map.active_floor->chests; chest->id != END; chest++) {
     if (chest->locked)
       set_chest_locked(chest->id);
+    hash_object(HASH_TYPE_CHEST, chest, chest->map_id, chest->col, chest->row);
+  }
 
   // Levers
   map.flags_lever_on = 0;
   map.flags_lever_stuck = 0;
 
   const Lever *lever;
-  for (lever = map.active_floor->levers; lever->id != END; lever++)
+  for (lever = map.active_floor->levers; lever->id != END; lever++) {
     if (lever->stuck)
       stick_lever(lever->id);
+    hash_object(HASH_TYPE_LEVER, lever, lever->map_id, lever->col, lever->row);
+  }
+
+  // Doors
+  map.flags_door_locked = 0;
+
+  const Door *door;
+  for (door = map.active_floor->doors; door->id != END; door++) {
+    set_door_locked(door->id);
+    hash_object(HASH_TYPE_DOOR, door, door->map_id, door->col, door->row);
+  }
+
+  // Signs
+  const Sign *sign;
+  for (sign = map.active_floor->signs; sign->map_id != END; sign++)
+    hash_object(HASH_TYPE_SIGN, sign, sign->map_id, sign->col, sign->row);
+
+  // Sconces
+  map.flags_sconce_lit = 0;
+  const Sconce *sconce;
+  for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
+    hash_object(HASH_TYPE_SCONCE, sconce,
+      sconce->map_id, sconce->col, sconce->row);
+    if (sconce->is_lit) {
+      light_sconce(sconce->id, sconce->color);
+    }
+  }
 }
 
 /**
@@ -421,7 +932,7 @@ void reset_chests(void) {
  * by the player.
  */
 void load_exit(void) {
-  lcd_off();
+  DISPLAY_OFF;
   const Exit *exit = map.active_exit;
 
   if (exit->to_floor)
@@ -433,8 +944,9 @@ void load_exit(void) {
   set_hero_position(exit->to_col, exit->to_row);
   update_local_tiles();
   refresh_map_screen();
+  clear_flames();
   map_fade_in(MAP_STATE_EXIT_LOADED);
-  lcd_on();
+  DISPLAY_ON;
 }
 
 /**
@@ -454,6 +966,7 @@ bool handle_exit(void) {
     if (exit->col != x || exit->row != y)
       continue;
 
+    sfx_stairs();
     map.active_exit = exit;
     map_fade_out(MAP_STATE_LOAD_EXIT);
     return true;
@@ -467,18 +980,34 @@ bool handle_exit(void) {
  * @param d Direction the player is to move.
  */
 void start_move(Direction d) {
-  MapTile *destination = map.local_tiles + d;
+  MapTile *destination = local_tiles + d;
 
-  map.hero_direction = d;
+  if (map.hero_direction != d) {
+    map.hero_direction = d;
+    play_wall_hit = true;
+  }
 
   if (destination->map_attr == MAP_WALL) {
+    if (play_wall_hit) {
+      sfx_wall_hit();
+      play_wall_hit = false;
+    }
     return;
+  } else {
+    play_wall_hit = true;
   }
 
   map.move_direction = d;
   map.move_step = 0;
   map.state = MAP_STATE_MOVING;
   map.hero_state = HERO_WALKING;
+
+  if (destination->bg_priority) {
+    set_move_vram_bg_priority(destination->attr);
+    map.bg_priority_set = true;
+  }
+
+  // Note: this updated map.x & map.y
   load_tile_buffer();
 }
 
@@ -517,7 +1046,7 @@ void update_map_move(void) {
   }
 
   if (map.buffer_pos < map.buffer_max) {
-    MapTile *tile = map.tile_buf + map.buffer_pos;
+    MapTile *tile = tile_buf + map.buffer_pos;
     uint8_t *vram = VRAM_BACKGROUND_XY(map.vram_col, map.vram_row);
     draw_map_tile(vram, tile);
 
@@ -538,13 +1067,18 @@ void update_map_move(void) {
 
   update_local_tiles();
 
+  if (map.bg_priority_set) {
+    clear_vram_bg_priority();
+    map.bg_priority_set = false;
+  }
+
   map.state = MAP_STATE_WAITING;
   map.hero_state = HERO_STILL;
 
   if (on_move())
     return;
 
-  MapTile *here = map.local_tiles + HERE;
+  MapTile *here = local_tiles + HERE;
 
   switch (here->map_attr) {
   case MAP_EXIT:
@@ -571,44 +1105,14 @@ bool check_signs(void) {
   int8_t x = hero_x();
   int8_t y = hero_y();
 
-  const Sign *sign;
-  for (sign = map.active_floor->signs; sign->map_id != END; sign++) {
-    if (sign->map_id != map.active_map->id)
-      continue;
+  const MapTile *tile = local_tiles + map.hero_direction;
+  const Sign *sign = tile->sign;
 
-    if (sign->facing == HERE)
-      continue;
+  if (!sign)
+    return false;
 
-    if (map.hero_direction != sign->facing)
-      continue;
-
-    uint8_t hero_x, hero_y;
-    switch (sign->facing) {
-    case UP:
-      hero_x = sign->col;
-      hero_y = sign->row + 1;
-      break;
-    case DOWN:
-      hero_x = sign->col;
-      hero_y = sign->row - 1;
-      break;
-    case LEFT:
-      hero_x = sign->col - 1;
-      hero_y = sign->row;
-      break;
-    default:
-      hero_x = sign->col + 1;
-      hero_y = sign->row;
-      break;
-    }
-
-    if (x != (int8_t)hero_x || y != (int8_t)hero_y)
-      continue;
-
-    map_textbox(sign->message);
-    return true;
-  }
-  return false;
+  map_textbox(sign->message);
+  return true;
 }
 
 /**
@@ -619,6 +1123,18 @@ bool check_signs(void) {
  */
 void tile_to_state_on(const MapTile *tile, uint8_t *vram) {
   const uint8_t t = tile->tile + 2;
+  set_vram_byte(vram, t);
+  set_vram_byte(vram + 1, t + 1);
+  set_vram_byte(vram + 0x20, t + 0x10);
+  set_vram_byte(vram + 0x20 + 1, t + 0x10 + 1);
+}
+
+/**
+ * Swaps a tile's graphics to the given base tile.
+ * @param vram VRAM address of the tile to swap.
+ * @param t Base tile for the graphics to set.
+ */
+void swap_tile_graphics(uint8_t *vram, uint8_t t) {
   set_vram_byte(vram, t);
   set_vram_byte(vram + 1, t + 1);
   set_vram_byte(vram + 0x20, t + 0x10);
@@ -655,7 +1171,7 @@ void open_chest(const MapTile *tile) {
  * @return `true` to prevent the default behavior of the action handler.
  */
 bool check_chests(void) {
-  const MapTile *tile = map.local_tiles + map.hero_direction;
+  const MapTile *tile = local_tiles + map.hero_direction;
   const Chest *chest = tile->chest;
 
   if (!chest)
@@ -722,24 +1238,103 @@ void toggle_lever(const MapTile *tile) {
 
   toggle_lever_state(lever->id);
 
+  uint8_t t = 0x8A;
+
+  if (tile->tile == 0x8A || tile->tile == 0x8C) {
+    // Non-wall lever
+    t = is_lever_on(lever->id) ? 0x8C : 0x8A;
+  } else {
+    // Wall lever
+    t = is_lever_on(lever->id) ? 0xA0 : 0x8E;
+  }
+
   uint8_t *vram = get_local_vram(map.hero_direction);
-  if (is_lever_on(lever))
-    tile_to_state_on(tile, vram);
-  else
-    tile_to_state_off(tile, vram);
+  set_vram_byte(vram, t);
+  set_vram_byte(vram + 1, t + 1);
+  set_vram_byte(vram + 0x20, t + 0x10);
+  set_vram_byte(vram + 0x20 + 1, t + 0x10 + 1);
+}
+
+/**
+ * Opens the door at the given map tile.
+ * @param tile Map tile containing the door.
+ */
+void open_door(const MapTile *tile) {
+  const Door *door = tile->door;
+  if (!door)
+    return;
+  set_door_open(door->id);
+
+  uint8_t *vram = get_local_vram(map.hero_direction);
+  uint8_t tile_base = door->type;
+  swap_tile_graphics(vram, tile_base);
+
+  update_local_tiles();
+}
+
+/**
+ * @return Vram at the given tile.
+ * @param tx Tile x coordinate.
+ * @param ty Tile y coordinate.
+ */
+uint8_t *get_vram_at(int8_t tx, int8_t ty) {
+  int8_t col = (int8_t)((map.scroll_x) >> 3);
+  int8_t row = (int8_t)((map.scroll_y) >> 3);
+
+  const int8_t dx = tx - map.x;
+  col += dx * 2;
+  const int8_t dy = ty - map.y;
+  row += dy * 2;
+
+  if (col < 0)
+    col += 32;
+  if (col >= 32)
+    col -= 32;
+
+  if (row < 0)
+    row += 32;
+  if (row >= 32)
+    row -= 32;
+
+  return VRAM_BACKGROUND_XY(col, row);
+}
+
+void open_door_by_id(DoorId id) {
+  const Door *door;
+  for (door = map.active_floor->doors; door->id != END; door++) {
+    if (door->id == id)
+      break;
+  }
+
+  if (door->id == END)
+    return;
+
+  set_door_open(id);
+
+  if (
+    map.active_map->id != door->map_id ||
+    door->col < map.x - 1 ||
+    door->col >= map.x + MAP_HORIZ_LOADS ||
+    door->row < map.y - 1 ||
+    door->row >= map.y + MAP_VERT_LOADS
+  ) return;
+
+  uint8_t *vram = get_vram_at(door->col, door->row);
+  uint8_t tile_base = door->type;
+  swap_tile_graphics(vram, tile_base);
 }
 
 /**
  * Checks for a lever in front of the player and handles its logic.
  */
 bool check_levers(void) {
-  const MapTile *tile = map.local_tiles + map.hero_direction;
+  const MapTile *tile = local_tiles + map.hero_direction;
   const Lever *lever = tile->lever;
 
   if (!lever)
     return false;
 
-  if (lever->one_shot && is_lever_on(lever)) {
+  if (lever->one_shot && is_lever_on(lever->id)) {
     map_textbox(str_maps_lever_one_way);
     return true;
   }
@@ -758,6 +1353,101 @@ bool check_levers(void) {
 }
 
 /**
+ * Checks to see if the player is interacting with a door.
+ */
+bool check_doors(void) {
+  const MapTile *tile = local_tiles + map.hero_direction;
+  const Door *door = tile->door;
+
+  if (!door)
+    return false;
+
+  if (!is_locked_door(door->id))
+    return false;
+
+  if (door->magic_key_unlock) {
+    if (player.magic_keys > 0) {
+      player.magic_keys--;
+      map_textbox(str_maps_door_unlock_key);
+      set_door_open(door->id);
+      open_door(tile);
+    } else {
+      map_textbox(str_maps_door_locked_key);
+    }
+  } else {
+    map_textbox(str_maps_door_locked);
+  }
+
+  return true;
+
+}
+
+/**
+ * Lights the player's torch with the given flame color.
+ * @param color Color of the flame.
+ */
+void light_torch(FlameColor color) {
+  player.torch_gauge = 32;
+  player.torch_color = color;
+  const palette_color_t *palette = torch_gauge_palettes + color * 4;
+  core.load_sprite_palette(palette, TORCH_GAUGE_PALETTE, 1);
+}
+
+/**
+ * Lights a sconce.
+ * @param id Id of the sconce to light.
+ * @param color Color of the flame.
+ */
+void light_sconce(SconceId id, FlameColor color) {
+  map.flags_sconce_lit |= id;
+  sconce_colors[get_sconce_index(id)] = color;
+  set_sprite_prop(get_sconce_flame_sprite(id), 0b00001000 | color);
+
+  // Call the "on_lit" handler
+  const Sconce *sconce;
+  for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
+    if (sconce->id != id)
+      continue;
+    if (sconce->on_lit)
+      sconce->on_lit(sconce);
+    break;
+  }
+}
+
+/**
+ * Checks to see if the player is interacting with a sconce.
+ */
+bool check_sconces(void) {
+  const MapTile *tile = local_tiles + map.hero_direction;
+  const Sconce *sconce = tile->sconce;
+
+  if (!sconce)
+    return false;
+
+  const uint8_t sconce_idx = get_sconce_index(sconce->id);
+
+  if (is_sconce_lit(sconce->id)) {
+    if (player.has_torch) {
+      light_torch(sconce_colors[sconce_idx]);
+    } else {
+      map_textbox(str_maps_sconce_lit_no_torch);
+    }
+  } else {
+    if (player.has_torch) {
+      if (player.torch_gauge > 0) {
+        light_sconce(sconce->id, player.torch_color);
+      } else {
+        map_textbox(str_maps_sconce_torch_not_lit);
+      }
+    } else {
+      map_textbox(str_maps_sconce_no_torch);
+    }
+  }
+
+  return true;
+}
+
+/**
  * Checks to see if the player is attempting to perform an action by pressing
  * the A button.
  * @return `true` if an action was attempted.
@@ -770,6 +1460,10 @@ bool check_action(void) {
       return true;
     if (check_chests())
       return true;
+    if (check_doors())
+      return true;
+    if (check_sconces())
+      return true;
     return check_levers();
   }
   return false;
@@ -780,14 +1474,14 @@ void set_active_floor(Floor *floor) BANKED {
   map.active_map = &floor->maps[floor->default_map];
   set_hero_position(floor->default_x, floor->default_y);
   core.load_bg_palette(map.active_floor->palettes, 0, 7);
-  reset_chests();
+  reset_map_objects();
 }
 
 /**
  * Initializes the world map system.
  */
 void initialize_world_map(void) {
-  lcd_off();
+  DISPLAY_OFF;
 
   core.load_font();
   core.load_object_tiles();
@@ -798,10 +1492,12 @@ void initialize_world_map(void) {
   textbox.init();
 
   init_hero();
+  init_flames();
+  init_hud();
   update_local_tiles();
   refresh_map_screen();
 
-  lcd_on();
+  DISPLAY_ON;
 }
 
 void init_world_map(void) NONBANKED {
@@ -855,12 +1551,23 @@ void update_world_map(void) NONBANKED {
     break;
   case MAP_STATE_START_BATTLE:
     map.state = MAP_STATE_INACTIVE;
-    lcd_off();
+    DISPLAY_OFF;
     init_battle();
     return;
   }
 
+  if (update_timer(map.torch_timer)) {
+    reset_timer(map.torch_timer);
+    if (player.torch_gauge > 0) {
+      player.torch_gauge--;
+      if (player.torch_gauge == 0)
+        core.load_sprite_palette(torch_gauge_palettes, TORCH_GAUGE_PALETTE, 1);
+    }
+  }
+
   update_hero();
+  update_flames();
+  update_hud();
 }
 
 void draw_world_map(void) {

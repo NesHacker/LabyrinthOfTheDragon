@@ -1,9 +1,9 @@
 /*
- * strings_battle.bank03.c
+ * strings_battle.bank00.c
  * Encoded string values for the "battle" namespace.
  */
 
-#pragma bank 3
+#pragma bank 0
 
 const char str_battle_poison_spray[] = "Poison gas erupts \nfrom your palm!";
 const char str_battle_cure_wounds[] = "You\'re enveloped \nin blue light\x60";
@@ -12,18 +12,6 @@ const char str_battle_lightning[] = "Bolts of lighting \nfall!";
 const char str_battle_heal[] = "Radiant blue light\n falls upon you\x60";
 const char str_battle_insect_plague[] = "Locusts swarm your\n enemies!";
 const char str_battle_regen[] = "You surge with \nvitality!";
-const char str_battle_monster_attack[] = "%s %c \nattacks!";
-const char str_battle_monster_miss[] = "But they miss!";
-const char str_battle_monster_magic_miss[] = "But it has no \neffect!";
-const char str_battle_monster_hit[] = "You take %u \ndamage!";
-const char str_battle_monster_hit_aspect[] = "You take %u \n%s damage!";
-const char str_battle_monster_hit_immune[] = "But you\'re \ncompletely \nimmune!";
-const char str_battle_monster_hit_resist[] = "You resist, only \n%u damage";
-const char str_battle_monster_hit_vuln[] = "It\'s SUPER BAD! \n%u damage!";
-const char str_battle_monster_hit_crit[] = "CRITICAL HIT! You \ntake %u damage!";
-const char str_battle_monster_flee[] = "%s %c makes \na run for it\x60";
-const char str_battle_monster_flee_failure[] = "But they cannot \nget away!";
-const char str_battle_monster_flee_success[] = "And they get away!";
 const char str_battle_monster_scared_frozen[] = "%s %c \nshivers in fear\x60";
 const char str_battle_monster_paralyzed[] = "%s %c can\'t \nmove!";
 const char str_battle_monster_poison_death[] = "%s %c \nsuccumbs to the \npoison!";
