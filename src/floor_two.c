@@ -119,19 +119,19 @@ const Exit floor_two_exits[] = {
     {MAP_A, 2, 9, MAP_A, 21, 2, DOWN, EXIT_STAIRS},
     {MAP_A, 21, 2, MAP_A, 2, 9, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
-    {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
+    // {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
+    // {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 13, 12, MAP_A, 4, 19, UP, EXIT_STAIRS},
-    {MAP_A, 4, 19, MAP_A, 13, 12, DOWN, EXIT_STAIRS},
+    // {MAP_A, 13, 12, MAP_A, 4, 19, UP, EXIT_STAIRS},
+    // {MAP_A, 4, 19, MAP_A, 13, 12, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 12, 17, MAP_A, 18, 16, UP, EXIT_STAIRS},
-    {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
+    // {MAP_A, 12, 17, MAP_A, 18, 16, UP, EXIT_STAIRS},
+    // {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 8, MAP_A, 9, 2, UP, EXIT_STAIRS},
-    {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
+    // {MAP_A, 6, 8, MAP_A, 9, 2, UP, EXIT_STAIRS},
+    // {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 3, 1, MAP_A, 7, 31, UP, EXIT_STAIRS, &floor_two},
+    {MAP_A, 3, 1, MAP_A, 4, 14, DOWN, EXIT_STAIRS, &floor_two},
 
     {END},
 };
@@ -247,7 +247,8 @@ const NPC floor_two_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
-void floor_two_on_init(void) {
+bool floor_two_on_init(void) {
+  return false;
 }
 
 void floor_two_on_update(void) {

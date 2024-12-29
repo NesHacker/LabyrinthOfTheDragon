@@ -133,7 +133,7 @@ const Exit floor_one_exits[] = {
     {MAP_A, 6, 18, MAP_A, 6, 13, UP, EXIT_STAIRS},
     {MAP_A, 6, 13, MAP_A, 6, 18, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 3, MAP_A, 7, 31, UP, EXIT_STAIRS, &floor_one},
+    {MAP_A, 6, 3, MAP_A, 4, 14, DOWN, EXIT_STAIRS, &floor_two},
 
     {END},
 };
@@ -256,8 +256,9 @@ const NPC floor_one_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
-void floor_one_on_init(void) {
+bool floor_one_on_init(void) {
   // map_textbox("You have wandered\ninto a place\n of danger!");
+  return false;
 }
 
 void floor_one_on_update(void) {
