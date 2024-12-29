@@ -6,18 +6,19 @@
 // Floorwide settings
 //------------------------------------------------------------------------------
 
-#define FLOOR_ONE_ID 99
-#define FLOOR_ONE_DEFAULT_X 7
-#define FLOOR_ONE_DEFAULT_Y 30
-#define FLOOR_ONE_DEFAULT_MAP MAP_A
+#define FLOOR_TWO_ID 98
+#define FLOOR_TWO_DEFAULT_X 4
+#define FLOOR_TWO_DEFAULT_Y 14
+#define FLOOR_TWO_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
 // Maps
 //------------------------------------------------------------------------------
 
-const Map floor_one_maps[] = {
+const Map floor_two_maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_9, floor_one_data, 32, 32 },
+  { MAP_A, BANK_9, floor_two_data, 32, 32 },
+
   { END },
 };
 
@@ -25,7 +26,7 @@ const Map floor_one_maps[] = {
 // Palette Colors
 //------------------------------------------------------------------------------
 
-const uint16_t floor_one_palettes[] = {
+const uint16_t floor_two_palettes[] = {
   // Palette 1 - Core background tiles
   RGB8(190, 200, 190),
   RGB8(100, 100, 140),
@@ -67,7 +68,7 @@ const uint16_t floor_one_palettes[] = {
 // Chests
 //------------------------------------------------------------------------------
 
-const Chest floor_one_chests[] = {
+const Chest floor_two_chests[] = {
   /*
   {
     CHEST_1,    // Always use a CHEST_* here cause it acts like a flag
@@ -80,28 +81,19 @@ const Chest floor_one_chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
-  // Basic items chest, contains some stuffs
   {
     CHEST_1,
-    MAP_A, 21, 18, false, false,
-    NULL,
-    NULL,
-    chest_add_torch,
-  },
-  // A locked chest that can be unlocked using scripting
-  {
-    CHEST_2,
-    MAP_A, 23, 26, false, false,
+    MAP_A, 20, 11, false, false,
     NULL,
     NULL,
     chest_add_magic_key,
   },
-  // An empty chest, default behavior if you don't set any params
   {
-    CHEST_3,
-    MAP_A, 22, 9, false, false,
-    str_chest_item_1pot,
-    chest_item_1pot,
+    CHEST_2,
+    MAP_A, 24, 10, false, false,
+    NULL,
+    NULL,
+    chest_add_magic_key,
   },
 
   { END },
@@ -111,12 +103,12 @@ const Chest floor_one_chests[] = {
 // Exits
 //------------------------------------------------------------------------------
 
-const Exit floor_one_exits[] = {
+const Exit floor_two_exits[] = {
     /*
     {
       MAP_A,        // Map the exit is on
       0, 0,         // Column and row on that map for the exit
-      FLOOR_TEST_ID,    // Floor to which the exit leads (last door, basically)
+      FLOOR_TWO_ID,    // Floor to which the exit leads (last door, basically)
       DEST_MAP      // Id of the destination map
       0, 0,         // Column and row
       UP,           // Way the player should be facing leaving the exit
@@ -124,16 +116,22 @@ const Exit floor_one_exits[] = {
     },
     */
 
-    {MAP_A, 3, 25, MAP_A, 19, 17, DOWN, EXIT_STAIRS},
-    {MAP_A, 19, 17, MAP_A, 3, 25, DOWN, EXIT_STAIRS},
+    {MAP_A, 2, 9, MAP_A, 21, 2, DOWN, EXIT_STAIRS},
+    {MAP_A, 21, 2, MAP_A, 2, 9, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 12, 25, MAP_A, 28, 18, DOWN, EXIT_STAIRS},
-    {MAP_A, 28, 18, MAP_A, 12, 25, DOWN, EXIT_STAIRS},
+    {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
+    {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 18, MAP_A, 6, 13, UP, EXIT_STAIRS},
-    {MAP_A, 6, 13, MAP_A, 6, 18, DOWN, EXIT_STAIRS},
+    {MAP_A, 13, 12, MAP_A, 4, 19, UP, EXIT_STAIRS},
+    {MAP_A, 4, 19, MAP_A, 13, 12, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 3, MAP_A, 7, 31, UP, EXIT_STAIRS, &floor_one},
+    {MAP_A, 12, 17, MAP_A, 18, 16, UP, EXIT_STAIRS},
+    {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
+
+    {MAP_A, 6, 8, MAP_A, 9, 2, UP, EXIT_STAIRS},
+    {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
+
+    {MAP_A, 3, 1, MAP_A, 7, 31, UP, EXIT_STAIRS, &floor_two},
 
     {END},
 };
@@ -142,7 +140,7 @@ const Exit floor_one_exits[] = {
 // Exits
 //------------------------------------------------------------------------------
 
-const Sign floor_one_signs[] = {
+const Sign floor_two_signs[] = {
   /*
   {
     MAP_A,      // Id of the map
@@ -151,7 +149,7 @@ const Sign floor_one_signs[] = {
     "Hi there!" // The message to display
   }
   */
-  { MAP_A, 4, 25, UP, str_maps_sign_monster_no_fire },
+  { MAP_A, 5, 8, UP, str_maps_sign_monster_no_fire },
   { END },
 };
 
@@ -159,14 +157,7 @@ const Sign floor_one_signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
-void floor_one_on_lever(const Lever *lever) {
-  if (lever->id == LEVER_1) {
-    map_textbox("You hear a\nka-thunk\x60");
-    open_door_by_id(DOOR_3);
-  }
-}
-
-const Lever floor_one_levers[] = {
+const Lever floor_two_levers[] = {
   /*
   {
     LEVER_1,  // Use the LEVER_* constants for ids (again, used as flags)
@@ -177,8 +168,6 @@ const Lever floor_one_levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
-  { LEVER_1, MAP_A, 6, 7, true, false, floor_one_on_lever },
-
   { END },
 };
 
@@ -186,7 +175,7 @@ const Lever floor_one_levers[] = {
 // Doors
 //------------------------------------------------------------------------------
 
-const Door floor_one_doors[] = {
+const Door floor_two_doors[] = {
   /*
   {
     DOOR_1,           // Use DOOR_* constants for ids.
@@ -196,9 +185,9 @@ const Door floor_one_doors[] = {
     true              // Magic key required to unlock
   }
   */
-  { DOOR_1, MAP_A, 3, 25, DOOR_STAIRS_DOWN, true },
-  { DOOR_2, MAP_A, 6, 18, DOOR_NORMAL, false },
-  { DOOR_3, MAP_A, 6,  3, DOOR_NEXT_LEVEL, false },
+  { DOOR_1, MAP_A, 6, 8, DOOR_STAIRS_DOWN, false },
+  { DOOR_2, MAP_A, 20, 16, DOOR_NORMAL, true },
+  { DOOR_3, MAP_A, 3,  1, DOOR_NEXT_LEVEL, false },
 
   { END }
 };
@@ -207,14 +196,19 @@ const Door floor_one_doors[] = {
 // Sconces
 //------------------------------------------------------------------------------
 
-void floor_one_on_lit(const Sconce* sconce) {
-  if(is_sconce_lit(SCONCE_1) && is_sconce_lit(SCONCE_2)) {
+void floor_two_on_lit(const Sconce* sconce) {
+  if(
+    is_sconce_lit(SCONCE_1) &&
+    is_sconce_lit(SCONCE_2) &&
+    is_sconce_lit(SCONCE_3) &&
+    is_sconce_lit(SCONCE_4)
+    ) {
     //open the door dave
-    open_door_by_id(DOOR_2);
+    open_door_by_id(DOOR_1);
   }
 }
 
-const Sconce floor_one_sconces[] = {
+const Sconce floor_two_sconces[] = {
   /*
   {
     SCONCE_1,   // Use SCONCE_* constants for ids.
@@ -224,14 +218,11 @@ const Sconce floor_one_sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  { SCONCE_1, MAP_A, 4, 18, false, FLAME_RED, floor_one_on_lit },
-  { SCONCE_2, MAP_A, 8, 18, false, FLAME_RED, floor_one_on_lit },
-
-  // These do nothing Jon Snow
-  { SCONCE_3, MAP_A,  5, 25, true, FLAME_RED },
-  { SCONCE_4, MAP_A, 20, 17, true, FLAME_RED },
-  { SCONCE_5, MAP_A, 22, 17, true, FLAME_RED },
-  { SCONCE_6, MAP_A, 22,  6, true, FLAME_RED },
+  { SCONCE_1, MAP_A,  3, 14, true, FLAME_RED },
+  { SCONCE_2, MAP_A,  8, 16, false, FLAME_RED },
+  { SCONCE_3, MAP_A, 23, 16, false, FLAME_RED },
+  { SCONCE_4, MAP_A, 15,  2, false, FLAME_RED },
+  { SCONCE_5, MAP_A, 18,  2, false, FLAME_RED },
 
 
   { END }
@@ -241,7 +232,7 @@ const Sconce floor_one_sconces[] = {
 // NPCs (NOT YET IMPLS)
 //------------------------------------------------------------------------------
 
-const NPC floor_one_npcs[] = {
+const NPC floor_two_npcs[] = {
   /*
   {
     NPC_1,    // Use NPC_* constants for ids.
@@ -256,88 +247,52 @@ const NPC floor_one_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
-void floor_one_on_init(void) {
-  // map_textbox("You have wandered\ninto a place\n of danger!");
+void floor_two_on_init(void) {
 }
 
-void floor_one_on_update(void) {
+void floor_two_on_update(void) {
 }
 
-void floor_one_on_draw(void) {
+void floor_two_on_draw(void) {
 }
 
-bool floor_one_on_action(void) {
+bool floor_two_on_action(void) {
   return false;
 }
 
-bool floor_one_on_special(void) {
-  // 21, 19
-  if (player_at(21, 19)) {
-    Monster *monster = encounter.monsters;
-    reset_encounter(MONSTER_LAYOUT_1);
-    kobold_generator(monster, player.level, C_TIER);
-    monster->id = 'A';
-    start_battle();
-    return true;
-  }
-
+bool floor_two_on_special(void) {
   return false;
 }
 
-bool floor_one_on_exit(void) {
+bool floor_two_on_exit(void) {
   return false;
 }
 
-uint8_t floor_one_enc_step = 0;
-uint8_t floor_one_enc_reset = 255;
-uint8_t floor_one_enc_chance = 1;
-
-bool floor_one_on_move(void) {
-  floor_one_enc_step++;
-  if (player.torch_gauge > 0)
-    return false;
-
-  if (floor_one_enc_step < floor_one_enc_reset)
-    return false;
-
-  if (d64() >= floor_one_enc_chance) {
-    floor_one_enc_chance++;
-    return false;
-  }
-
-  floor_one_enc_step = 0;
-  floor_one_enc_chance = 1;
-
-  Monster *monster = encounter.monsters;
-  reset_encounter(MONSTER_LAYOUT_1);
-  beholder_generator(monster, player.level, C_TIER);
-  monster->id = 'A';
-  start_battle();
-  return true;
+bool floor_two_on_move(void) {
 }
 
 //------------------------------------------------------------------------------
 // Area Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
-const Floor floor_one= {
-  FLOOR_ONE_ID,                              // Id
-  FLOOR_ONE_DEFAULT_MAP,                     // Default Map
-  FLOOR_ONE_DEFAULT_X, FLOOR_ONE_DEFAULT_Y, // Default Starting (x, y)
-  floor_one_palettes,                        // Palettes
-  floor_one_maps,
-  floor_one_exits,
-  floor_one_chests,
-  floor_one_signs,
-  floor_one_levers,
-  floor_one_doors,
-  floor_one_sconces,
-  floor_one_npcs,
-  floor_one_on_init,
-  floor_one_on_update,
-  floor_one_on_draw,
-  floor_one_on_action,
-  floor_one_on_special,
-  floor_one_on_exit,
-  floor_one_on_move,
+const Floor floor_two= {
+  FLOOR_TWO_ID,                              // Id
+  FLOOR_TWO_DEFAULT_MAP,                     // Default Map
+  FLOOR_TWO_DEFAULT_X, FLOOR_TWO_DEFAULT_Y, // Default Starting (x, y)
+  floor_two_palettes,                        // Palettes
+  floor_two_maps,
+  floor_two_exits,
+  floor_two_chests,
+  floor_two_signs,
+  floor_two_levers,
+  floor_two_doors,
+  floor_two_sconces,
+  floor_two_npcs,
+  floor_two_on_init,
+  floor_two_on_update,
+  floor_two_on_draw,
+  floor_two_on_action,
+  floor_two_on_special,
+  floor_two_on_exit,
+  floor_two_on_move,
 };
 
