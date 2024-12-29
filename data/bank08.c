@@ -8,3 +8,4 @@
 
 INCBIN(map_example_0, "res/maps/map_example_0.bin")
 INCBIN(map_example_1, "res/maps/map_example_1.bin")
+INCBIN(map_example_11x13, "res/maps/map_example_11x13.bin")

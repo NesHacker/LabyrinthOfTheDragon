@@ -7,6 +7,7 @@
 
 #include "core.h"
 #include "item.h"
+#include "monster.h"
 #include "textbox.h"
 
 /**
@@ -105,6 +106,21 @@
 #define FLAME_TILE_2 0x14
 
 /**
+ * Base properties for all flame sprites.
+ */
+#define FLAME_SPRITE_PROP 0b00001000
+
+/**
+ * Id of the first designated flame sprite.
+ */
+#define FLAME_SPRITE_ID0 32
+
+/**
+ * Maximum number of flame sprites that can be on the screen at once.
+ */
+#define MAX_FLAME_SPRITES 8
+
+/**
  * Clear tile for sprites.
  */
 #define SPRITE_TILE_CLEAR 0x74
@@ -168,6 +184,31 @@
  * Palette to use for the magic keys hud.
  */
 #define MAGIC_KEY_HUD_PALETTE 5
+
+/**
+ * Starting sprite id for NPC 1.
+ */
+#define NPC_SPRITE_1 4
+
+/**
+ * Starting sprite id for NPC 2.
+ */
+#define NPC_SPRITE_2 8
+
+/**
+ * Root tile number for the first sprite of NPC 1.
+ */
+#define NPC_1_TILE_ROOT 0x20
+
+/**
+ * Root tile number for the first sprite of NPC 2.
+ */
+#define NPC_2_TILE_ROOT 0x40
+
+/**
+ * Base property for NPC sprites.
+ */
+#define NPC_BASE_PROP 0x00
 
 /**
  * Sconce flame sprite ids.
@@ -264,6 +305,10 @@ typedef struct MapTile {
    * If the tile contains a sconce, this will point to it.
    */
   const struct Sconce *sconce;
+  /**
+   * If the tile contains an NPC, this point to it.
+   */
+  const struct NPC *npc;
   /**
    * Whether or not the tile was marked as BG priority for rendering in the tile
    * source data.
@@ -604,6 +649,7 @@ typedef struct Door {
  * Ids/Flags used to denote specific sconces.
  */
 typedef enum SconceId {
+  SCONCE_STATIC = 0,
   SCONCE_1 = FLAG(0),
   SCONCE_2 = FLAG(1),
   SCONCE_3 = FLAG(2),
@@ -664,22 +710,38 @@ typedef struct Sconce {
 typedef enum NpcId {
   NPC_1 = FLAG(0),
   NPC_2 = FLAG(1),
-  NPC_3 = FLAG(2),
-  NPC_4 = FLAG(3),
-  NPC_5 = FLAG(4),
-  NPC_6 = FLAG(5),
-  NPC_7 = FLAG(6),
-  NPC_8 = FLAG(7),
 } NpcId;
 
 /**
  * An NPC that can inhabit a map. WARNING: not yet implemented.
  */
 typedef struct NPC {
+  /**
+   * Unique ID for the NPC.
+   */
   NpcId id;
+  /**
+   * The map where the NPC should be placed.
+   */
   MapId map_id;
+  /**
+   * Column in the map for the NPC.
+   */
   int8_t col;
+  /**
+   * Row in the map for the NPC.
+   */
   int8_t row;
+  /**
+   * The type of monster that the NPC is (determines the NPC graphic).
+   */
+  MonsterType monster_type;
+  /**
+   * Scripting callback to execute when the player interacts with the NPC.
+   * @param npc The NPC that initiated the callback.
+   * @return `true` if the default action should be skipped.
+   */
+  bool (*on_action)(const struct NPC *npc);
 } NPC;
 
 /**
@@ -741,7 +803,7 @@ typedef struct Floor {
   /**
    * Called when the map is initialized by the game engine.
    */
-  const void (*on_init)(void);
+  const bool (*on_init)(void);
   /**
    * Called on game loop update when the map is active.
    */
@@ -788,6 +850,7 @@ typedef enum TileHashType {
   HASH_TYPE_DOOR,
   HASH_TYPE_SIGN,
   HASH_TYPE_SCONCE,
+  HASH_TYPE_NPC,
 } TileHashType;
 
 /**
@@ -959,6 +1022,29 @@ typedef struct MapSystem {
    * Whether or not the BG priority was set for the destination during a move.
    */
   bool bg_priority_set;
+  /**
+   * Whether or not to execute the `on_init` function after finishing the next
+   * map move.
+   */
+  bool execute_on_init;
+  /**
+   * Scripting callback to execute before closing the map textbox. This callback
+   * is cleared every time the textbox is closed.
+   * @return `true` to override default textbox closing behavior.
+   */
+  bool (*after_textbox)(void);
+  /**
+   * Whether or not NPCs are visible.
+   */
+  uint8_t npc_visible;
+  /**
+   * Walk animation timer for NPCs.
+   */
+  Timer npc_walk_timer;
+  /**
+   * Current walk frame for NPCs.
+   */
+  uint8_t npc_walk_frame;
 } MapSystem;
 
 /**
@@ -1037,6 +1123,16 @@ inline void map_textbox(const char *text) {
 }
 
 /**
+ * Opens a textbox that executes the given action as it is closed.
+ * @param text Text to display in the text box.
+ * @param action Action to execute.
+ */
+inline void map_textbox_with_action(const char *text, bool (*action)(void)) {
+  map.after_textbox = action;
+  map_textbox(text);
+}
+
+/**
  * @param c Column to check.
  * @param r Row to check.
  * @return `true` If the player is at the given column and row in the map.
@@ -1073,9 +1169,13 @@ inline bool player_facing(uint8_t col, uint8_t row) {
 /**
  * Executes the active area's `on_init` callback if one is set.
  */
-inline void on_init(void) {
+inline bool on_init(void) {
+  if (!map.execute_on_init)
+    return false;
+  map.execute_on_init = false;
   if (map.active_floor->on_init)
-    map.active_floor->on_init();
+    return map.active_floor->on_init();
+  return false;
 }
 
 /**
@@ -1262,7 +1362,7 @@ inline bool is_locked_door(DoorId id) {
  * @param id Id of the sconce to test.
  */
 inline bool is_sconce_lit(SconceId id) {
-  return id == map.flags_sconce_lit & id;
+  return id == SCONCE_STATIC || map.flags_sconce_lit & id;
 }
 
 /**
@@ -1278,6 +1378,30 @@ void light_sconce(SconceId id, FlameColor color);
  */
 inline void extinguish_sconce(SconceId id) {
   map.flags_sconce_lit &= ~id;
+}
+
+/**
+ * @return `true` if the npc with the given id is visible.
+ * @param id Id of the NPC to check.
+ */
+inline bool is_npc_visible(NpcId id) {
+  return map.npc_visible & id;
+}
+
+/**
+ * Sets an NPC to be visible.
+ * @param id Id of the NPC to set.
+ */
+inline void set_npc_visible(NpcId id) {
+  map.npc_visible |= id;
+}
+
+/**
+ * Sets and NPC to be invisible.
+ * @param id Id of the NPC to set.
+ */
+inline void set_npc_invisible(NpcId id) {
+  map.npc_visible &= ~id;
 }
 
 #endif

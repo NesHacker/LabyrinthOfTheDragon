@@ -135,6 +135,11 @@ typedef struct Encounter {
    * system will not return to the map after the battle is complete.
    */
   bool is_test;
+  /**
+   * Callback to execute upon encounter success. This callback is reset after
+   * being called.
+   */
+  void (*on_victory)(void) NONBANKED;
 } Encounter;
 
 /**
@@ -142,6 +147,24 @@ typedef struct Encounter {
  * @see battle.c For battle rendering and effects.
  */
 extern Encounter encounter;
+
+/**
+ * Sets the victory callback for the encounter.
+ * @param callback Victory callback to execute if the player is victorious.
+ */
+inline void set_on_victory(void (*callback)(void) NONBANKED) {
+  encounter.on_victory = callback;
+}
+
+/**
+ * Calls and then resets the on_victory callback.
+ */
+inline void on_victory(void) {
+  if (encounter.on_victory) {
+    encounter.on_victory();
+    encounter.on_victory = NULL;
+  }
+}
 
 /**
  * Sets the player's next action to a basic attack.

@@ -101,7 +101,7 @@ void damage_monster(uint16_t base_damage, DamageAspect type) {
  * @return Number of monsters hit by the attack.
  */
 uint8_t damage_all(
-  uint8_t base_damage,
+  uint16_t base_damage,
   uint8_t atk,
   bool use_mdef,
   DamageAspect type

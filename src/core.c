@@ -71,7 +71,28 @@ const Tileset dungeon_tileset_page3 = {
 /**
  * Hero sprites tileset.
  */
-Tileset hero_tileset = { 12 * 8, 10, tile_data_hero };
+const Tileset hero_tileset = { 12 * 8, 10, tile_data_hero };
+
+/**
+ * Monster map character tiles, page1.
+ */
+const Tileset monsters_tileset_page1 = {
+  96, 15, tile_monsters
+};
+
+/**
+ * Monster map character tiles, page2.
+ */
+const Tileset monsters_tileset_page2 = {
+  96, 15, tile_monsters + BYTES_PER_TILE * 96
+};
+
+/**
+ * Monster map character tiles, page2.
+ */
+const Tileset monsters_tileset_page3 = {
+  96, 15, tile_monsters + BYTES_PER_TILE * 96 * 2
+};
 
 void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
   const uint8_t *src = s->data;
@@ -237,6 +258,45 @@ void core_fill(
   }
 }
 
+void load_monster_tiles(MonsterTiles tiles, MonsterTilePosition pos) {
+  const Tileset *tileset;
+
+  switch (tiles) {
+  case MONSTER_TILES_KOBOLD:
+  case MONSTER_TILES_GOBLIN:
+  case MONSTER_TILES_ZOMBIE:
+  case MONSTER_TILES_BUGBEAR:
+    tileset = &monsters_tileset_page1;
+    break;
+  case MONSTER_TILES_OWLBEAR:
+  case MONSTER_TILES_GELATINOUS_CUBE:
+  case MONSTER_TILES_DISPLACER_BEAST:
+  case MONSTER_TILES_WILL_O_WISP:
+    tileset = &monsters_tileset_page2;
+    break;
+  default:
+    tileset = &monsters_tileset_page3;
+  }
+
+  // const uint8_t row_width = 12;
+  // const uint8_t offset = player_class * row_width * 2;
+  // const uint8_t offset2 = offset + row_width;
+  // uint8_t *const vram = VRAM_SPRITE_TILES;
+  // uint8_t *const vram2 = vram + 16 * BYTES_PER_TILE;
+
+  const uint8_t row_width = 12;
+
+  const uint8_t offset = tiles * row_width * 2;
+  const uint8_t offset2 = offset + row_width;
+
+  uint8_t *vram = 0x8000 + BYTES_PER_TILE * (0x20 + 0x20 * pos);
+  uint8_t *vram2 = vram + 16 * BYTES_PER_TILE;
+
+  VBK_REG = VBK_BANK_0;
+  core_load_tiles(tileset, vram, offset, row_width);
+  core_load_tiles(tileset, vram2, offset2, row_width);
+}
+
 const Core core = {
   load_tileset,
   core_load_tiles,
@@ -255,4 +315,5 @@ const Core core = {
   hide_sprites,
   core_fill,
   load_dungeon_tiles,
+  load_monster_tiles,
 };

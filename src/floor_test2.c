@@ -10,6 +10,9 @@
 #define FLOOR_TEST2_DEFAULT_X 2
 #define FLOOR_TEST2_DEFAULT_Y 14
 #define FLOOR_TEST2_DEFAULT_MAP MAP_A
+// #define FLOOR_TEST2_DEFAULT_X 5
+// #define FLOOR_TEST2_DEFAULT_Y 12
+// #define FLOOR_TEST2_DEFAULT_MAP MAP_C
 
 //------------------------------------------------------------------------------
 // Maps
@@ -19,6 +22,7 @@ const Map floor_test2_maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_8, map_example_0, 16, 16 },
   { MAP_B, BANK_8, map_example_1, 16, 16 },
+  { MAP_C, BANK_8, map_example_11x13, 11, 13 },
   { END },
 };
 
@@ -102,9 +106,12 @@ const Exit floor_test2_exits[] = {
   { MAP_B, 2, 2, MAP_A, 2, 2, DOWN, EXIT_STAIRS },
   { MAP_B, 9, 9, MAP_A, 9, 9, DOWN, EXIT_STAIRS },
   { MAP_A, 9, 9, MAP_B, 9, 9, DOWN, EXIT_STAIRS },
-  { MAP_A, 11, 2, MAP_A, 4, 4, UP, EXIT_STAIRS, &floor_test },
+  { MAP_A, 11, 2, MAP_C, 5, 12, UP, EXIT_STAIRS },
+  { MAP_C, 5, 2, MAP_A, 4, 4, UP, EXIT_STAIRS, &floor_test },
   { END },
 };
+
+// 5, 12
 
 //------------------------------------------------------------------------------
 // Signs
@@ -148,6 +155,7 @@ const Lever floor_test2_levers[] = {
 
 const Door floor_test2_doors[] = {
   { DOOR_1, MAP_A, 11, 2, DOOR_NEXT_LEVEL, false },
+  { DOOR_2, MAP_C, 5, 2, DOOR_NEXT_LEVEL, false },
   { END }
 };
 
@@ -169,7 +177,9 @@ void floor_test2_on_lit(const Sconce *sconce) {
 }
 
 const Sconce floor_test2_sconces[] = {
-  { SCONCE_1, MAP_A, 6, 4, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 6, 4, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_C, 4, 2, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_C, 6, 2, true, FLAME_BLUE },
   { SCONCE_2, MAP_A, 10, 2, false, FLAME_NONE, floor_test2_on_lit },
   { SCONCE_3, MAP_A, 12, 2, false, FLAME_NONE, floor_test2_on_lit },
   { END }
@@ -179,14 +189,38 @@ const Sconce floor_test2_sconces[] = {
 // NPCs
 //------------------------------------------------------------------------------
 
+void floor2_boss_victory(void) NONBANKED {
+  set_door_open(DOOR_2);
+  set_npc_invisible(NPC_1);
+}
+
+bool floor2_boss_encounter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  kobold_generator(monster, player.level, A_TIER);
+  monster->id = 'A';
+  set_on_victory(floor2_boss_victory);
+  start_battle();
+  return true;
+}
+
+bool floor2_on_npc_action(const NPC *npc) {
+  map_textbox("Growl\x60");
+  map_textbox_with_action("GROWL!", floor2_boss_encounter);
+  return true;
+}
+
 const NPC floor_test2_npcs[] = {
   /*
   {
-    NPC_1,    // Use NPC_* constants for ids.
-    MAP_A,    // Map for the npc
-    0, 0      // (x, y) tile for the npc
+    NPC_1,            // Use NPC_* constants for ids.
+    MAP_A,            // Map for the npc
+    0, 0              // (x, y) tile for the npc
+    MONSTER_KOBOLD,   // Monster graphic to use for the NPC
+    action_callback,  // Action callback to execute when the player interacts
   }
   */
+  { NPC_1, MAP_C, 5, 5, MONSTER_KOBOLD, floor2_on_npc_action },
   { END }
 };
 
@@ -194,7 +228,9 @@ const NPC floor_test2_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
-void floor_test2_on_init(void) {
+bool floor_test2_on_init(void) {
+  // map_textbox("floor_test2\non_init()");
+  return false;
 }
 
 void floor_test2_on_update(void) {

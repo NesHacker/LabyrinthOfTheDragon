@@ -296,6 +296,33 @@ inline void toggle_flags(FlagPage page, uint8_t mask) {
 }
 
 /**
+ * Position in sprite tile memory to place monster tiles.
+ */
+typedef enum MonsterTilePosition {
+  MONSTER_TILE_POSITION1,
+  MONSTER_TILE_POSITION2,
+  MONSTER_TILE_POSITION3,
+} MonsterTilePosition;
+
+/**
+ * Enumeration of all monster tilesets for use as NPCs in the world map.
+ */
+typedef enum MonsterTiles {
+  MONSTER_TILES_KOBOLD,
+  MONSTER_TILES_GOBLIN,
+  MONSTER_TILES_ZOMBIE,
+  MONSTER_TILES_BUGBEAR,
+  MONSTER_TILES_OWLBEAR,
+  MONSTER_TILES_GELATINOUS_CUBE,
+  MONSTER_TILES_DISPLACER_BEAST,
+  MONSTER_TILES_WILL_O_WISP,
+  MONSTER_TILES_DEATHKNIGHT,
+  MONSTER_TILES_MINDFLAYER,
+  MONSTER_TILES_BEHOLDER,
+  MONSTER_TILES_DRAGON,
+} MonsterTiles;
+
+/**
  * Bitfield for buttons that are currently being held down.
  *
  * @see J_START, J_SELECT, J_A, J_B, J_UP, J_DOWN, J_LEFT, J_RIGHT
@@ -525,6 +552,12 @@ typedef struct Core {
    * Loads the dungeon tileset.
    */
   const void (*load_dungeon_tiles)(void);
+  /**
+   * Loads monster tiles.
+   * @param tiles Which monster tiles to load.
+   * @param pos Position where the sprites should be loaded.
+   */
+  const void (*load_monster_tiles)(MonsterTiles tiles, MonsterTilePosition pos);
 } Core;
 
 /**

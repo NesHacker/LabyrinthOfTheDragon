@@ -233,6 +233,164 @@ void clear_hero(void) {
 }
 
 /**
+ * Clears NPC sprites.
+ */
+void clear_npcs(void) {
+  for (uint8_t k = NPC_SPRITE_1; k < NPC_SPRITE_2 + 4; k++)
+    move_sprite(k, 0, 0);
+}
+
+/**
+ * @return Monster tiles.
+ * @param type Type of monter for which to find the tiles.
+ */
+MonsterTiles monster_tiles_by_type(MonsterType type) {
+  switch (type) {
+  case MONSTER_GOBLIN:
+    return MONSTER_TILES_GOBLIN;
+  case MONSTER_ZOMBIE:
+    return MONSTER_TILES_ZOMBIE;
+  case MONSTER_BUGBEAR:
+    return MONSTER_TILES_BUGBEAR;
+  case MONSTER_OWLBEAR:
+    return MONSTER_TILES_OWLBEAR;
+  case MONSTER_GELATINOUS_CUBE:
+    return MONSTER_TILES_GELATINOUS_CUBE;
+  case MONSTER_DISPLACER_BEAST:
+    return MONSTER_TILES_DISPLACER_BEAST;
+  case MONSTER_WILL_O_WISP:
+    return MONSTER_TILES_WILL_O_WISP;
+  case MONSTER_DEATHKNIGHT:
+    return MONSTER_TILES_DEATHKNIGHT;
+  case MONSTER_MINDFLAYER:
+    return MONSTER_TILES_MINDFLAYER;
+  case MONSTER_BEHOLDER:
+    return MONSTER_TILES_BEHOLDER;
+  case MONSTER_DRAGON:
+    return MONSTER_TILES_DRAGON;
+  default:
+    return MONSTER_TILES_KOBOLD;
+  }
+}
+
+/**
+ * @return Palette colors for the monster.
+ * @param type Type of monster for which to find the palette colors.
+ */
+palette_color_t *monster_palette_by_type(MonsterType type) {
+  return kobold_palettes;
+}
+
+/**
+ * Initializes NPC sprites.
+ */
+void init_npcs(void) {
+  init_timer(map.npc_walk_timer, 16);
+
+  MonsterTilePosition pos = MONSTER_TILE_POSITION1;
+  const NPC *npc;
+  for (
+    npc = map.active_floor->npcs;
+    pos <= MONSTER_TILE_POSITION2 && npc->id != END;
+    npc++, pos++
+  ) {
+    MonsterTiles monster_tiles = monster_tiles_by_type(npc->monster_type);
+    palette_color_t *palette = monster_palette_by_type(npc->monster_type);
+
+    const uint8_t palette_num = pos + 6;
+    core.load_monster_tiles(monster_tiles, pos);
+    core.load_sprite_palette(kobold_palettes, palette_num, 1);
+
+    const uint8_t sprite_root = NPC_SPRITE_1 + 4 * pos;
+    const uint8_t tile_root = NPC_1_TILE_ROOT + 0x20 * pos;
+    set_sprite_tile(sprite_root, tile_root);
+    set_sprite_tile(sprite_root + 1, tile_root + 1);
+    set_sprite_tile(sprite_root + 2, tile_root + 0x10);
+    set_sprite_tile(sprite_root + 3, tile_root + 0x10 + 1);
+    set_sprite_prop(sprite_root + 0, NPC_BASE_PROP | palette_num);
+    set_sprite_prop(sprite_root + 1, NPC_BASE_PROP | palette_num);
+    set_sprite_prop(sprite_root + 2, NPC_BASE_PROP | palette_num);
+    set_sprite_prop(sprite_root + 3, NPC_BASE_PROP | palette_num);
+    move_sprite(sprite_root + 0, 0, 0);
+    move_sprite(sprite_root + 1, 0, 0);
+    move_sprite(sprite_root + 2, 0, 0);
+    move_sprite(sprite_root + 3, 0, 0);
+  }
+}
+
+/**
+ * Updates NPCs.
+ */
+void update_npcs(void) {
+  if (update_timer(map.npc_walk_timer)) {
+    reset_timer(map.npc_walk_timer);
+    map.npc_walk_frame ^= 2;
+  }
+
+  MonsterTilePosition pos = MONSTER_TILE_POSITION1;
+  const NPC *npc;
+  for (
+    npc = map.active_floor->npcs;
+    pos <= MONSTER_TILE_POSITION2 && npc->id != END;
+    npc++, pos++
+  ) {
+    const uint8_t sprite_root = NPC_SPRITE_1 + 4 * pos;
+
+    *(debug + 1) = *(debug + 1) + 1;
+
+    if (
+      is_npc_visible(npc->id) &&
+      npc->map_id == map.active_map->id &&
+      npc->col >= map.x - 1 &&
+      npc->col < map.x + MAP_HORIZ_LOADS &&
+      npc->row >= map.y - 1 &&
+      npc->row < map.y + MAP_VERT_LOADS
+    ) {
+      *debug = *debug + 1;
+
+      const uint8_t tile_root =
+        NPC_1_TILE_ROOT + 0x20 * pos + map.npc_walk_frame;
+
+      uint8_t x = ((npc->col - map.x + 1) << 4) - 8;
+      uint8_t y = ((npc->row - map.y + 1) << 4);
+
+      if (map.state == MAP_STATE_MOVING) {
+        switch (map.move_direction) {
+        case UP:
+          y += map.move_step - 15;
+          break;
+        case DOWN:
+          y -= map.move_step - 15;
+          break;
+        case LEFT:
+          x += map.move_step - 15;
+          break;
+        case RIGHT:
+          x -= map.move_step - 15;
+          break;
+        }
+      }
+
+      move_sprite(sprite_root + 0, x, y);
+      move_sprite(sprite_root + 1, x + 8, y);
+      move_sprite(sprite_root + 2, x, y + 8);
+      move_sprite(sprite_root + 3, x + 8, y + 8);
+
+      set_sprite_tile(sprite_root, tile_root);
+      set_sprite_tile(sprite_root + 1, tile_root + 1);
+      set_sprite_tile(sprite_root + 2, tile_root + 0x10);
+      set_sprite_tile(sprite_root + 3, tile_root + 0x10 + 1);
+
+    } else {
+      move_sprite(sprite_root + 0, 0, 0);
+      move_sprite(sprite_root + 1, 0, 0);
+      move_sprite(sprite_root + 2, 0, 0);
+      move_sprite(sprite_root + 3, 0, 0);
+    }
+  }
+}
+
+/**
  * Palettes used for flames.
  */
 const palette_color_t flame_palettes[] = {
@@ -360,9 +518,12 @@ void update_flames(void) {
     }
   }
 
+  uint8_t flame_id = 0;
+
   const Sconce *sconce;
   for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
-    const uint8_t sprite_id = get_sconce_flame_sprite(sconce->id);
+    const uint8_t sprite_id = FLAME_SPRITE_ID0 + flame_id; //get_sconce_flame_sprite(sconce->id);
+
     if (
       is_sconce_lit(sconce->id) &&
       sconce->map_id == map.active_map->id &&
@@ -371,7 +532,9 @@ void update_flames(void) {
       sconce->row >= map.y - 1 &&
       sconce->row < map.y + MAP_VERT_LOADS
     ) {
-      // Sconce is on the active screen.
+      flame_id++;
+
+      // Sconce is lit and on the active screen.
       uint8_t x = ((sconce->col - map.x + 1) << 4) - 4;
       uint8_t y = ((sconce->row - map.y + 1) << 4) + 2;
 
@@ -392,11 +555,19 @@ void update_flames(void) {
         }
       }
 
+      FlameColor color = sconce->id == SCONCE_STATIC ?
+        sconce->color :
+        sconce_colors[get_sconce_index(sconce->id)];
       move_sprite(sprite_id, x, y);
+      set_sprite_prop(sprite_id, FLAME_SPRITE_PROP | color);
     } else {
       // Sconce is offscreen
       move_sprite(sprite_id, 0, 0);
     }
+  }
+
+  for (; flame_id < MAX_FLAME_SPRITES; flame_id++) {
+    move_sprite(flame_id + FLAME_SPRITE_ID0, 0, 0);
   }
 }
 
@@ -604,8 +775,12 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED CRITICAL {
     case HASH_TYPE_LEVER:
       Lever *lever = (Lever *)entry->data;
       tile->lever = lever;
-      if (is_lever_on(lever->id))
-        map_tile += 2;
+      if (!is_lever_on(lever->id))
+        break;
+      if (map_tile == 0x8E)
+        map_tile = 0xA0;
+      else
+        map_tile = 0x8C;
       break;
     case HASH_TYPE_DOOR:
       Door *door = (Door *)entry->data;
@@ -624,6 +799,12 @@ void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED CRITICAL {
     case HASH_TYPE_SCONCE:
       Sconce *sconce = (Sconce *)entry->data;
       tile->sconce = sconce;
+      break;
+    case HASH_TYPE_NPC:
+      NPC *npc = (NPC *)entry->data;
+      tile->npc = npc;
+      if (is_npc_visible(npc->id))
+        map_attr = MAP_WALL;
       break;
     default:
     }
@@ -925,6 +1106,14 @@ void reset_map_objects(void) {
       light_sconce(sconce->id, sconce->color);
     }
   }
+
+  // NPCs
+  map.npc_visible = 0;
+  const NPC *npc;
+  for (npc = map.active_floor->npcs; npc->id != END; npc++) {
+    hash_object(HASH_TYPE_NPC, npc, npc->map_id, npc->col, npc->row);
+    set_npc_visible(npc->id);
+  }
 }
 
 /**
@@ -935,8 +1124,10 @@ void load_exit(void) {
   DISPLAY_OFF;
   const Exit *exit = map.active_exit;
 
-  if (exit->to_floor)
+  if (exit->to_floor) {
+    map.execute_on_init = true;
     set_active_floor(exit->to_floor);
+  }
 
   map.active_map = map.active_floor->maps + exit->to_map;
   map.hero_direction = exit->heading;
@@ -945,6 +1136,7 @@ void load_exit(void) {
   update_local_tiles();
   refresh_map_screen();
   clear_flames();
+  clear_npcs();
   map_fade_in(MAP_STATE_EXIT_LOADED);
   DISPLAY_ON;
 }
@@ -1026,6 +1218,40 @@ void check_map_move(void) {
     start_move(RIGHT);
 }
 
+void draw_next_buffer_tile(void) CRITICAL {
+  if (map.buffer_pos >= map.buffer_max)
+    return;
+
+  MapTile *map_tile = tile_buf + map.buffer_pos;
+  uint8_t *vram = VRAM_BACKGROUND_XY(map.vram_col, map.vram_row);
+
+  const uint8_t tile = map_tile->blank ? 0 : map_tile->tile;
+  const uint8_t attr = map_tile->blank ? 0 :  map_tile->attr;
+
+  // Set tilemap attributes
+  VBK_REG = VBK_ATTRIBUTES;
+  *vram = attr;
+  *(vram + 1) = attr;
+  *(vram + 0x20) = attr;
+  *(vram + 0x20 + 1) = attr;
+
+  // Set tile from data
+  VBK_REG = VBK_TILES;
+  *vram = tile;
+  *(vram + 0x20) = tile + 16;
+  *(vram + 1) = tile + 1;
+  *(vram + 0x20 + 1) = tile + 16 + 1;
+
+  map.buffer_pos++;
+
+  map.vram_col += map.vram_d_col;
+  if (map.vram_col >= 32)
+    map.vram_col -= 32;
+  map.vram_row += map.vram_d_row;
+  if (map.vram_row >= 32)
+    map.vram_row -= 32;
+}
+
 /**
  * Update handler for when the player is moving.
  */
@@ -1045,20 +1271,7 @@ void update_map_move(void) {
     break;
   }
 
-  if (map.buffer_pos < map.buffer_max) {
-    MapTile *tile = tile_buf + map.buffer_pos;
-    uint8_t *vram = VRAM_BACKGROUND_XY(map.vram_col, map.vram_row);
-    draw_map_tile(vram, tile);
-
-    map.buffer_pos++;
-
-    map.vram_col += map.vram_d_col;
-    if (map.vram_col >= 32)
-      map.vram_col -= 32;
-    map.vram_row += map.vram_d_row;
-    if (map.vram_row >= 32)
-      map.vram_row -= 32;
-  }
+  draw_next_buffer_tile();
 
   move_bkg(map.scroll_x, map.scroll_y);
 
@@ -1401,7 +1614,7 @@ void light_torch(FlameColor color) {
 void light_sconce(SconceId id, FlameColor color) {
   map.flags_sconce_lit |= id;
   sconce_colors[get_sconce_index(id)] = color;
-  set_sprite_prop(get_sconce_flame_sprite(id), 0b00001000 | color);
+  set_sprite_prop(get_sconce_flame_sprite(id), FLAME_SPRITE_PROP | color);
 
   // Call the "on_lit" handler
   const Sconce *sconce;
@@ -1424,11 +1637,14 @@ bool check_sconces(void) {
   if (!sconce)
     return false;
 
-  const uint8_t sconce_idx = get_sconce_index(sconce->id);
-
   if (is_sconce_lit(sconce->id)) {
     if (player.has_torch) {
-      light_torch(sconce_colors[sconce_idx]);
+      if (sconce->id == SCONCE_STATIC) {
+        light_torch(sconce->color);
+      } else {
+        const uint8_t sconce_idx = get_sconce_index(sconce->id);
+        light_torch(sconce_colors[sconce_idx]);
+      }
     } else {
       map_textbox(str_maps_sconce_lit_no_torch);
     }
@@ -1448,6 +1664,25 @@ bool check_sconces(void) {
 }
 
 /**
+ * Checks to see if the player is interacting with an NPC.
+ */
+bool check_npcs(void) {
+  const MapTile *tile = local_tiles + map.hero_direction;
+  const NPC *npc = tile->npc;
+
+  if (!npc)
+    return false;
+
+  if (!is_npc_visible(npc->id))
+    return false;
+
+  if (!npc->on_action)
+    return false;
+
+  return npc->on_action(npc);
+}
+
+/**
  * Checks to see if the player is attempting to perform an action by pressing
  * the A button.
  * @return `true` if an action was attempted.
@@ -1464,6 +1699,8 @@ bool check_action(void) {
       return true;
     if (check_sconces())
       return true;
+    if (check_npcs())
+      return true;
     return check_levers();
   }
   return false;
@@ -1475,7 +1712,6 @@ void set_active_floor(Floor *floor) BANKED {
   set_hero_position(floor->default_x, floor->default_y);
   core.load_bg_palette(map.active_floor->palettes, 0, 7);
   reset_map_objects();
-  on_init();
 }
 
 /**
@@ -1493,10 +1729,13 @@ void initialize_world_map(void) {
   textbox.init();
 
   init_hero();
+  init_npcs();
   init_flames();
   init_hud();
   update_local_tiles();
   refresh_map_screen();
+
+  game_state = GAME_STATE_WORLD_MAP;
 
   DISPLAY_ON;
 }
@@ -1504,6 +1743,7 @@ void initialize_world_map(void) {
 void init_world_map(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   initialize_world_map();
+  map.execute_on_init = true;
   map.state = MAP_STATE_WAITING;
 }
 
@@ -1513,7 +1753,6 @@ void start_battle(void) {
 
 void return_from_battle(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
-  game_state = GAME_STATE_WORLD_MAP;
   initialize_world_map();
   map_fade_in(MAP_STATE_WAITING);
 }
@@ -1523,6 +1762,8 @@ void update_world_map(void) NONBANKED {
   case MAP_STATE_INACTIVE:
     return;
   case MAP_STATE_WAITING:
+    if (on_init())
+      break;
     if (!check_action())
       check_map_move();
     break;
@@ -1531,6 +1772,12 @@ void update_world_map(void) NONBANKED {
     break;
   case MAP_STATE_TEXTBOX:
     textbox.update();
+    if (textbox.state == TEXT_BOX_CLOSING && map.after_textbox) {
+      bool (*callback)(void) = map.after_textbox;
+      map.after_textbox = NULL;
+      if (callback())
+        break;
+    }
     if (textbox.state == TEXT_BOX_CLOSED)
       map.state = MAP_STATE_WAITING;
     break;
@@ -1569,6 +1816,7 @@ void update_world_map(void) NONBANKED {
   update_hero();
   update_flames();
   update_hud();
+  update_npcs();
 }
 
 void draw_world_map(void) {

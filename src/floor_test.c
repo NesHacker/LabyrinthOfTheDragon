@@ -215,6 +215,10 @@ void floor_test_on_lever(const Lever *lever) {
     map_textbox("The chest clicks.");
     set_chest_unlocked(CHEST_6);
   }
+
+  if (lever->id == LEVER_4) {
+    extinguish_sconce(SCONCE_1);
+  }
 }
 
 const Lever floor_test_levers[] = {
@@ -231,6 +235,7 @@ const Lever floor_test_levers[] = {
   { LEVER_1, MAP_A, 12, 3, true, false, floor_test_on_lever },
   { LEVER_2, MAP_A, 22, 3, false, false, floor_test_on_lever },
   { LEVER_3, MAP_A, 20, 3, true, true, floor_test_on_lever },
+  { LEVER_4, MAP_A, 5, 2, false, false, floor_test_on_lever },
   { END },
 };
 
@@ -266,11 +271,11 @@ const Sconce floor_test_sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  { SCONCE_1, MAP_A, 7, 5, true, FLAME_RED },
-  { SCONCE_2, MAP_A, 11, 1, true, FLAME_GREEN },
-  { SCONCE_3, MAP_A, 16, 1, true, FLAME_BLUE },
-  { SCONCE_4, MAP_A, 23, 1, true, FLAME_RED },
-  { SCONCE_5, MAP_A, 6, 1, false, FLAME_NONE },
+  { SCONCE_STATIC, MAP_A, 7, 5, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 11, 1, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 16, 1, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 23, 1, true, FLAME_RED },
+  { SCONCE_1, MAP_A, 6, 1, false, FLAME_NONE },
   { END }
 };
 
@@ -293,7 +298,8 @@ const NPC floor_test_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
-void floor_test_on_init(void) {
+bool floor_test_on_init(void) {
+  return false;
 }
 
 void floor_test_on_update(void) {
