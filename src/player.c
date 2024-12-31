@@ -370,7 +370,12 @@ void test_class_ability1(void) {
 void test_class_ability2(void) {
   sprintf(battle_pre_message, "SUPERKILL!!!");
   skip_post_message = true;
-  damage_all(5000, 200, false, DAMAGE_PHYSICAL);
+  Monster *monster = encounter.monsters;
+  for (uint8_t k = 0; k < 3; k++, monster++) {
+    if (!monster->active)
+      continue;
+    monster->target_hp = 0;
+  }
 }
 
 void test_class_ability3(void) {
