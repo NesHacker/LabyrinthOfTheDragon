@@ -38,7 +38,8 @@ static inline void initialize(void) {
   // initialize_game();
   // test_combat_general(MONSTER_LAYOUT_1, DUMMY_NORMAL);
   // test_flee();
-  test_big_map();
+  // test_big_map();
+  test_level();
 }
 
 /**

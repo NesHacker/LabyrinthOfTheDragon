@@ -39,3 +39,15 @@ void test_big_map(void) {
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
+
+void test_level(void) {
+  init_test_player(CLASS_TEST, 20);
+  grant_ability(ABILITY_ALL);
+
+  player.has_torch = true;
+  grant_ability(ABILITY_ALL);
+
+  set_active_floor(&floor_two);
+  init_world_map();
+  game_state = GAME_STATE_WORLD_MAP;
+}

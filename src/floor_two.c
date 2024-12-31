@@ -90,7 +90,7 @@ const Chest floor_two_chests[] = {
   {
     CHEST_2,
     MAP_A, 24, 10, false, false,
-    str_chest_item_1pot,
+    str_chest_item_1pots,
     chest_item_1pot,
   },
   {
@@ -155,7 +155,8 @@ const Sign floor_two_signs[] = {
   }
   */
   { MAP_A,  5, 8, UP, "Lite Fires,\n to open this\n Doors!" },
-  { MAP_A, 26, 3, UP, "Something used\n have been here.\n" },
+  { MAP_A, 26, 3, UP, "Something used\n have been here." }, // Yep...
+  { MAP_A, 6, 12, DOWN, "There is no\n going back." },
 
   { END },
 };
@@ -163,13 +164,6 @@ const Sign floor_two_signs[] = {
 //------------------------------------------------------------------------------
 // Levers
 //------------------------------------------------------------------------------
-
-const void floor_two_on_lever(const Lever *lever) {
-  if (lever->id == LEVER_1) {
-    map_textbox("You hear a\nka-thunk\x60");
-    open_door_by_id(DOOR_3);
-  }
-}
 
 const Lever floor_two_levers[] = {
   /*
@@ -182,8 +176,6 @@ const Lever floor_two_levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
-  { LEVER_1, MAP_A, 3, 3, true, false, floor_two_on_lever },
-
   { END },
 };
 
@@ -263,17 +255,41 @@ const Sconce floor_two_sconces[] = {
 };
 
 //------------------------------------------------------------------------------
-// NPCs (NOT YET IMPLS)
+// NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-const NPC floor_two_npcs[] = {
+static void boss_victory(void) NONBANKED {
+  set_door_open(DOOR_3);
+  set_npc_invisible(NPC_1);
+}
+
+static bool boss_encounter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  kobold_generator(monster, player.level, A_TIER);
+  monster->id = 'A';
+  set_on_victory(boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_npc_action(const NPC *npc) {
+  map_textbox_with_action("GROWL!", boss_encounter);
+  return true;
+}
+
+static const NPC npcs[] = {
   /*
   {
-    NPC_1,    // Use NPC_* constants for ids.
-    MAP_A,    // Map for the npc
-    0, 0      // (x, y) tile for the npc
+    NPC_1,            // Use NPC_* constants for ids.
+    MAP_A,            // Map for the npc
+    0, 0              // (x, y) tile for the npc
+    MONSTER_KOBOLD,   // Monster graphic to use for the NPC
+    action_callback,  // Action callback to execute when the player interacts
   }
   */
+  { NPC_1, MAP_A, 3, 3, MONSTER_KOBOLD, on_npc_action },
+
   { END }
 };
 
@@ -322,7 +338,7 @@ const Floor floor_two = {
   floor_two_levers,
   floor_two_doors,
   floor_two_sconces,
-  floor_two_npcs,
+  npcs,
   floor_two_on_init,
   floor_two_on_update,
   floor_two_on_draw,

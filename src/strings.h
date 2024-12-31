@@ -431,6 +431,11 @@ extern const char str_chest_item_2pot_1eth[];
 extern const char str_chest_item_1pot[];
 
 /**
+ * "You get a potions!"
+ */
+extern const char str_chest_item_1pots[];
+
+/**
  * "You get a haste potion!"
  */
 extern const char str_chest_item_haste_pot[];

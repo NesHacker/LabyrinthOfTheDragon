@@ -100,7 +100,7 @@ addNamespace('battle', 0, {
 addNamespace('maps', 2, {
   'chest_locked': "The chest is locked.",
   'chest_open': "You opened the chest!",
-  "chest_empty": "The chest was empty.",
+  'chest_empty': "The chest was empty.",
   'chest_key_locked': "You need a magic key to unlock this chest...",
   'chest_unlock_key': "You unlock the chest with a magic key!",
   'get_magic_key': "You get a magic key!",
@@ -119,6 +119,7 @@ addNamespace('maps', 2, {
 addNamespace('chest_item', 2, {
   '2pot_1eth': 'You get 2 potions and an ether!',
   '1pot': 'You get a potion!',
+  '1pots': 'You get a potions!',
   'haste_pot': 'You get a haste potion!',
   'regen_pot': 'You get a regen potion!',
 });

@@ -100,7 +100,7 @@ const Chest floor_one_chests[] = {
   {
     CHEST_3,
     MAP_A, 22, 9, false, false,
-    str_chest_item_1pot,
+    str_chest_item_1pots,
     chest_item_1pot,
   },
 
@@ -160,13 +160,6 @@ const Sign floor_one_signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
-void floor_one_on_lever(const Lever *lever) {
-  if (lever->id == LEVER_1) {
-    map_textbox("You hear a\nka-thunk\x60");
-    open_door_by_id(DOOR_3);
-  }
-}
-
 const Lever floor_one_levers[] = {
   /*
   {
@@ -178,8 +171,6 @@ const Lever floor_one_levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
-  { LEVER_1, MAP_A, 6, 7, true, false, floor_one_on_lever },
-
   { END },
 };
 
@@ -239,17 +230,41 @@ const Sconce floor_one_sconces[] = {
 };
 
 //------------------------------------------------------------------------------
-// NPCs (NOT YET IMPLS)
+// NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-const NPC floor_one_npcs[] = {
+static void boss_victory(void) NONBANKED {
+  set_door_open(DOOR_3);
+  set_npc_invisible(NPC_1);
+}
+
+static bool boss_encounter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  kobold_generator(monster, player.level, A_TIER);
+  monster->id = 'A';
+  set_on_victory(boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_npc_action(const NPC *npc) {
+  map_textbox_with_action("GROWL!", boss_encounter);
+  return true;
+}
+
+static const NPC npcs[] = {
   /*
   {
-    NPC_1,    // Use NPC_* constants for ids.
-    MAP_A,    // Map for the npc
-    0, 0      // (x, y) tile for the npc
+    NPC_1,            // Use NPC_* constants for ids.
+    MAP_A,            // Map for the npc
+    0, 0              // (x, y) tile for the npc
+    MONSTER_KOBOLD,   // Monster graphic to use for the NPC
+    action_callback,  // Action callback to execute when the player interacts
   }
   */
+  { NPC_1, MAP_A, 6, 6, MONSTER_KOBOLD, on_npc_action },
+
   { END }
 };
 
@@ -333,7 +348,7 @@ const Floor floor_one= {
   floor_one_levers,
   floor_one_doors,
   floor_one_sconces,
-  floor_one_npcs,
+  npcs,
   floor_one_on_init,
   floor_one_on_update,
   floor_one_on_draw,

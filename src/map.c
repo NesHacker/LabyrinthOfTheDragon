@@ -765,6 +765,7 @@ static void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
   tile->lever = NULL;
   tile->sign = NULL;
   tile->sconce = NULL;
+  tile->npc = NULL;
 
   TileHashEntry *entry = get_hash_entry(x, y);
   if (entry) {
