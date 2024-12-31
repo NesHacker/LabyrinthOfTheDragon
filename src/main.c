@@ -15,24 +15,12 @@ GameState game_state = GAME_STATE_TITLE;
 uint8_t joypad_down;
 uint8_t joypad_pressed;
 uint8_t joypad_released;
-Timer sound_update_timer;
-
-/**
- * Timer interrupt handler. Primarily responsible for performing sound engine
- * updates at a fixed rate.
- */
-void timer_isr(void) {
-  if (update_timer(sound_update_timer)) {
-    update_sound();
-    reset_timer(sound_update_timer);
-  }
-}
 
 /**
  * Initializes the normal game. Abstracted out of `initialize` to make it easy
  * to switch between tests and the actual game while handling common setup.
  */
-void initialize_game(void) {
+static void initialize_game(void) {
   init_player(CLASS_DRUID);
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
@@ -41,7 +29,7 @@ void initialize_game(void) {
 /**
  * Initializes the core game engine.
  */
-inline void initialize(void) {
+static inline void initialize(void) {
   ENABLE_RAM;
 
   initarand(RANDOM_SEED);
@@ -56,7 +44,7 @@ inline void initialize(void) {
 /**
  * Executes core gameloop logic.
  */
-inline void game_loop(void) {
+static inline void game_loop(void) {
   switch (game_state) {
   case GAME_STATE_TITLE:
     update_main_menu();
@@ -75,7 +63,7 @@ inline void game_loop(void) {
 /**
  * Executes rendering logic that must occur during a VBLANK.
  */
-inline void render(void) {
+static inline void render(void) {
   switch (game_state) {
   case GAME_STATE_TITLE:
     draw_main_menu();
@@ -94,22 +82,11 @@ inline void render(void) {
 /**
  * Reads and updates the joypad state.
  */
-inline void update_joypad(void) {
+static inline void update_joypad(void) {
   uint8_t last = joypad_down;
   joypad_down = joypad();
   joypad_pressed = ~last & joypad_down;
   joypad_released = last & ~joypad_down;
-}
-
-/**
- * Initializesd the sound engine and sets the timer interrupt.
- */
-void init_sound_engine(void) {
-  sound_init();
-  init_timer(sound_update_timer, 4);
-  add_TIM(timer_isr);
-  TAC_REG = 0b00000110;
-  set_interrupts(TIM_IFLAG | VBL_IFLAG);
 }
 
 /**
@@ -124,7 +101,8 @@ void main(void) {
   disable_interrupts();
   DISPLAY_OFF;
 
-  init_sound_engine();
+  sound_init();
+
   LCDC_REG = LCDCF_OFF
     | LCDCF_OBJON
     | LCDCF_BGON

@@ -167,6 +167,37 @@ typedef struct StatusEffectInstance {
 } StatusEffectInstance;
 
 /**
+ * Odds for percentages on a roll of a d256.
+ */
+typedef enum Odds {
+  ODDS_1P = 3,
+  ODDS_2P = 5,
+  ODDS_3P = 8,
+  ODDS_4P = 10,
+  ODDS_5P = 13,
+  ODDS_10P = 26,
+  ODDS_15P = 38,
+  ODDS_20P = 51,
+  ODDS_25P = 64,
+  ODDS_30P = 77,
+  ODDS_33P = 84,
+  ODDS_35P = 90,
+  ODDS_40P = 102,
+  ODDS_45P = 115,
+  ODDS_50P = 128,
+  ODDS_55P = 141,
+  ODDS_60P = 154,
+  ODDS_66P = 169,
+  ODDS_70P = 179,
+  ODDS_75P = 192,
+  ODDS_80P = 205,
+  ODDS_85P = 218,
+  ODDS_90P = 230,
+  ODDS_95P = 243,
+  ODDS_100P = 255,
+} Odds;
+
+/**
  * Used to determine hit chance based on the difference between the attacker's
  * ATK and the defender's DEF. Yields a maximum chance to hit of 95% and a
  * minimum of 20%.
@@ -200,7 +231,6 @@ extern const uint8_t damage_roll_modifier[16];
  * calculated using the monster's level and tier.
  */
 extern const uint8_t xp_mod[16];
-
 
 /**
  * @return Experience points required to achieve the given level.
@@ -463,6 +493,15 @@ inline StatusEffectInstance *get_effect(
   StatusEffect effect
 ) {
   return effects_list + effect;
+}
+
+/**
+ * Rolls a 256 and determines success based on the given odds.
+ * @param o Odds of the roll succeeding.
+ * @return `true` if the roll succeeds.
+ */
+inline bool roll_odds(Odds o) {
+  return d256() <= o;
 }
 
 /**

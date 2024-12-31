@@ -66,7 +66,7 @@ void fade_in(void) {
   fade_type = FADE_IN;
 }
 
-inline void update_fade_out(uint8_t k) {
+static void update_fade_out(uint8_t k) {
   palette_color_t target = RGB_WHITE;
   palette_color_t color = fade_palettes[k];
   if (color == target) return;
@@ -97,7 +97,7 @@ inline void update_fade_out(uint8_t k) {
   fade_palettes[k] = RGB(r, g, b);
 }
 
-inline void update_fade_in(uint8_t k) {
+static void update_fade_in(uint8_t k) {
   palette_color_t target = bg_palettes[k];
   palette_color_t color = fade_palettes[k];
   if (color == target) return;

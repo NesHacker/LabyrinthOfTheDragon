@@ -25,7 +25,7 @@ const uint8_t damage_roll_modifier[16] = {
   16, 17, 18, 19, 20, 22, 24, 26,
 };
 
-const uint16_t xp_mod[16] = {
+const uint8_t xp_mod[16] = {
   0, 2, 5, 9, 12, 14, 15, 16,
   16, 17, 18, 20, 23, 27, 30, 32,
 };

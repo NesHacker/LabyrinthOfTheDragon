@@ -26,10 +26,6 @@ typedef struct TextBox {
    */
   const void (*open)(const char *text);
   /**
-   * Closes the text box.
-   */
-  const void (*close)(void);
-  /**
    * Called to render updates for the textbox.
    */
   const void (*update)(void);

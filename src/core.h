@@ -362,6 +362,14 @@ extern uint8_t joypad_released;
 #define was_released(b) (joypad_released & (b))
 
 /**
+ * Hides all sprites.
+ */
+inline void hide_sprites(void) {
+  for (uint8_t k = 0; k < 40; k++)
+    move_sprite(k, 0, 0);
+}
+
+/**
  * General use blank palette (all RGB_WHITE).
  */
 extern const palette_color_t blank_palette[4];
@@ -509,11 +517,6 @@ typedef struct Core {
    */
   const void (*load_sprite_palette)(
     const palette_color_t *data, uint8_t index, uint8_t n);
-
-  /**
-   * Clears the 32x32 tile background and fills tiles and attribute bytes with 0s.
-   */
-  const void (*clear_bg)(void);
   /**
    * Fill the background with the given tile and attribute.
    * @param tile Tile to fill.
@@ -534,10 +537,6 @@ typedef struct Core {
    * @param d Denominator for the fraction.
    */
   const void (*print_fraction)(uint8_t *vram, uint16_t n, uint16_t d);
-  /**
-   * Hides all sprites by moving them to the origin.
-   */
-  const void (*hide_sprites)(void);
   /**
    * Fills a rect with the given tiles and attributes.
    * @param vram Vram location to begin the fill.

@@ -24,6 +24,7 @@
     "textbox.h": "c",
     "text_writer.h": "c",
     "encounter.h": "c",
-    "tables.h": "c"
+    "tables.h": "c",
+    "stats.h": "c"
   }
 }

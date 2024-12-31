@@ -14,7 +14,7 @@
  * @param flag Flag for the status effect.
  * @param text Text to display upon successful application of the item buff.
  */
-void set_item_buff(StatusEffect s, uint8_t flag, const char *text) {
+static void set_item_buff(StatusEffect s, uint8_t flag, const char *text) {
   apply_status_effect(
     encounter.player_status_effects,
     s,
@@ -34,7 +34,7 @@ void set_item_buff(StatusEffect s, uint8_t flag, const char *text) {
  * @param factor Healing factor of the item.
  * @param format Format string to use for the results message.
  */
-inline uint16_t item_heal(
+static inline uint16_t item_heal(
   uint16_t current,
   uint16_t max,
   uint16_t factor,
@@ -54,7 +54,7 @@ inline uint16_t item_heal(
  * Potion battle action. Do not call directly.
  * @see use_item
  */
-inline void use_potion(void) {
+static inline void use_potion(void) {
   const char *format = str_items_use_potion;
   player.hp = item_heal(player.hp, player.max_hp, POTION_HEAL_FACTOR, format);
 }
@@ -63,14 +63,14 @@ inline void use_potion(void) {
  * Ether battle action. Do not call directly.
  * @see use_item
  */
-inline void use_ether(void) {
+static inline void use_ether(void) {
   const char *format = is_magic_class() ?
     str_items_use_ether_mp :
     str_items_use_ether_sp;
   player.sp = item_heal(player.sp, player.max_sp, ETHER_HEAL_FACTOR, format);
 }
 
-inline void use_remedy(void) {
+static inline void use_remedy(void) {
   StatusEffectInstance *effect = encounter.player_status_effects;
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
     if (!effect->active)
@@ -82,30 +82,30 @@ inline void use_remedy(void) {
   skip_post_message = true;
 }
 
-inline void use_atkup_potion(void) {
+static inline void use_atkup_potion(void) {
   set_item_buff(BUFF_ATK_UP, FLAG_BUFF_ATK_UP, str_items_use_atkup);
 }
 
-inline void use_defup_potion(void) {
+static inline void use_defup_potion(void) {
   set_item_buff(BUFF_DEF_UP, FLAG_BUFF_DEF_UP, str_items_use_defup);
 }
 
-inline void use_elixer(void) {
+static inline void use_elixer(void) {
   player.hp = player.max_hp;
   player.sp = player.max_sp;
   sprintf(battle_pre_message, str_items_use_elixer);
   skip_post_message = true;
 }
 
-inline void use_regen_potion(void) {
+static inline void use_regen_potion(void) {
   set_item_buff(BUFF_REGEN, FLAG_BUFF_REGEN, str_items_use_regen);
 }
 
-inline void use_haste_potion(void) {
+static inline void use_haste_potion(void) {
   set_item_buff(BUFF_HASTE, FLAG_BUFF_HASTE, str_items_use_haste);
 }
 
-inline bool can_add_item_buff(StatusEffect effect) {
+static inline bool can_add_item_buff(StatusEffect effect) {
   return has_effect_slot(
     encounter.player_status_effects,
     effect,

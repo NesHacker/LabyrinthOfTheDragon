@@ -83,7 +83,7 @@ addNamespace('battle', 0, {
   'player_hit': 'You deal %damage damage!',
   'player_hit_immune': "They're completely immune!",
   'player_hit_resist': "They resist your attack, only %damage damage...",
-  'player_hit_vuln': "It's SUPER EFFECTIVE dealing %damage damage!",
+  'player_hit_vuln': "SUPER EFFECTIVE %damage damage!",
   'player_hit_crit': 'CRITICAL HIT! You deal %damage damage!',
   'player_heal': 'You heal %damage HP.',
   'player_heal_crit': 'CRITICAL! You heal a whopping %damage HP!',
@@ -96,8 +96,6 @@ addNamespace('battle', 0, {
   'victory_no_xp': 'Victory! You gain no XP.\fMust have been too weak...',
   'level_up': 'LEVEL UP! You reach %level!',
 })
-
-
 
 addNamespace('maps', 2, {
   'chest_locked': "The chest is locked.",
@@ -151,6 +149,7 @@ addNamespace('monster', 6, {
   'hit_resist': 'You resist, only %damage damage',
   'hit_vuln': "It's SUPER BAD! %damage damage!",
   'hit_crit': 'CRITICAL HIT! You take %damage damage!',
+  'hit_barkskin': 'Your barkskin protects you! %damage damage.',
   'does_nothing': '%monster %c does nothing.',
   'dummy_pre': 'Dummy %c stands still.',
   'dummy_post_heal': '"I will never die..."',
@@ -158,7 +157,15 @@ addNamespace('monster', 6, {
   'kobold_fire': 'Kobold %c spits a glob of fire...',
   'kobold_dazed': 'Kobold %c looks dazed...',
   'kobold_does_nothing': 'And does nothing!',
-  'kobold_miss': 'But instead it falls back and hiccups!',
+  'kobold_miss': 'But instead it falls over and hiccups!',
+  'kobold_get_up': 'Kobold %c gets up.',
+  'goblin_nose_pick': 'Goblin %c picks its nose.',
+  'goblin_attack': "Goblin %c swings a shortsword!",
+  'goblin_acid_arrow': "Goblin %c shoots an acid arrow!",
+  'zombie_brains': 'Hrrnng... brains.',
+  'zombie_bite_miss': "Zombie %c's bite barely misses!",
+  'zombie_bite_hit': "Zombie %c bites and poisons you!",
+  'zombie_slam': "Zombie %c swipes at you!",
 })
 
 // Export the namespaces

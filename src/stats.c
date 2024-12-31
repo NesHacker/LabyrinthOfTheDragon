@@ -73,21 +73,25 @@ bool check_attack(uint8_t d256_roll, uint8_t atk, uint8_t def) BANKED {
 }
 
 uint16_t calc_damage(uint8_t d16_roll, uint16_t base_dmg) BANKED {
-  return (damage_roll_modifier[d16_roll & 0x0F] * base_dmg) >> 4;
+  uint16_t d = base_dmg;
+  d *= (uint16_t)damage_roll_modifier[d16_roll & 0x0F];
+  d /= 16;
+  return d == 0 ? 1 : d;
 }
 
 uint16_t calc_monster_exp(uint8_t mlevel, PowerTier tier) BANKED {
-  // If the monster is 8 levels or greater: 2x rewards
-  if (mlevel >= player.level + 8)
-    return get_monster_exp(mlevel, tier) << 1;
 
-  // No experience from monsters seven levels below
-  if (player.level >= mlevel + 7)
+  int8_t diff = (int8_t)mlevel - (int8_t)player.level;
+
+  if (diff <= -8)
     return 0;
 
-  uint16_t k = xp_mod[mlevel - player.level + 8];
+  if (diff >= 7)
+    return get_monster_exp(mlevel, tier) << 1;
+
+  uint16_t k = (uint16_t)xp_mod[diff + 8];
   k *= get_monster_exp(mlevel, tier);
-  k >>= 4;
+  k /= 16;
 
   return k;
 }

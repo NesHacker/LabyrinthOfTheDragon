@@ -1,5 +1,3 @@
-#pragma bank 7
-
 #include "core.h"
 #include "sound.h"
 
@@ -18,11 +16,11 @@ typedef struct SoundRegister {
   Timer timer;
 } SoundRegister;
 
-void register_disable(SoundRegister *r) {
+inline void register_disable(SoundRegister *r) {
   r->enabled = false;
 }
 
-void register_next(SoundRegister *r) {
+inline void register_next(SoundRegister *r) {
   if (!r->enabled)
     return;
 
@@ -38,15 +36,20 @@ void register_next(SoundRegister *r) {
 }
 
 inline void register_update(SoundRegister *r) {
-  if (r->enabled && update_timer(r->timer))
-    register_next(r);
+  if (!r->enabled)
+    return;
+
+  if (!update_timer(r->timer))
+    return;
+
+  register_next(r);
 }
 
-SoundRegister nr13 = { (void *)0xFF13 };
-SoundRegister nr14 = { (void *)0xFF14 };
+volatile SoundRegister nr13 = { (void *)0xFF13 };
+volatile SoundRegister nr14 = { (void *)0xFF14 };
 
-SoundRegister nr42 = { (void *)0xFF21 };
-SoundRegister nr44 = { (void *)0xFF23 };
+volatile SoundRegister nr42 = { (void *)0xFF21 };
+volatile SoundRegister nr44 = { (void *)0xFF23 };
 
 
 void register_init(SoundRegister *r, uint8_t *data) {
@@ -55,7 +58,19 @@ void register_init(SoundRegister *r, uint8_t *data) {
   register_next(r);
 }
 
-void sound_init(void) BANKED {
+Timer sound_update_timer;
+
+void update_sound_isr(void) {
+  if (!update_timer(sound_update_timer))
+    return;
+  reset_timer(sound_update_timer);
+  register_update(&nr13);
+  register_update(&nr14);
+  register_update(&nr42);
+  register_update(&nr44);
+}
+
+void sound_init(void) {
   // Note: SO1 (left) and SO2 (right)
   // Enable sound
   NR52_REG = 0b10000000;
@@ -63,14 +78,13 @@ void sound_init(void) BANKED {
   NR50_REG = 0b01110111;
   // Send channels 1, 2 & 4 to both SO1 & SO2
   NR51_REG = 0b11111111;
+
+  init_timer(sound_update_timer, 4);
+  add_TIM(update_sound_isr);
+  TAC_REG = 0b00000110;
+  set_interrupts(TIM_IFLAG | VBL_IFLAG);
 }
 
-void update_sound(void) BANKED {
-  register_update(&nr13);
-  register_update(&nr14);
-  register_update(&nr42);
-  register_update(&nr44);
-}
 
 #define SFX_STAIRS_DURATION 28
 
@@ -90,21 +104,21 @@ const uint8_t sfx_stairs_nr44[] = {
   SOUND_END
 };
 
-void sfx_stairs(void) BANKED {
+void sfx_stairs(void) {
   NR41_REG = 0x00;
   NR43_REG = (2 << 4)| 3;
   register_init(&nr42, sfx_stairs_nr42);
   register_init(&nr44, sfx_stairs_nr44);
 }
 
-void sfx_error(void) BANKED {
+void sfx_error(void) {
   NR11_REG = 0;
   NR12_REG = 0xA1;
   NR13_REG = 0x2C;
   NR14_REG = 0xC0;
 }
 
-void sfx_wall_hit(void) BANKED {
+void sfx_wall_hit(void) {
   NR10_REG = 0b00111011;
   NR11_REG = 0b10000000;
   NR12_REG = 0x71;
@@ -130,7 +144,7 @@ const uint8_t sfx_menu_move_nr14[] = {
   SOUND_END
 };
 
-void sfx_menu_move(void) BANKED {
+void sfx_menu_move(void) {
   NR10_REG = 0;
   NR11_REG = 0b01000000 | 50;
   NR12_REG = envelope(8, 0, 1);
@@ -152,7 +166,7 @@ const uint8_t sfx_next_round_nr14[] = {
   SOUND_END
 };
 
-void sfx_next_round(void) BANKED {
+void sfx_next_round(void) {
   NR10_REG = 0;
   NR11_REG = 0b01000000 | 0;
   NR12_REG = envelope(7, 0, 6);
@@ -160,7 +174,7 @@ void sfx_next_round(void) BANKED {
   register_init(&nr14, sfx_next_round_nr14);
 }
 
-void sfx_test(void) BANKED {
+void sfx_test(void) {
 
 
   // "Hard Fall"

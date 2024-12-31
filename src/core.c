@@ -94,7 +94,7 @@ const Tileset monsters_tileset_page3 = {
   96, 15, tile_monsters + BYTES_PER_TILE * 96 * 2
 };
 
-void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
+static void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
   const uint8_t *src = s->data;
   uint8_t size = s->size;
   uint8_t _prev_bank = _current_bank;
@@ -108,7 +108,7 @@ void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
   SWITCH_ROM(_prev_bank);
 }
 
-void core_load_tiles(
+static void core_load_tiles(
   const Tileset *s,
   uint8_t *dst,
   uint8_t o,
@@ -126,17 +126,17 @@ void core_load_tiles(
   SWITCH_ROM(_prev_bank);
 }
 
-void load_battle_tiles(void) NONBANKED {
+static void load_battle_tiles(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
   load_tileset(&tileset_battle, VRAM_BATTLE_TILES);
 }
 
-void load_font(void) NONBANKED {
+static void load_font(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
   load_tileset(&tileset_font, VRAM_FONT_TILES);
 }
 
-void load_dungeon_tiles(void) NONBANKED {
+static void load_dungeon_tiles(void) NONBANKED {
   VBK_REG = VBK_BANK_0;
   core.load_tileset(&dungeon_tileset_page1, VRAM_BG_TILES);
   VBK_REG = VBK_BANK_0;
@@ -145,7 +145,7 @@ void load_dungeon_tiles(void) NONBANKED {
   core.load_tileset(&dungeon_tileset_page3, VRAM_BG_TILES);
 }
 
-void load_hero_tiles(uint8_t player_class) NONBANKED {
+static void load_hero_tiles(uint8_t player_class) NONBANKED {
   const uint8_t row_width = 12;
   const uint8_t offset = player_class * row_width * 2;
   const uint8_t offset2 = offset + row_width;
@@ -157,7 +157,7 @@ void load_hero_tiles(uint8_t player_class) NONBANKED {
   core_load_tiles(&hero_tileset, vram2, offset2, row_width);
 }
 
-void load_all_heros(void) NONBANKED {
+static void load_all_heros(void) NONBANKED {
   const uint8_t row = 4 * 3;
   VBK_REG = VBK_BANK_0;
   for (uint8_t k = 0; k < 4; k++) {
@@ -168,12 +168,12 @@ void load_all_heros(void) NONBANKED {
   }
 }
 
-void load_object_tiles(void) NONBANKED {
+static void load_object_tiles(void) NONBANKED {
   VBK_REG = VBK_BANK_1;
   load_tileset(&objects_tileset, VRAM_SPRITE_TILES);
 }
 
-void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
+static void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
   uint8_t _prev_bank = _current_bank;
   SWITCH_ROM(m.bank);
 
@@ -190,25 +190,15 @@ void draw_tilemap(Tilemap m, uint8_t *dst) NONBANKED {
   SWITCH_ROM(_prev_bank);
 }
 
-void load_bg_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
+static void load_bg_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
   update_bg_palettes(index, n, data);
 }
 
-void load_sprite_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
+static void load_sprite_palette(const palette_color_t *data, uint8_t index, uint8_t n) {
   update_sprite_palettes(index, n, data);
 }
 
-void clear_bg(void) NONBANKED {
-  uint8_t *vram = VRAM_BACKGROUND;
-  for (uint16_t k = 0; k < 32 * 32; k++) {
-    VBK_REG = VBK_TILES;
-    *vram = 0;
-    VBK_REG = VBK_ATTRIBUTES;
-    *vram++ = 0;
-  }
-}
-
-void fill_bg(uint8_t tile_id, uint8_t attr) NONBANKED {
+static void fill_bg(uint8_t tile_id, uint8_t attr) NONBANKED {
   uint8_t *vram = VRAM_BACKGROUND;
   for (uint16_t k = 0; k < 32 * 32; k++) {
     VBK_REG = VBK_TILES;
@@ -218,7 +208,7 @@ void fill_bg(uint8_t tile_id, uint8_t attr) NONBANKED {
   }
 }
 
-void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
+static void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
   VBK_REG = VBK_TILES;
   while (*text != 0 && max) {
     set_vram_byte(vram++, (*text++) + FONT_OFFSET);
@@ -230,18 +220,13 @@ void draw_text(uint8_t *vram, const char *text, uint8_t max) NONBANKED {
   }
 }
 
-void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
+static void print_fraction(uint8_t *vram, uint16_t n, uint16_t d) {
   char buf[10];
   sprintf(buf, "%u/%u", n, d);
   draw_text(vram, buf, 7);
 }
 
-void hide_sprites(void) {
-  for (uint8_t k = 0; k < 40; k++)
-    move_sprite(k, 0, 0);
-}
-
-void core_fill(
+static void core_fill(
   uint8_t *vram,
   uint8_t w,
   uint8_t h,
@@ -258,7 +243,7 @@ void core_fill(
   }
 }
 
-void load_monster_tiles(MonsterTiles tiles, MonsterTilePosition pos) {
+static void load_monster_tiles(MonsterTiles tiles, MonsterTilePosition pos) {
   const Tileset *tileset;
 
   switch (tiles) {
@@ -278,18 +263,11 @@ void load_monster_tiles(MonsterTiles tiles, MonsterTilePosition pos) {
     tileset = &monsters_tileset_page3;
   }
 
-  // const uint8_t row_width = 12;
-  // const uint8_t offset = player_class * row_width * 2;
-  // const uint8_t offset2 = offset + row_width;
-  // uint8_t *const vram = VRAM_SPRITE_TILES;
-  // uint8_t *const vram2 = vram + 16 * BYTES_PER_TILE;
-
   const uint8_t row_width = 12;
-
   const uint8_t offset = tiles * row_width * 2;
   const uint8_t offset2 = offset + row_width;
 
-  uint8_t *vram = 0x8000 + BYTES_PER_TILE * (0x20 + 0x20 * pos);
+  uint8_t *vram = (void *)(0x8000 + BYTES_PER_TILE * (0x20 + 0x20 * pos));
   uint8_t *vram2 = vram + 16 * BYTES_PER_TILE;
 
   VBK_REG = VBK_BANK_0;
@@ -308,11 +286,9 @@ const Core core = {
   draw_tilemap,
   load_bg_palette,
   load_sprite_palette,
-  clear_bg,
   fill_bg,
   draw_text,
   print_fraction,
-  hide_sprites,
   core_fill,
   load_dungeon_tiles,
   load_monster_tiles,

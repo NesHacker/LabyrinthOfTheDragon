@@ -5,15 +5,15 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
-void sfx_test(void) BANKED;
+void sfx_test(void);
 
-void sound_init(void) BANKED;
-void update_sound(void) BANKED;
+void sound_init(void);
+void update_sound(void);
 
-void sfx_stairs(void) BANKED;
-void sfx_error(void) BANKED;
-void sfx_wall_hit(void) BANKED;
-void sfx_menu_move(void) BANKED;
-void sfx_next_round(void) BANKED;
+void sfx_stairs(void);
+void sfx_error(void);
+void sfx_wall_hit(void);
+void sfx_menu_move(void);
+void sfx_next_round(void);
 
 #endif

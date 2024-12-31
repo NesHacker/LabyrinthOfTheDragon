@@ -1,5 +1,5 @@
 /**
- * [Core] Bank 4 - Cinema System
+ * [Core] Bank 4
  */
 #pragma bank 4
 

@@ -281,7 +281,7 @@ extern const char str_battle_player_hit_immune[];
 extern const char str_battle_player_hit_resist[];
 
 /**
- * "It's SUPER EFFECTIVE dealing %damage damage!"
+ * "SUPER EFFECTIVE %damage damage!"
  */
 extern const char str_battle_player_hit_vuln[];
 
@@ -551,6 +551,11 @@ extern const char str_monster_hit_vuln[];
 extern const char str_monster_hit_crit[];
 
 /**
+ * "Your barkskin protects you! %damage damage."
+ */
+extern const char str_monster_hit_barkskin[];
+
+/**
  * "%monster %c does nothing."
  */
 extern const char str_monster_does_nothing[];
@@ -586,8 +591,48 @@ extern const char str_monster_kobold_dazed[];
 extern const char str_monster_kobold_does_nothing[];
 
 /**
- * "But instead it falls back and hiccups!"
+ * "But instead it falls over and hiccups!"
  */
 extern const char str_monster_kobold_miss[];
+
+/**
+ * "Kobold %c gets up."
+ */
+extern const char str_monster_kobold_get_up[];
+
+/**
+ * "Goblin %c picks its nose."
+ */
+extern const char str_monster_goblin_nose_pick[];
+
+/**
+ * "Goblin %c swings a shortsword!"
+ */
+extern const char str_monster_goblin_attack[];
+
+/**
+ * "Goblin %c shoots an acid arrow!"
+ */
+extern const char str_monster_goblin_acid_arrow[];
+
+/**
+ * "Hrrnng... brains."
+ */
+extern const char str_monster_zombie_brains[];
+
+/**
+ * "Zombie %c's bite barely misses!"
+ */
+extern const char str_monster_zombie_bite_miss[];
+
+/**
+ * "Zombie %c bites and poisons you!"
+ */
+extern const char str_monster_zombie_bite_hit[];
+
+/**
+ * "Zombie %c swipes at you!"
+ */
+extern const char str_monster_zombie_slam[];
 
 #endif

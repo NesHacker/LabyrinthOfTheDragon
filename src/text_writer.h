@@ -214,7 +214,9 @@ typedef struct TextWriter {
  */
 extern TextWriter text_writer;
 
-
+/**
+ * @return `true` If the text write is done writing text.
+ */
 inline bool text_writer_done(void) {
   return text_writer.state == TEXT_WRITER_DONE;
 }

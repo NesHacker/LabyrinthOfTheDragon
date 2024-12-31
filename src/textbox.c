@@ -1,3 +1,5 @@
+#pragma bank 2
+
 #include "core.h"
 #include "textbox.h"
 
@@ -10,7 +12,7 @@ const palette_color_t textbox_palette[4] = {
   RGB8(200, 200, 200)
 };
 
-void init_textbox(void) {
+static void init_textbox(void) {
   core.load_bg_palette(textbox_palette, 7, 1);
   core.draw_tilemap(textbox_tilemap, VRAM_WINDOW);
   textbox.y = 144;
@@ -21,17 +23,13 @@ void init_textbox(void) {
   text_writer.set_auto_page(AUTO_PAGE_OFF);
 }
 
-void open_textbox(const char *text) {
+static void open_textbox(const char *text) {
   text_writer.clear();
   textbox.text = text;
   textbox.state = TEXT_BOX_OPENING;
 }
 
-void close_textbox(void) {
-  textbox.state = TEXT_BOX_CLOSING;
-}
-
-void update_textbox(void) {
+static void update_textbox(void) {
   switch (textbox.state) {
   case TEXT_BOX_CLOSED:
     break;
@@ -67,7 +65,6 @@ void update_textbox(void) {
 TextBox textbox = {
   init_textbox,
   open_textbox,
-  close_textbox,
   update_textbox,
   TEXT_BOX_CLOSED,
   144

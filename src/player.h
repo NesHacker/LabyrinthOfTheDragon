@@ -84,6 +84,14 @@ typedef struct Ability {
 } Ability;
 
 /**
+ * Special flags that can be set during battle by abilities.
+ */
+typedef enum SpecialFlags {
+  SPECIAL_BARKSKIN = FLAG(0),
+  SPECIAL_HASTE = FLAG(1),
+} SpecialFlags;
+
+/**
  * Data representation of the player.
  */
 typedef struct Player {
@@ -225,6 +233,10 @@ typedef struct Player {
    * Whether or not the player has collected their first magic key (for UI).
    */
   bool got_magic_key;
+  /**
+   * Special battle flags that the player can have.
+   */
+  uint8_t special_flags;
 } Player;
 
 /**
@@ -316,6 +328,37 @@ inline bool is_martial_class(void) {
  */
 inline bool has_leveled(void) {
   return player.next_level_exp >= player.exp;
+}
+
+/**
+ * Clears all special flags for the player.
+ */
+inline void reset_special(void) {
+  player.special_flags = 0;
+}
+
+/**
+ * Applies a special flag to the player.
+ * @param s Flag to set.
+ */
+inline void apply_special(SpecialFlags s) {
+  player.special_flags |= s;
+}
+
+/**
+ * Removes a special flag from the character.
+ * @param s Flag to remove.
+ */
+inline void remove_special(SpecialFlags s) {
+  player.special_flags &= ~s;
+}
+
+/**
+ * @return `true` if the given special flag is set for the player.
+ * @param s Flag to test.
+ */
+inline bool has_special(SpecialFlags s) {
+  return player.special_flags & s;
 }
 
 /**

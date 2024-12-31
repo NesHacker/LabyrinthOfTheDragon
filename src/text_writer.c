@@ -1,21 +1,21 @@
 #include "text_writer.h"
 
-void text_writer_set_auto_page(AutoPageSpeed a) {
+static void text_writer_set_auto_page(AutoPageSpeed a) {
   text_writer.auto_page = a;
 }
 
-void text_writer_set_size(uint8_t w, uint8_t h) {
+static void text_writer_set_size(uint8_t w, uint8_t h) {
   text_writer.width = w;
   text_writer.height = h;
 }
 
-void text_writer_set_origin(uint8_t *vram, uint8_t col, uint8_t row) {
+static void text_writer_set_origin(uint8_t *vram, uint8_t col, uint8_t row) {
   text_writer.origin_column = col;
   text_writer.origin_row = row;
   text_writer.origin = vram + row * 32 + col;
 }
 
-void text_writer_clear(void) {
+static void text_writer_clear(void) {
   uint8_t *vram = text_writer.origin;
 
   for (uint8_t row = 0; row < text_writer.height; row++) {
@@ -31,17 +31,17 @@ void text_writer_clear(void) {
   text_writer.row = 0;
 }
 
-void text_writer_print(const char *string) {
+static void text_writer_print(const char *string) {
   text_writer.text = string;
   text_writer.state = TEXT_WRITER_START;
 }
 
-void text_writer_next_page(void) {
+static void text_writer_next_page(void) {
   const char next = *text_writer.text;
   text_writer.state = TEXT_WRITER_CLEAR;
 }
 
-void page_wait(void) {
+static void page_wait(void) {
   switch (text_writer.auto_page) {
   case AUTO_PAGE_OFF:
     text_writer.state = TEXT_WRITER_PAGE_WAIT;
@@ -59,7 +59,7 @@ void page_wait(void) {
   text_writer.state = TEXT_WRITER_PAGE_DELAY;
 }
 
-inline void text_end(void) {
+static inline void text_end(void) {
   switch (text_writer.auto_page) {
   case AUTO_PAGE_OFF:
     text_writer.state = TEXT_WRITER_DONE;
@@ -77,7 +77,7 @@ inline void text_end(void) {
   text_writer.state = TEXT_WRITER_END_DELAY;
 }
 
-void new_line(void) {
+static void new_line(void) {
   if (text_writer.row == text_writer.height - 1) {
     page_wait();
     return;
@@ -88,7 +88,7 @@ void new_line(void) {
   text_writer.col = 0;
 }
 
-void text_writer_update(void) {
+static void text_writer_update(void) {
   switch (text_writer.state) {
   case TEXT_WRITER_DONE:
   case TEXT_WRITER_PAGE_WAIT:

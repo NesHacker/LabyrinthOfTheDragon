@@ -67,6 +67,56 @@ typedef enum Turn {
 } Turn;
 
 /**
+ * Encounter table entry for the random encounter system.
+ */
+typedef struct EncounterTable {
+  /**
+   * Odds out of 256 that this encounter will be chosen.
+   */
+  Odds odds;
+  /**
+   * Encounter layout.
+   */
+  MonsterLayout layout;
+  /**
+   * Monster type for the first monster.
+   */
+  MonsterType monster1;
+  /**
+   * Level for the first monster.
+   */
+  uint8_t monster1_level;
+  /**
+   * Tier for the first monster.
+   */
+  PowerTier monster1_tier;
+  /**
+   * Monster type for the second monster.
+   */
+  MonsterType monster2;
+  /**
+   * Level for the second monster.
+   */
+  uint8_t monster2_level;
+  /**
+   * Power tier for the second monster.
+   */
+  PowerTier monster2_tier;
+  /**
+   * Type for the third monster.
+   */
+  MonsterType monster3;
+  /**
+   * Level for the third monster.
+   */
+  uint8_t monster3_level;
+  /**
+   * Tier for the third monster.
+   */
+  PowerTier monster3_tier;
+} EncounterTable;
+
+/**
  * Data structure detailing the current encounter.
  */
 typedef struct Encounter {
@@ -167,6 +217,12 @@ inline void on_victory(void) {
 }
 
 /**
+ * Generates a random encounter from the given encounter table.
+ * @param table Table to use when generating the encounter.
+ */
+void generate_encounter(EncounterTable *table) NONBANKED;
+
+/**
  * Sets the player's next action to a basic attack.
  * @param target Target for the basic attack.
  */
@@ -239,17 +295,6 @@ inline Monster *get_monster(uint8_t idx) {
 }
 
 /**
- * Heals the player without going over max HP.
- * @param hp Amount of HP to heal the player.
- */
-inline void heal_player(uint16_t hp) {
-  if (player.hp + hp > player.max_hp)
-    player.hp = player.max_hp;
-  else
-    player.hp += hp;
-}
-
-/**
  * Resets player combat stats and flags at the start of each round.
  */
 void reset_player_stats(void) NONBANKED;
@@ -259,17 +304,6 @@ void reset_player_stats(void) NONBANKED;
  * @param m Monster instance to reset.
  */
 void monster_reset_stats(Monster *m) NONBANKED;
-
-/**
- * Handles status effect updates for the player.
- */
-void update_player_status_effects(void);
-
-/**
- * Handles status effect updates for a monster.
- * @param monster Monster for which to handle the effects.
- */
-void update_monster_status_effects(Monster *monster);
 
 /**
  * Applies a status effect and adds it to the given list.
@@ -467,18 +501,16 @@ inline StatusEffectResult apply_def_down(
  * @param list List of status effects for the entity.
  * @param tier Power tier for the effect (potency, basically).
  * @param duration Duration for the effect (0 means endless).
- * @param immune Debuff immunities for the entity.
  * @return The result of the status effect application.
  */
 inline StatusEffectResult apply_haste(
   StatusEffectInstance *list,
   PowerTier tier,
-  uint8_t duration,
-  uint8_t immune
+  uint8_t duration
 ) {
   const StatusEffect effect = BUFF_HASTE;
   const DebuffFlag flag = FLAG_BUFF_HASTE;
-  return apply_status_effect(list, effect, flag, tier, duration, immune);
+  return apply_status_effect(list, effect, flag, tier, duration, 0);
 }
 
 /**
@@ -486,18 +518,16 @@ inline StatusEffectResult apply_haste(
  * @param list List of status effects for the entity.
  * @param tier Power tier for the effect (potency, basically).
  * @param duration Duration for the effect (0 means endless).
- * @param immune Debuff immunities for the entity.
  * @return The result of the status effect application.
  */
 inline StatusEffectResult apply_regen(
   StatusEffectInstance *list,
   PowerTier tier,
-  uint8_t duration,
-  uint8_t immune
+  uint8_t duration
 ) {
   const StatusEffect effect = BUFF_REGEN;
   const DebuffFlag flag = FLAG_BUFF_REGEN;
-  return apply_status_effect(list, effect, flag, tier, duration, immune);
+  return apply_status_effect(list, effect, flag, tier, duration, 0);
 }
 
 /**
@@ -505,18 +535,16 @@ inline StatusEffectResult apply_regen(
  * @param list List of status effects for the entity.
  * @param tier Power tier for the effect (potency, basically).
  * @param duration Duration for the effect (0 means endless).
- * @param immune Debuff immunities for the entity.
  * @return The result of the status effect application.
  */
 inline StatusEffectResult apply_agl_up(
   StatusEffectInstance *list,
   PowerTier tier,
-  uint8_t duration,
-  uint8_t immune
+  uint8_t duration
 ) {
   const StatusEffect effect = BUFF_AGL_UP;
   const DebuffFlag flag = FLAG_BUFF_AGL_UP;
-  return apply_status_effect(list, effect, flag, tier, duration, immune);
+  return apply_status_effect(list, effect, flag, tier, duration, 0);
 }
 
 /**
@@ -524,18 +552,16 @@ inline StatusEffectResult apply_agl_up(
  * @param list List of status effects for the entity.
  * @param tier Power tier for the effect (potency, basically).
  * @param duration Duration for the effect (0 means endless).
- * @param immune Debuff immunities for the entity.
  * @return The result of the status effect application.
  */
 inline StatusEffectResult apply_atk_up(
   StatusEffectInstance *list,
   PowerTier tier,
-  uint8_t duration,
-  uint8_t immune
+  uint8_t duration
 ) {
   const StatusEffect effect = BUFF_ATK_UP;
   const DebuffFlag flag = FLAG_BUFF_ATK_UP;
-  return apply_status_effect(list, effect, flag, tier, duration, immune);
+  return apply_status_effect(list, effect, flag, tier, duration, 0);
 }
 
 /**
@@ -543,18 +569,16 @@ inline StatusEffectResult apply_atk_up(
  * @param list List of status effects for the entity.
  * @param tier Power tier for the effect (potency, basically).
  * @param duration Duration for the effect (0 means endless).
- * @param immune Debuff immunities for the entity.
  * @return The result of the status effect application.
  */
 inline StatusEffectResult apply_def_up(
   StatusEffectInstance *list,
   PowerTier tier,
-  uint8_t duration,
-  uint8_t immune
+  uint8_t duration
 ) {
   const StatusEffect effect = BUFF_DEF_UP;
   const DebuffFlag flag = FLAG_BUFF_DEF_UP;
-  return apply_status_effect(list, effect, flag, tier, duration, immune);
+  return apply_status_effect(list, effect, flag, tier, duration, 0);
 }
 
 #endif
