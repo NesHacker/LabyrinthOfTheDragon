@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define FLOOR_TWO_ID 98
-#define FLOOR_TWO_DEFAULT_X 4
-#define FLOOR_TWO_DEFAULT_Y 14
+#define FLOOR_TWO_DEFAULT_X 6
+#define FLOOR_TWO_DEFAULT_Y 12
 #define FLOOR_TWO_DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
@@ -17,7 +17,7 @@
 
 const Map floor_two_maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_9, floor_two_data, 32, 32 },
+  { MAP_A, BANK_9, floor_two_data, 32, 22 },
 
   { END },
 };
@@ -84,13 +84,18 @@ const Chest floor_two_chests[] = {
   {
     CHEST_1,
     MAP_A, 20, 11, false, false,
-    NULL,
-    NULL,
-    chest_add_magic_key,
+    str_chest_item_2pot_1eth,
+    chest_item_2pot_1eth,
   },
   {
     CHEST_2,
     MAP_A, 24, 10, false, false,
+    str_chest_item_1pot,
+    chest_item_1pot,
+  },
+  {
+    CHEST_3,
+    MAP_A, 18, 3, false, false,
     NULL,
     NULL,
     chest_add_magic_key,
@@ -119,19 +124,19 @@ const Exit floor_two_exits[] = {
     {MAP_A, 2, 9, MAP_A, 21, 2, DOWN, EXIT_STAIRS},
     {MAP_A, 21, 2, MAP_A, 2, 9, DOWN, EXIT_STAIRS},
 
-    // {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
-    // {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
+    {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
+    {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
 
-    // {MAP_A, 13, 12, MAP_A, 4, 19, UP, EXIT_STAIRS},
-    // {MAP_A, 4, 19, MAP_A, 13, 12, DOWN, EXIT_STAIRS},
+    {MAP_A, 29, 2, MAP_A, 4, 19, DOWN, EXIT_STAIRS},
+    {MAP_A, 4, 19, MAP_A, 29, 2, DOWN, EXIT_STAIRS},
 
-    // {MAP_A, 12, 17, MAP_A, 18, 16, UP, EXIT_STAIRS},
-    // {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
+    {MAP_A, 12, 17, MAP_A, 18, 16, DOWN, EXIT_STAIRS},
+    {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
 
-    // {MAP_A, 6, 8, MAP_A, 9, 2, UP, EXIT_STAIRS},
-    // {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
+    {MAP_A, 6, 8, MAP_A, 9, 2, DOWN, EXIT_STAIRS},
+    {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 3, 1, MAP_A, 4, 14, DOWN, EXIT_STAIRS, &floor_two},
+    {MAP_A, 3, 1, MAP_A, 6, 12, UP, EXIT_STAIRS, &floor_two},
 
     {END},
 };
@@ -149,13 +154,22 @@ const Sign floor_two_signs[] = {
     "Hi there!" // The message to display
   }
   */
-  { MAP_A, 5, 8, UP, str_maps_sign_monster_no_fire },
+  { MAP_A,  5, 8, UP, "Lite Fires,\n to open this\n Doors!" },
+  { MAP_A, 26, 3, UP, "Something used\n have been here.\n" },
+
   { END },
 };
 
 //------------------------------------------------------------------------------
 // Levers
 //------------------------------------------------------------------------------
+
+const void floor_two_on_lever(const Lever *lever) {
+  if (lever->id == LEVER_1) {
+    map_textbox("You hear a\nka-thunk\x60");
+    open_door_by_id(DOOR_3);
+  }
+}
 
 const Lever floor_two_levers[] = {
   /*
@@ -168,6 +182,8 @@ const Lever floor_two_levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+  { LEVER_1, MAP_A, 3, 3, true, false, floor_two_on_lever },
+
   { END },
 };
 
@@ -185,9 +201,9 @@ const Door floor_two_doors[] = {
     true              // Magic key required to unlock
   }
   */
-  { DOOR_1, MAP_A, 6, 8, DOOR_STAIRS_DOWN, false },
+  { DOOR_1, MAP_A,  6,  8, DOOR_STAIRS_DOWN, false },
   { DOOR_2, MAP_A, 20, 16, DOOR_NORMAL, true },
-  { DOOR_3, MAP_A, 3,  1, DOOR_NEXT_LEVEL, false },
+  { DOOR_3, MAP_A,  3,  1, DOOR_NEXT_LEVEL, false },
 
   { END }
 };
@@ -197,11 +213,23 @@ const Door floor_two_doors[] = {
 //------------------------------------------------------------------------------
 
 void floor_two_on_lit(const Sconce* sconce) {
+  if(is_sconce_lit(SCONCE_2))
+    light_sconce(SCONCE_6, FLAME_RED);
+
+  if(is_sconce_lit(SCONCE_3))
+    light_sconce(SCONCE_7, FLAME_GREEN);
+
+  if(is_sconce_lit(SCONCE_4))
+    light_sconce(SCONCE_8, FLAME_BLUE);
+
+  if(is_sconce_lit(SCONCE_5))
+    light_sconce(SCONCE_1, FLAME_RED);
+
   if(
-    is_sconce_lit(SCONCE_1) &&
-    is_sconce_lit(SCONCE_2) &&
-    is_sconce_lit(SCONCE_3) &&
-    is_sconce_lit(SCONCE_4)
+    is_sconce_lit(SCONCE_5) &&
+    is_sconce_lit(SCONCE_6) &&
+    is_sconce_lit(SCONCE_7) &&
+    is_sconce_lit(SCONCE_8)
     ) {
     //open the door dave
     open_door_by_id(DOOR_1);
@@ -218,12 +246,18 @@ const Sconce floor_two_sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  { SCONCE_1, MAP_A,  3, 14, true, FLAME_RED },
-  { SCONCE_2, MAP_A,  8, 16, false, FLAME_RED },
-  { SCONCE_3, MAP_A, 23, 16, false, FLAME_RED },
-  { SCONCE_4, MAP_A, 15,  2, false, FLAME_RED },
-  { SCONCE_5, MAP_A, 18,  2, false, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 4, 14, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 13, 12, true, FLAME_RED },
 
+  { SCONCE_2, MAP_A,  8, 16, false, FLAME_RED, floor_two_on_lit },
+  { SCONCE_3, MAP_A, 23, 16, false, FLAME_RED, floor_two_on_lit },
+  { SCONCE_4, MAP_A, 15,  2, false, FLAME_RED, floor_two_on_lit },
+  { SCONCE_5, MAP_A, 20,  2, false, FLAME_RED, floor_two_on_lit },
+
+  { SCONCE_6, MAP_A, 4,  7, false, FLAME_RED },
+  { SCONCE_7, MAP_A, 5,  7, false, FLAME_RED },
+  { SCONCE_8, MAP_A, 7,  7, false, FLAME_RED },
+  { SCONCE_1, MAP_A, 8,  7, false, FLAME_RED },
 
   { END }
 };
@@ -270,12 +304,13 @@ bool floor_two_on_exit(void) {
 }
 
 bool floor_two_on_move(void) {
+  return false;
 }
 
 //------------------------------------------------------------------------------
 // Area Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
-const Floor floor_two= {
+const Floor floor_two = {
   FLOOR_TWO_ID,                              // Id
   FLOOR_TWO_DEFAULT_MAP,                     // Default Map
   FLOOR_TWO_DEFAULT_X, FLOOR_TWO_DEFAULT_Y, // Default Starting (x, y)

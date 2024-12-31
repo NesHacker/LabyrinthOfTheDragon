@@ -133,7 +133,7 @@ const Exit floor_one_exits[] = {
     {MAP_A, 6, 18, MAP_A, 6, 13, UP, EXIT_STAIRS},
     {MAP_A, 6, 13, MAP_A, 6, 18, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 3, MAP_A, 4, 14, DOWN, EXIT_STAIRS, &floor_two},
+    {MAP_A, 6, 3, MAP_A, 6, 12, UP, EXIT_STAIRS, &floor_two},
 
     {END},
 };
@@ -152,6 +152,7 @@ const Sign floor_one_signs[] = {
   }
   */
   { MAP_A, 4, 25, UP, str_maps_sign_monster_no_fire },
+
   { END },
 };
 
@@ -289,25 +290,25 @@ bool floor_one_on_exit(void) {
   return false;
 }
 
-uint8_t floor_one_enc_step = 0;
-uint8_t floor_one_enc_reset = 255;
-uint8_t floor_one_enc_chance = 1;
+uint8_t enc_reset = 4;
+uint8_t enc_step   = 0;
+uint8_t enc_chance = 1;
 
 bool floor_one_on_move(void) {
-  floor_one_enc_step++;
+  enc_step++;
   if (player.torch_gauge > 0)
     return false;
 
-  if (floor_one_enc_step < floor_one_enc_reset)
+  if (enc_step < enc_reset)
     return false;
 
-  if (d64() >= floor_one_enc_chance) {
-    floor_one_enc_chance++;
+  if (d128() >= enc_chance) {
+    enc_chance++;
     return false;
   }
 
-  floor_one_enc_step = 0;
-  floor_one_enc_chance = 1;
+  enc_step = 0;
+  enc_chance = 1;
 
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);

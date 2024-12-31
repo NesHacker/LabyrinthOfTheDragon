@@ -129,4 +129,3 @@ void test_big_map(void) {
 
   game_state = GAME_STATE_WORLD_MAP;
 }
-
