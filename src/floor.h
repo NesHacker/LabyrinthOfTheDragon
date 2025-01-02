@@ -11,6 +11,12 @@ extern const Floor floor_test;
 extern const Floor floor_test2;
 extern const Floor floor_one;
 extern const Floor floor_two;
+extern const Floor floor_three;
+extern const Floor floor_four;
+extern const Floor floor_five;
+extern const Floor floor_six;
+extern const Floor floor_seven;
+extern const Floor floor_eight;
 
 /**
  * Set this as a custom chest handler to have the chest give the player a

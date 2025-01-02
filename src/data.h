@@ -43,7 +43,14 @@ INCBIN_EXTERN(map_example_11x13)
 INCBIN_EXTERN(floor_test_data)
 INCBIN_EXTERN(floor_test_mini)
 INCBIN_EXTERN(floor_test_17x12)
+
 INCBIN_EXTERN(floor_one_data)
 INCBIN_EXTERN(floor_two_data)
+INCBIN_EXTERN(floor_three_data)
+INCBIN_EXTERN(floor_four_data)
+INCBIN_EXTERN(floor_five_data)
+INCBIN_EXTERN(floor_six_data)
+INCBIN_EXTERN(floor_seven_data)
+INCBIN_EXTERN(floor_eight_data)
 
 #endif

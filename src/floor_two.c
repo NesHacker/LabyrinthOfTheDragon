@@ -17,7 +17,7 @@
 
 const Map floor_two_maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_9, floor_two_data, 32, 22 },
+  { MAP_A, BANK_16, floor_two_data, 32, 22 },
 
   { END },
 };

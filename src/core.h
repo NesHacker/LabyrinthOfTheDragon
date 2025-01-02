@@ -31,6 +31,7 @@ typedef enum GameRomBank {
   BANK_13,
   BANK_14,
   BANK_15,
+  BANK_16,
 } GameRomBank;
 
 /**
