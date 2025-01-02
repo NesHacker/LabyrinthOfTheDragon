@@ -46,6 +46,7 @@ static void monster_init_instance(
   monster->can_flee = true;
   monster->fled = false;
   monster->parameter = 0;
+  monster->trip_turns = 0;
 }
 
 /**
@@ -53,16 +54,28 @@ static void monster_init_instance(
  * @param base_damage Base damage for the attck.
  * @param type Type of damage dealt.
  */
-static void damage_player(uint16_t base_damage, DamageAspect type) {
+static uint16_t damage_player(uint16_t base_damage, DamageAspect type) {
   if (player.aspect_immune & type) {
     sprintf(battle_post_message, str_monster_hit_immune);
-    return;
+    return 0;
+  }
+
+  // Monk evasion
+  if (player.special_flags & SPECIAL_EVASION) {
+    uint8_t evade_chance = 3;
+    if (player.level > 70)
+      evade_chance = 5;
+    else if (player.level > 30)
+      evade_chance = 4;
+    if (d8() < evade_chance) {
+      sprintf(battle_post_message, str_battle_monster_miss_evaded);
+      return 0;
+    }
   }
 
   uint8_t roll = d16();
   uint16_t damage = calc_damage(roll, base_damage);
-  bool critical = roll >= 12;
-
+  bool critical = is_critical(roll);
   bool barskin = has_special(SPECIAL_BARKSKIN) && type != DAMAGE_FIRE;
 
   if (barskin)
@@ -89,9 +102,10 @@ static void damage_player(uint16_t base_damage, DamageAspect type) {
   }
 
   if (player.hp < damage)
-    player.hp = 0;
-  else
-    player.hp -= damage;
+    damage = player.hp;
+  player.hp -= damage;
+
+  return damage;
 }
 
 void monster_flee(Monster *monster) BANKED {
@@ -182,7 +196,9 @@ static void kobold_take_turn(Monster *m) {
   }
 
   if (roll_attack(atk, def)) {
-    damage_player(get_monster_dmg(m->level, m->exp_tier), type);
+    uint16_t base_damage = get_monster_dmg(m->level, m->exp_tier);
+    clear_debug();
+    damage_player(base_damage, type);
   } else if (d16() >= prone_chance) {
     // Not only did they miss, but they fell prone and need to spend a turn
     // getting back up...
@@ -378,9 +394,52 @@ void zombie_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
 // -----------------------------------------------------------------------------
 
 static void bugbear_take_turn(Monster *monster) {
-  sprintf(battle_pre_message, str_monster_does_nothing,
-    monster->name, monster->id);
-  skip_post_message = true;
+  if (
+    monster->parameter > 0 &&
+    d8() < 2
+  ) {
+    sprintf(battle_pre_message, str_monster_bugbear_for_hruggek, monster->id);
+    if (roll_attack(monster->atk, player.mdef)) {
+      apply_scared(encounter.player_status_effects, C_TIER, 2, 0);
+      sprintf(battle_post_message, str_monster_bugbear_for_hruggek_hit);
+      monster->parameter--;
+    } else {
+      sprintf(battle_post_message, str_monster_bugbear_for_hruggek_miss);
+    }
+    return;
+  }
+
+  uint8_t atk;
+  uint16_t base_damage;
+  PowerTier tier;
+
+  switch (monster->exp_tier) {
+  case S_TIER:
+    tier = S_TIER;
+    break;
+  case A_TIER:
+  case B_TIER:
+    tier = B_TIER;
+    break;
+  default:
+    tier = C_TIER;
+  }
+
+  if (d8() < 3) {
+    atk = get_monster_atk(level_offset(monster->level, 4), monster->exp_tier);
+    base_damage = get_monster_dmg(level_offset(monster->level, -2), tier);
+    sprintf(battle_pre_message, str_monster_bugbear_javelin, monster->id);
+  } else {
+    atk = monster->atk;
+    base_damage = get_monster_dmg(level_offset(monster->level, 2), tier);
+    sprintf(battle_pre_message, str_monster_bugbead_club, monster->id);
+  }
+
+  if (roll_attack(atk, player.def))
+    damage_player(base_damage, DAMAGE_PHYSICAL);
+  else
+    sprintf(battle_post_message, str_monster_miss);
+
 }
 
 void bugbear_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
@@ -393,15 +452,27 @@ void bugbear_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
 
   m->max_hp = get_monster_hp(level, tier);
   m->hp = m->max_hp;
-  m->atk_base = get_monster_atk(level, tier);
+  m->atk_base = get_monster_atk(level_offset(level, 1), tier);
   m->def_base = get_monster_def(level, tier);
   m->matk_base = get_monster_atk(level, tier);
-  m->mdef_base = get_monster_def(level, tier);
-  m->agl_base = get_agl(level, tier);
+  m->mdef_base = get_monster_def(level_offset(level, 2), tier);
+  m->agl_base = get_agl(level_offset(level, 3), tier);
 
   m->aspect_resist = 0;
   m->aspect_vuln = 0;
-  m->debuff_immune = 0;
+  m->debuff_immune = DEBUFF_BLIND | DEBUFF_CONFUSED | DEBUFF_POISONED;
+
+  switch (tier) {
+  case C_TIER:
+    m->parameter = 1;
+    break;
+  case A_TIER:
+  case B_TIER:
+    m->parameter = 2;
+    break;
+  default:
+    m->parameter = 4;
+  }
 
   monster_reset_stats(m);
 }
@@ -411,9 +482,56 @@ void bugbear_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
 // -----------------------------------------------------------------------------
 
 static void owlbear_take_turn(Monster *monster) {
-  sprintf(battle_pre_message, str_monster_does_nothing,
-    monster->name, monster->id);
-  skip_post_message = true;
+  PowerTier tier = C_TIER;
+  if (monster->exp_tier == S_TIER)
+    tier = A_TIER;
+  else if (monster->exp_tier > C_TIER)
+    tier = B_TIER;
+
+  if (monster->parameter > 0 && d8() < 4) {
+    // Pounce
+    sprintf(battle_pre_message, str_monster_owlbear_pounce, monster->id);
+    if (roll_attack(monster->atk, player.def)) {
+      uint16_t base_damage = get_monster_dmg(monster->level, tier);
+      if (d8() < 2) {
+        // Toppled
+        monster->parameter--;
+        uint16_t dmg = damage_player(base_damage, DAMAGE_PHYSICAL);
+        player.trip_turns = 1;
+        sprintf(battle_post_message, str_monster_owlbear_pounce_topple, dmg);
+      } else {
+        damage_player(base_damage, DAMAGE_PHYSICAL);
+      }
+    } else {
+      sprintf(battle_post_message, str_monster_owlbear_pounce_miss);
+    }
+    return;
+  }
+  if (d8() < 2) {
+    // Multi-attack
+    sprintf(battle_pre_message, str_monster_owlbear_multi, monster->id);
+
+    uint16_t damage = 0;
+    if (roll_attack(monster->atk, player.def))
+      damage += get_monster_dmg(level_offset(monster->level, -2), tier);
+    if (roll_attack(monster->atk, player.def))
+      damage += get_monster_dmg(monster->level, tier);
+
+    if (damage > 0)
+      damage_player(damage, DAMAGE_PHYSICAL);
+    else
+      sprintf(battle_post_message, str_monster_miss);
+  } else {
+    // Beak only
+    sprintf(battle_pre_message, str_monster_owlbear_beak, monster->id);
+    if (roll_attack(monster->atk, player.def)) {
+      damage_player(get_monster_dmg(
+        level_offset(monster->level, -2), tier),
+        DAMAGE_PHYSICAL);
+    } else {
+      sprintf(battle_post_message, str_monster_miss);
+    }
+  }
 }
 
 void owlbear_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
@@ -422,19 +540,33 @@ void owlbear_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
   m->take_turn = owlbear_take_turn;
 
   m->exp_tier = tier;
-  m->level = level;
+  m->level = level + 2;
 
-  m->max_hp = get_monster_hp(level, tier);
+  m->max_hp = get_monster_hp(level_offset(level, 2), tier);
   m->hp = m->max_hp;
-  m->atk_base = get_monster_atk(level, tier);
-  m->def_base = get_monster_def(level, tier);
+  m->atk_base = get_monster_atk(level_offset(level, 2), tier);
+  m->def_base = get_monster_def(level_offset(level, -2), tier);
   m->matk_base = get_monster_atk(level, tier);
-  m->mdef_base = get_monster_def(level, tier);
-  m->agl_base = get_agl(level, tier);
+  m->mdef_base = get_monster_def(level_offset(level, -5), tier);
+  m->agl_base = get_agl(level_offset(level, 3), tier);
 
   m->aspect_resist = 0;
   m->aspect_vuln = 0;
   m->debuff_immune = 0;
+
+  switch (tier) {
+  case C_TIER:
+    m->parameter = 1;
+    break;
+  case B_TIER:
+    m->parameter = 2;
+    break;
+  case A_TIER:
+    m->parameter = 3;
+    break;
+  default:
+    m->parameter = 5;
+  }
 
   monster_reset_stats(m);
 }

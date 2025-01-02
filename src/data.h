@@ -28,6 +28,7 @@ INCBIN_EXTERN(tilemap_name_entry)
 INCBIN_EXTERN(tilemap_save_select)
 INCBIN_EXTERN(tilemap_battle_menus)
 INCBIN_EXTERN(tilemap_battle_monster_layouts)
+INCBIN_EXTERN(tilemap_map_menu)
 
 INCBIN_EXTERN(tile_data_dungeon)
 INCBIN_EXTERN(tile_data_font)

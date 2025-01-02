@@ -139,12 +139,6 @@ typedef enum GameRomBank {
 #define VRAM_ROW_OFFSET(col) (32 - (col))
 
 /**
- * Random Seed to use for the game. If set to 0 then the game will generate a
- * seed value on the title while waiting for the player to begin the game.
- */
-#define RANDOM_SEED 109
-
-/**
  * Number of bytes per 8x8 pixel 2BBP tile.
  */
 #define BYTES_PER_TILE 16
@@ -576,5 +570,17 @@ extern const uint8_t map_tile_lookup[];
  * when debugging code.
  */
 extern uint8_t *debug;
+
+/**
+ * Debug address for 16-bit values.
+ */
+extern uint16_t *debug16;
+
+inline void clear_debug(void) {
+  uint8_t *d = debug;
+  for (uint8_t k = 0; k < 16; k++)
+    *d++ = 0xFF;
+  debug = (void *)0xB000;
+}
 
 #endif

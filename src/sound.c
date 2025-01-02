@@ -174,8 +174,41 @@ void sfx_next_round(void) {
   register_init(&nr14, sfx_next_round_nr14);
 }
 
-void sfx_test(void) {
+#define SFX_TRANSPORTER 4
 
+const uint8_t sfx_transporter_nr13[] = {
+  SFX_TRANSPORTER, 0x6B,
+  SFX_TRANSPORTER, 0x39,
+  SFX_TRANSPORTER, 0x6B,
+  SFX_TRANSPORTER, 0x73,
+  SFX_TRANSPORTER, 0x6B,
+  SFX_TRANSPORTER, 0x39,
+  SFX_TRANSPORTER, 0x6B,
+  SFX_TRANSPORTER, 0x73,
+  SOUND_END
+};
+
+const uint8_t sfx_transporter_nr14[] = {
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SFX_TRANSPORTER, 0xC7,
+  SOUND_END
+};
+
+void sfx_no_no_square(void) {
+  NR10_REG = 0;
+  NR11_REG = 0b01000000 | 0;
+  NR12_REG = envelope(7, 0, 6);
+  register_init(&nr13, sfx_transporter_nr13);
+  register_init(&nr14, sfx_transporter_nr14);
+}
+
+void sfx_test(void) {
 
   // "Hard Fall"
   // NR10_REG = sweep(7, 1, 7);

@@ -17,6 +17,12 @@ uint8_t joypad_pressed;
 uint8_t joypad_released;
 
 /**
+ * Random Seed to use for the game. If set to 0 then the game will generate a
+ * seed value on the title while waiting for the player to begin the game.
+ */
+#define RANDOM_SEED 50
+
+/**
  * Initializes the normal game. Abstracted out of `initialize` to make it easy
  * to switch between tests and the actual game while handling common setup.
  */
@@ -95,9 +101,11 @@ static inline void update_joypad(void) {
  * joypad state updates.
  */
 void main(void) {
-  // TODO Send to "YOU NEED GBC screen if not"
   if (_cpu == CGB_TYPE)
     cpu_fast();
+  else {
+    while(1) {}
+  }
 
   disable_interrupts();
   DISPLAY_OFF;

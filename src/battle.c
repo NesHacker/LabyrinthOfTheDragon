@@ -21,21 +21,19 @@ BattleState battle_state;
 BattleMenu battle_menu;
 uint8_t status_effect_x[3] = { 7, 7, 7 };
 
-// TODO convert these into a single battle_buffer object?
 char battle_pre_message[64];
 char battle_post_message[64];
 char rewards_buf[64];
 bool skip_post_message = false;
 
-// TODO covert these into a single BattleAnimation state structure
-BattleAnimation battle_animation;
-
-// TODO Was gonna animate these but my drawing routine is too slow, don't have
-// the time for a deep optiization dive :(
-// Timer status_effect_timer;
-const uint8_t status_effect_frame = 1;
-
 bool flee_sound_played = false;
+
+BattleAnimation battle_animation;
+AnimationState animation_state = ANIMATION_PREAMBLE;
+Timer effect_delay_timer;
+Timer monster_death_timer;
+uint8_t monster_death_step = 0;
+MonsterDeathAnimation monster_death_state = MONSTER_DEATH_START;
 
 /**
  * Finds the monster currently selected by the screen cursor.
@@ -580,7 +578,7 @@ static void select_next_enemy(void) {
  * Draws the "EMPTY..." message in the middle of an empty battle_menu.
  */
 static inline void draw_menu_empty_text(void) {
-  core.draw_text(VRAM_BACKGROUND_XY(7, 20), str_misc_empty, 6);
+  core.draw_text(VRAM_BACKGROUND_XY(7, SUBMENU_Y + 2), str_misc_empty, 6);
 }
 
 /**
@@ -602,7 +600,7 @@ static inline void draw_submenu_heading(void) {
     start_tile = SUMMON_ICON;
     len = 5;
   }
-  uint8_t *vram = VRAM_BACKGROUND_XY(1, 18);
+  uint8_t *vram = VRAM_BACKGROUND_XY(1, SUBMENU_Y);
   uint8_t k;
   for (k = 0; k < len; k++, start_tile++, vram++)
     set_vram_byte(vram, start_tile);
@@ -705,25 +703,25 @@ static void draw_submenu_scroll_arrows(void) {
   const uint8_t border_tile = 0x91;
 
   if (battle_menu.max_scroll == 0) {
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), border_tile);
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), border_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y), border_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y + 5), border_tile);
     return;
   }
 
   if (battle_menu.scroll == 0) {
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), border_tile);
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), arrow_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y), border_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y + 5), arrow_tile);
     return;
   }
 
   if (battle_menu.scroll < battle_menu.max_scroll) {
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), arrow_tile);
-    set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), arrow_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y), arrow_tile);
+    set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y + 5), arrow_tile);
     return;
   }
 
-  set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x12), arrow_tile);
-  set_vram_byte(VRAM_BACKGROUND_XY(0x12, 0x17), border_tile);
+  set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y), arrow_tile);
+  set_vram_byte(VRAM_BACKGROUND_XY(0x12, SUBMENU_Y + 5), border_tile);
 }
 
 /**
@@ -825,6 +823,7 @@ static void submenu_cursor_up(void) {
       battle_menu.scroll--;
       redraw_submenu_text();
       draw_submenu_scroll_arrows();
+      sfx_menu_move();
     }
   }
 }
@@ -850,6 +849,7 @@ static void submenu_cursor_down(void) {
       battle_menu.scroll++;
       redraw_submenu_text();
       draw_submenu_scroll_arrows();
+      sfx_menu_move();
     }
   }
 }
@@ -863,7 +863,16 @@ static void open_battle_menu(BattleMenuType m) {
   battle_menu.active_menu = m;
   switch (m) {
   case BATTLE_MENU_MAIN:
-    move_screen_cursor(prev_menu - 1);
+    switch (prev_menu) {
+    case BATTLE_MENU_ABILITY:
+      move_screen_cursor(BATTLE_CURSOR_MAIN_ABILITY);
+      break;
+    case BATTLE_MENU_ITEM:
+      move_screen_cursor(BATTLE_CURSOR_MAIN_ITEM);
+      break;
+    default:
+      move_screen_cursor(BATTLE_CURSOR_MAIN_FIGHT);
+    }
     break;
   case BATTLE_ABILITY_MONSTER_SELECT:
   case BATTLE_MENU_FIGHT:
@@ -1013,22 +1022,6 @@ static inline void update_battle_menu(void) {
   }
 }
 
-//------------------------------------------------------------------------------
-// TODO Organize animation code elsewhere
-//------------------------------------------------------------------------------
-
-typedef enum AnimationState {
-  ANIMATION_PREAMBLE,
-  ANIMATION_EFFECT,
-  ANIMATION_RESULT,
-  ANIMATION_COMPLETE,
-} AnimationState;
-
-#define ANIMATION_HP_DELTA_FACTOR 4
-
-AnimationState animation_state = ANIMATION_PREAMBLE;
-Timer effect_delay_timer;
-
 static inline uint16_t tween_hp(uint16_t hp, uint16_t target, int16_t delta) {
   if (hp == target)
     return target;
@@ -1064,19 +1057,6 @@ static inline bool animate_monster_hp_bars(void) {
   }
   return updated;
 }
-
-typedef enum MonsterDeathAnimation {
-  MONSTER_DEATH_START,
-  MONSTER_DEATH_ANIMATE,
-  MONSTER_DEATH_DONE,
-} MonsterDeathAnimation;
-
-#define MONSTER_DEATH_INITIAL_DELAY 23
-#define MONSTER_DEATH_FADE_DELAY 5
-
-Timer monster_death_timer;
-uint8_t monster_death_step = 0;
-MonsterDeathAnimation monster_death_state = MONSTER_DEATH_START;
 
 static inline void reset_monster_death_animation(void) {
   monster_death_step = 0;
@@ -1182,10 +1162,6 @@ static void animate_action_result(void) {
   }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
 /**
  * Checks for status effect changes and updates UI accordingly.
  */
@@ -1216,7 +1192,7 @@ static void fight_menu_isr(void) {
     battle_menu.active_menu != BATTLE_MENU_MAIN &&
     battle_menu.active_menu != BATTLE_MENU_FIGHT
   ) {
-    SCY_REG = 48;
+    SCY_REG = 64;
     return;
   }
 }
@@ -1273,7 +1249,7 @@ void initialize_battle(void) {
 
   // Attach an LCY=LY interrupt to handle the menu display.
   CRITICAL {
-    LYC_REG = 87 + 8;
+    LYC_REG = 90;
     STAT_REG = STATF_LYC;
     add_LCD(fight_menu_isr);
     add_LCD(nowait_int_handler);

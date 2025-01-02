@@ -228,8 +228,29 @@ const NPC floor_test2_npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+static const EncounterTable random_encounters[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 6, C_TIER,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_GOBLIN, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  { END }
+};
+
 bool floor_test2_on_init(void) {
-  // map_textbox("floor_test2\non_init()");
+  config_random_encounter(6, 1, 1, true);
   return false;
 }
 
@@ -255,6 +276,11 @@ bool floor_test2_on_exit(void) {
 }
 
 bool floor_test2_on_move(void) {
+  if (check_random_encounter()) {
+    generate_encounter(random_encounters);
+    start_battle();
+    return true;
+  }
   return false;
 }
 

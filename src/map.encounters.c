@@ -3,67 +3,97 @@
 #include "encounter.h"
 #include "monster.h"
 
+static uint8_t steps = 0;
+static uint8_t current_chance = 1;
+
+static uint8_t safe_steps = 4;
+static uint8_t chance_increase = 1;
+static uint8_t initial_chance = 1;
+static uint8_t torch_safe = true;
+
+void config_random_encounter(uint8_t s, uint8_t ic, uint8_t i, bool ts) {
+  safe_steps = s;
+  initial_chance = ic;
+  chance_increase = i;
+  torch_safe = ts;
+}
+
+bool check_random_encounter(void) {
+  if (torch_safe && player.torch_gauge > 0)
+    return false;
+
+  if (++steps <= safe_steps)
+    return false;
+
+  if (d64() > current_chance) {
+    current_chance += chance_increase;
+    return false;
+  }
+
+  steps = 0;
+  current_chance = initial_chance;
+  return true;
+}
+
 void generate_monster(
-  Monster *m,
-  MonsterType t,
-  uint8_t l,
+  Monster *monster,
+  MonsterType type,
+  uint8_t level,
   PowerTier tier
 ) NONBANKED {
-  switch (t) {
+  switch (type) {
   case MONSTER_KOBOLD:
-    kobold_generator(m, l, tier);
+    kobold_generator(monster, level, tier);
     break;
   case MONSTER_GOBLIN:
-    goblin_generator(m, l, tier);
+    goblin_generator(monster, level, tier);
     break;
   case MONSTER_ZOMBIE:
-    zombie_generator(m, l, tier);
+    zombie_generator(monster, level, tier);
     break;
   case MONSTER_BUGBEAR:
-    bugbear_generator(m, l, tier);
+    bugbear_generator(monster, level, tier);
     break;
   case MONSTER_OWLBEAR:
-    owlbear_generator(m, l, tier);
+    owlbear_generator(monster, level, tier);
     break;
   case MONSTER_GELATINOUS_CUBE:
-    gelatinous_cube_generator(m, l, tier);
+    gelatinous_cube_generator(monster, level, tier);
     break;
   case MONSTER_DISPLACER_BEAST:
-    displacer_beast_generator(m, l, tier);
+    displacer_beast_generator(monster, level, tier);
     break;
   case MONSTER_WILL_O_WISP:
-    will_o_wisp_generator(m, l, tier);
+    will_o_wisp_generator(monster, level, tier);
     break;
   case MONSTER_DEATHKNIGHT:
-    deathknight_generator(m, l, tier);
+    deathknight_generator(monster, level, tier);
     break;
   case MONSTER_MINDFLAYER:
-    mindflayer_generator(m, l, tier);
+    mindflayer_generator(monster, level, tier);
     break;
   case MONSTER_BEHOLDER:
-    beholder_generator(m, l, tier);
+    beholder_generator(monster, level, tier);
     break;
   case MONSTER_DRAGON:
-    dragon_generator(m, l, tier);
+    dragon_generator(monster, level, tier);
     break;
   }
 }
 
-void generate_encounter(EncounterTable *table) {
-  uint8_t odds = 0;
+void generate_encounter(const EncounterTable *table) {
+  uint16_t odds = 0;
   uint8_t roll = d256();
 
   while (table->odds != END) {
     odds += table->odds;
-    *debug++ = odds;
     if (roll <= odds)
       break;
     table++;
   }
 
-  *debug++ = 0xAA;
-  *debug++ = table->odds;
-  *debug++ = table->layout;
+  if (table->odds == END)
+    table--;
 
   reset_encounter(table->layout);
   Monster *monster = encounter.monsters;

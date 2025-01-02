@@ -423,12 +423,13 @@ inline uint8_t d256(void) {
  * @param offset The amount by which to offset the level.
  * @return The level with the offset applied capped to the range 1 to 99.
  */
-inline uint8_t level_offset(uint8_t level, int8_t offset) {
-  if ((int8_t)level + offset < 1)
+inline uint8_t level_offset(int8_t level, int8_t offset) {
+  int8_t result = level + offset;
+  if (result < 0)
     return 1;
-  if ((int8_t)level + offset > 99)
+  if (result > 99)
     return 99;
-  return level + offset;
+  return (uint8_t)result;
 }
 
 /**

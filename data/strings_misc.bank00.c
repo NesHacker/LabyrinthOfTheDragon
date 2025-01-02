@@ -35,3 +35,7 @@ const char str_misc_death_knight[] = "D.Knight";
 const char str_misc_mind_flayer[] = "M.Flayer";
 const char str_misc_beholder[] = "Beholder";
 const char str_misc_dragon[] = "Dragon";
+const char str_misc_druid_short[] = "DRU";
+const char str_misc_fighter_short[] = "FTR";
+const char str_misc_monk_short[] = "MNK";
+const char str_misc_sorcerer_short[] = "SORC";

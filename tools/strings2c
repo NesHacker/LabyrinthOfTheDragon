@@ -65,6 +65,10 @@ const params = {
   '%level': {
     code: '%u',
     max: 2
+  },
+  '%1u': {
+    code: '%u',
+    max: 1
   }
 };
 

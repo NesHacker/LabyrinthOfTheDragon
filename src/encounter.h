@@ -217,6 +217,21 @@ inline void on_victory(void) {
 }
 
 /**
+ * Sets parameters for random encounter checking.
+ * @param s Number of safe steps before encounter rolls begin.
+ * @param ic Initial chance for an encounter to occur.
+ * @param i Chance increment per each step if an encounter doesn't occur.
+ * @param ts Whether or not the torch keeps the player safe.
+ */
+void config_random_encounter(uint8_t s, uint8_t ic, uint8_t i, bool ts);
+
+/**
+ * Determines if a random encounter has occured.
+ * @return `true` If a random encounter has occured.
+ */
+bool check_random_encounter(void);
+
+/**
  * Generates a random encounter from the given encounter table.
  * @param table Table to use when generating the encounter.
  */

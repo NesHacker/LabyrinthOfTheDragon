@@ -35,55 +35,124 @@ const Ability druid0 = {
 
 const Ability druid1 = {
   2, str_ability_druid_bark_skin,
-  TARGET_SELF, 12, druid_bark_skin,
+  TARGET_SELF, 8, druid_bark_skin,
 };
 
 const Ability druid2 = {
   3, str_ability_druid_ligtning,
-  TARGET_SINGLE, 18, druid_lightning,
+  TARGET_SINGLE, 15, druid_lightning,
 };
 
 const Ability druid3 = {
    4, str_ability_druid_heal,
-   TARGET_SELF, 20, druid_heal,
+   TARGET_SELF, 19, druid_heal,
 };
 
 const Ability druid4 = {
    5, str_ability_druid_insect_plague,
-   TARGET_ALL, 45, druid_insect_plague,
+   TARGET_ALL, 28, druid_insect_plague,
 };
 
 const Ability druid5 = {
    6, str_ability_druid_regen,
-   TARGET_SELF, 30, druid_regen
+   TARGET_SELF, 33, druid_regen
 };
 
 //------------------------------------------------------------------------------
 
-const Ability fighter0 = { 1 };
-const Ability fighter1 = { 2 };
-const Ability fighter2 = { 3 };
-const Ability fighter3 = { 4 };
-const Ability fighter4 = { 5 };
-const Ability fighter5 = { 6 };
+const Ability fighter0 = {
+  1, str_ability_fighter_second_wind,
+  TARGET_SELF, 11, fighter_second_wind,
+};
+
+const Ability fighter1 = {
+  2, str_ability_fighter_action_surge,
+  TARGET_SINGLE, 14, fighter_action_surge,
+};
+
+const Ability fighter2 = {
+  3, str_ability_fighter_cleave,
+  TARGET_ALL, 19, fighter_cleave,
+};
+
+const Ability fighter3 = {
+  4, str_ability_fighter_trip_attack,
+  TARGET_SINGLE, 23, fighter_trip_attack,
+};
+
+const Ability fighter4 = {
+  5, str_ability_fighter_menace,
+  TARGET_ALL, 28, fighter_menace,
+};
+
+const Ability fighter5 = {
+  6, str_ability_fighter_indomitable,
+  TARGET_SELF, 35, fighter_indomitable
+};
 
 //------------------------------------------------------------------------------
 
-const Ability monk0 = { 1 };
-const Ability monk1 = { 2 };
-const Ability monk2 = { 3 };
-const Ability monk3 = { 4 };
-const Ability monk4 = { 5 };
-const Ability monk5 = { 6 };
+const Ability monk0 = {
+  1, str_ability_monk_evasion,
+  TARGET_SELF, 3, monk_evasion
+};
+
+const Ability monk1 = {
+  2, str_ability_monk_open_palm,
+  TARGET_SINGLE, 10, monk_open_palm
+};
+
+const Ability monk2 = {
+  3, str_ability_monk_still_mind,
+  TARGET_SELF, 13, monk_still_mind
+};
+
+const Ability monk3 = {
+  4, str_ability_monk_flurry,
+  TARGET_SINGLE, 19, monk_flurry
+};
+
+const Ability monk4 = {
+  5, str_ability_monk_diamond_body,
+  TARGET_SELF, 15, monk_diamond_body
+};
+
+const Ability monk5 = {
+  6, str_ability_monk_quivering_palm,
+  TARGET_SINGLE, 30, monk_quivering_palm
+};
 
 //------------------------------------------------------------------------------
 
-const Ability sorcerer0 = { 1 };
-const Ability sorcerer1 = { 2 };
-const Ability sorcerer2 = { 3 };
-const Ability sorcerer3 = { 4 };
-const Ability sorcerer4 = { 5 };
-const Ability sorcerer5 = { 6 };
+const Ability sorcerer0 = {
+  1, str_ability_sorc_darkness,
+  TARGET_ALL, 4, sorcerer_darkness
+};
+
+const Ability sorcerer1 = {
+  2, str_ability_sorc_fireball,
+  TARGET_ALL, 12, sorcerer_fireball
+};
+
+const Ability sorcerer2 = {
+  3, str_ability_sorc_haste,
+  TARGET_SELF, 15, sorcerer_haste
+};
+
+const Ability sorcerer3 = {
+  4, str_ability_sorc_sleetstorm,
+  TARGET_ALL, 20, sorcerer_sleetstorm
+};
+
+const Ability sorcerer4 = {
+  5, str_ability_sorc_disintigrate,
+  TARGET_SINGLE, 28, sorcerer_disintegrate
+};
+
+const Ability sorcerer5 = {
+  6, str_ability_sorc_wild_magic,
+  TARGET_ALL, 33, sorcerer_wild_magic
+};
 
 //------------------------------------------------------------------------------
 

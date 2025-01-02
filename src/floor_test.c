@@ -1,6 +1,7 @@
 #pragma bank 2
 
 #include "floor.h"
+#include "sound.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -360,25 +361,44 @@ bool floor_test_on_action(void) {
   return false;
 }
 
+const Exit no_no_exit = {
+  MAP_A, 0, 0,
+  MAP_A, 24, 5,
+  LEFT
+};
+
 bool floor_test_on_special(void) {
   Monster *monster = encounter.monsters;
 
   switch (map.active_map->id) {
   case MAP_A:
     if (player_at(3, 8)) {
-      reset_encounter(MONSTER_LAYOUT_2);
-      beholder_generator(monster, player.level, C_TIER);
+      reset_encounter(MONSTER_LAYOUT_3S);
+      dummy_generator(monster, 10, DUMMY_COWARD);
       monster->id = 'A';
-      dragon_generator(++monster, player.level, C_TIER);
-      monster->id = 'A';
+      dummy_generator(++monster, 10, DUMMY_COWARD);
+      monster->id = 'B';
+      dummy_generator(++monster, 10, DUMMY_COWARD);
+      monster->id = 'C';
       start_battle();
       return true;
     }
     if (player_at(3, 4)) {
-      generate_encounter(random_encounters);
+      // generate_encounter(random_encounters);
+
+      reset_encounter(MONSTER_LAYOUT_1);
+      owlbear_generator(monster, 26, C_TIER);
+      monster->id = 'A';
       start_battle();
       return true;
     }
+
+    if (player_at(7, 8)) {
+      sfx_no_no_square();
+      take_exit(&no_no_exit);
+      return true;
+    }
+
     break;
   }
   return false;

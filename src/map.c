@@ -19,25 +19,25 @@ MapSystem map = { MAP_STATE_WAITING };
 /**
  * Whether or not to initiate the wall hit sound effect.
  */
-bool play_wall_hit = true;
+static bool play_wall_hit = true;
 
 /**
  * Map tile data for the tile the hero currently occupies and those in every
  * cardinal direction (index this with a `Direction`).
  */
-MapTile local_tiles[5];
+static MapTile local_tiles[5];
 
 /**
  * Stores a buffer of tiles to be progressively loaded over the animation frames
  * of a move.
  */
-MapTile tile_buf[2 * MAP_HORIZ_LOADS];
+static MapTile tile_buf[2 * MAP_HORIZ_LOADS];
 
 /**
  * Map game object hashtable. Makes it easy to lookup game objects based on the
  * map and tile position in the map.
  */
-TileHashEntry tile_object_hashtable[TILE_HASHTABLE_SIZE];
+static TileHashEntry tile_object_hashtable[TILE_HASHTABLE_SIZE];
 
 /**
  * Holds the color of the flames for the sconces in the current floor.
@@ -349,8 +349,6 @@ static void update_npcs(void) {
       npc->row >= map.y - 1 &&
       npc->row < map.y + MAP_VERT_LOADS
     ) {
-      *debug = *debug + 1;
-
       const uint8_t tile_root =
         NPC_1_TILE_ROOT + 0x20 * pos + map.npc_walk_frame;
 
@@ -438,7 +436,6 @@ const palette_color_t torch_gauge_palettes[] = {
 };
 
 const palette_color_t magic_keys_palette[] = {
-  // Extinguished
   RGB_BLACK,
   RGB8(88, 32, 132),
   RGB8(200, 89, 213),
@@ -496,14 +493,22 @@ static void init_flames(void) {
   const Sconce *sconce;
   for (sconce = map.active_floor->sconces; sconce->id != END; sconce++) {
     const uint8_t sprite_id = get_sconce_flame_sprite(sconce->id);
-    sconce_colors[get_sconce_index(sconce->id)] = sconce->color;
+
+    if (sconce->is_lit || sconce->id == SCONCE_STATIC)
+      sconce_colors[get_sconce_index(sconce->id)] = sconce->color;
+
     switch (sconce->color) {
+    case FLAME_RED_PROP:
+      set_sprite_prop(sprite_id, FLAME_RED_PROP);
+      break;
     case FLAME_GREEN:
-      set_sprite_prop(sprite_id, 0b00001010);
+      set_sprite_prop(sprite_id, FLAME_GREEN_PROP);
       break;
     case FLAME_BLUE:
-      set_sprite_prop(sprite_id, 0b00001011);
+      set_sprite_prop(sprite_id, FLAME_BLUE_PROP);
       break;
+    default:
+      set_sprite_prop(sprite_id, FLAME_RED_PROP);
     }
   }
 }
@@ -582,23 +587,33 @@ static void clear_flames(void) {
     move_sprite(k, 0, 0);
 }
 
-
 /**
  * Initializes the player hud (torch gauge, keys, floor, etc.).
  */
 static void init_hud(void) {
-  core.load_sprite_palette(torch_gauge_palettes, TORCH_GAUGE_PALETTE, 1);
+  const palette_color_t *tgp = torch_gauge_palettes + player.torch_color * 4;
+  core.load_sprite_palette(tgp, TORCH_GAUGE_PALETTE, 1);
   core.load_sprite_palette(magic_keys_palette, MAGIC_KEY_HUD_PALETTE, 1);
 
   init_timer(map.torch_timer, TORCH_GAUGE_SPEED);
 
   set_sprite_tile(TORCH_GAUGE_FLAME, FLAME_TILE_1);
   set_sprite_prop(TORCH_GAUGE_FLAME, TORCH_GAUGE_PROP);
-  move_sprite(TORCH_GAUGE_FLAME, TORCH_GAUGE_X, TORCH_GAUGE_Y);
+
+  if (player.has_torch)
+    move_sprite(TORCH_GAUGE_FLAME, TORCH_GAUGE_X, TORCH_GAUGE_Y);
+  else
+    move_sprite(TORCH_GAUGE_FLAME, 0, 0);
 
   for (uint8_t k = TORCH_GAUGE_BODY_1; k <= TORCH_GAUGE_BODY_4; k++) {
     set_sprite_tile(k, TORCH_GAUGE_ZERO);
     set_sprite_prop(k, TORCH_GAUGE_PROP);
+
+    if (!player.has_torch) {
+      move_sprite(k, 0, 0);
+      continue;
+    }
+
     switch (k) {
     case TORCH_GAUGE_BODY_1:
       move_sprite(k, TORCH_GAUGE_X + 10, TORCH_GAUGE_Y);
@@ -623,9 +638,15 @@ static void init_hud(void) {
   set_sprite_prop(MAGIC_KEY_SPRITE_2, MAGIC_KEY_HUD_ATTR);
   set_sprite_prop(MAGIC_KEY_QTY, MAGIC_KEY_HUD_ATTR);
 
-  move_sprite(MAGIC_KEY_SPRITE_1, MAGIC_KEYS_X, MAGIC_KEYS_Y - 1);
-  move_sprite(MAGIC_KEY_SPRITE_2, MAGIC_KEYS_X, MAGIC_KEYS_Y + 7);
-  move_sprite(MAGIC_KEY_QTY, MAGIC_KEYS_X + 9, MAGIC_KEYS_Y);
+  if (player.got_magic_key) {
+    move_sprite(MAGIC_KEY_SPRITE_1, MAGIC_KEYS_X, MAGIC_KEYS_Y - 1);
+    move_sprite(MAGIC_KEY_SPRITE_2, MAGIC_KEYS_X, MAGIC_KEYS_Y + 7);
+    move_sprite(MAGIC_KEY_QTY, MAGIC_KEYS_X + 9, MAGIC_KEYS_Y);
+  } else {
+    move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
+    move_sprite(MAGIC_KEY_SPRITE_2, 0, 0);
+    move_sprite(MAGIC_KEY_QTY, 0, 0);
+  }
 }
 
 /**
@@ -701,6 +722,32 @@ static void clear_hud(void) {
   move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
   move_sprite(MAGIC_KEY_SPRITE_1, 0, 0);
   move_sprite(MAGIC_KEY_QTY, 0, 0);
+}
+
+void clear_map_sprites(void) {
+  clear_hero();
+  clear_flames();
+  clear_hud();
+  clear_npcs();
+}
+
+/**
+ * Updates the player's torch / flame.
+ */
+static void update_torch(void) {
+  if (player.torch_color == FLAME_NONE)
+    return;
+
+  if (!update_timer(map.torch_timer))
+    return;
+
+  reset_timer(map.torch_timer);
+
+  player.torch_gauge--;
+  if (player.torch_gauge == 0) {
+    player.torch_color = FLAME_NONE;
+    core.load_sprite_palette(torch_gauge_palettes, TORCH_GAUGE_PALETTE, 1);
+  }
 }
 
 /**
@@ -1144,6 +1191,11 @@ static void load_exit(void) {
   clear_npcs();
   map_fade_in(MAP_STATE_EXIT_LOADED);
   DISPLAY_ON;
+}
+
+void take_exit(Exit *exit) {
+  map.active_exit = exit;
+  map_fade_out(MAP_STATE_LOAD_EXIT);
 }
 
 /**
@@ -1730,6 +1782,7 @@ static void initialize_world_map(void) {
   text_writer.auto_page = AUTO_PAGE_OFF;
   textbox.init();
 
+  init_map_menu();
   init_hero();
   init_npcs();
   init_flames();
@@ -1766,6 +1819,10 @@ void update_map(void) {
   case MAP_STATE_WAITING:
     if (on_init())
       break;
+    if (was_pressed(J_START)) {
+      show_map_menu();
+      return;
+    }
     if (!check_action())
       check_map_move();
     break;
@@ -1799,17 +1856,20 @@ void update_map(void) {
   case MAP_STATE_EXIT_LOADED:
     start_move(map.active_exit->heading);
     break;
-  }
-
-  if (update_timer(map.torch_timer)) {
-    reset_timer(map.torch_timer);
-    if (player.torch_gauge > 0) {
-      player.torch_gauge--;
-      if (player.torch_gauge == 0)
-        core.load_sprite_palette(torch_gauge_palettes, TORCH_GAUGE_PALETTE, 1);
+  case MAP_STATE_MENU:
+    update_map_menu();
+    if (map_menu.state == MAP_MENU_CLOSED) {
+      map.state = MAP_STATE_WAITING;
+      init_hero();
+      init_hud();
+      init_flames();
+      init_npcs();
+      break;
     }
+    return;
   }
 
+  update_torch();
   update_hero();
   update_flames();
   update_hud();

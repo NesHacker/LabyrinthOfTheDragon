@@ -89,6 +89,9 @@ typedef struct Ability {
 typedef enum SpecialFlags {
   SPECIAL_BARKSKIN = FLAG(0),
   SPECIAL_HASTE = FLAG(1),
+  SPECIAL_EVASION = FLAG(2),
+  SPECIAL_SLEET_STORM = FLAG(3),
+  SPECIAL_INSTANT_KILL = FLAG(7),
 } SpecialFlags;
 
 /**
@@ -237,6 +240,10 @@ typedef struct Player {
    * Special battle flags that the player can have.
    */
   uint8_t special_flags;
+  /**
+   * Number of turns the player is tripped and prone.
+   */
+  uint8_t trip_turns;
 } Player;
 
 /**
@@ -384,6 +391,12 @@ extern const Ability druid4;
 extern const Ability druid5;
 
 void fighter_base_attack(void);
+void fighter_second_wind(void);
+void fighter_action_surge(void);
+void fighter_cleave(void);
+void fighter_trip_attack(void);
+void fighter_menace(void);
+void fighter_indomitable(void);
 
 extern const Ability fighter0;
 extern const Ability fighter1;
@@ -393,6 +406,12 @@ extern const Ability fighter4;
 extern const Ability fighter5;
 
 void monk_base_attack(void);
+void monk_evasion(void);
+void monk_open_palm(void);
+void monk_still_mind(void);
+void monk_flurry(void);
+void monk_diamond_body(void);
+void monk_quivering_palm(void);
 
 extern const Ability monk0;
 extern const Ability monk1;
@@ -402,6 +421,12 @@ extern const Ability monk4;
 extern const Ability monk5;
 
 void sorcerer_base_attack(void);
+void sorcerer_darkness(void);
+void sorcerer_fireball(void);
+void sorcerer_haste(void);
+void sorcerer_sleetstorm(void);
+void sorcerer_disintegrate(void);
+void sorcerer_wild_magic(void);
 
 extern const Ability sorcerer0;
 extern const Ability sorcerer1;

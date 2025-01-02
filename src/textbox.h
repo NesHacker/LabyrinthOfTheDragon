@@ -49,4 +49,9 @@ typedef struct TextBox {
  */
 extern TextBox textbox;
 
+/**
+ * Palette used by the text box.
+ */
+extern const palette_color_t textbox_palette[4];
+
 #endif

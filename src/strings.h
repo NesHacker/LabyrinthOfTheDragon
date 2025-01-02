@@ -156,6 +156,26 @@ extern const char str_misc_beholder[];
 extern const char str_misc_dragon[];
 
 /**
+ * "DRU"
+ */
+extern const char str_misc_druid_short[];
+
+/**
+ * "FTR"
+ */
+extern const char str_misc_fighter_short[];
+
+/**
+ * "MNK"
+ */
+extern const char str_misc_monk_short[];
+
+/**
+ * "SORC"
+ */
+extern const char str_misc_sorcerer_short[];
+
+/**
  * "Poison Spray "
  */
 extern const char str_ability_druid_poison_spray[];
@@ -191,6 +211,111 @@ extern const char str_ability_druid_insect_plague[];
 extern const char str_ability_druid_regen[];
 
 /**
+ * "Melee Attack "
+ */
+extern const char str_ability_fighter_attack[];
+
+/**
+ * "Second Wind  "
+ */
+extern const char str_ability_fighter_second_wind[];
+
+/**
+ * "Action Surge "
+ */
+extern const char str_ability_fighter_action_surge[];
+
+/**
+ * "Cleave       "
+ */
+extern const char str_ability_fighter_cleave[];
+
+/**
+ * "Trip Attack  "
+ */
+extern const char str_ability_fighter_trip_attack[];
+
+/**
+ * "Menace       "
+ */
+extern const char str_ability_fighter_menace[];
+
+/**
+ * "Indomitable  "
+ */
+extern const char str_ability_fighter_indomitable[];
+
+/**
+ * "Unarmed Atk. "
+ */
+extern const char str_ability_monk_attack[];
+
+/**
+ * "Evasion      "
+ */
+extern const char str_ability_monk_evasion[];
+
+/**
+ * "Open Palm    "
+ */
+extern const char str_ability_monk_open_palm[];
+
+/**
+ * "Still Mind   "
+ */
+extern const char str_ability_monk_still_mind[];
+
+/**
+ * "Flurry       "
+ */
+extern const char str_ability_monk_flurry[];
+
+/**
+ * "Diamond Body "
+ */
+extern const char str_ability_monk_diamond_body[];
+
+/**
+ * "Quiver. Palm "
+ */
+extern const char str_ability_monk_quivering_palm[];
+
+/**
+ * "Magic Missle "
+ */
+extern const char str_ability_sorc_attack[];
+
+/**
+ * "Darkness     "
+ */
+extern const char str_ability_sorc_darkness[];
+
+/**
+ * "Fireball     "
+ */
+extern const char str_ability_sorc_fireball[];
+
+/**
+ * "Haste        "
+ */
+extern const char str_ability_sorc_haste[];
+
+/**
+ * "Sleetstorm   "
+ */
+extern const char str_ability_sorc_sleetstorm[];
+
+/**
+ * "Disintegrate "
+ */
+extern const char str_ability_sorc_disintigrate[];
+
+/**
+ * "Wild Magic   "
+ */
+extern const char str_ability_sorc_wild_magic[];
+
+/**
  * "Poison gas erupts from your palm!"
  */
 extern const char str_battle_poison_spray[];
@@ -211,12 +336,17 @@ extern const char str_battle_bark_skin[];
 extern const char str_battle_lightning[];
 
 /**
- * "Radiant blue light falls upon you..."
+ * "Radiant green light descends..."
  */
 extern const char str_battle_heal[];
 
 /**
- * "Locusts swarm your enemies!"
+ * "You're fully healed!"
+ */
+extern const char str_battle_heal_complete[];
+
+/**
+ * "Locusts swarm!"
  */
 extern const char str_battle_insect_plague[];
 
@@ -224,6 +354,151 @@ extern const char str_battle_insect_plague[];
  * "You surge with vitality!"
  */
 extern const char str_battle_regen[];
+
+/**
+ * "You rush forward!"
+ */
+extern const char str_battle_fighter_attack[];
+
+/**
+ * "You heal %damage HP!"
+ */
+extern const char str_battle_second_wind[];
+
+/**
+ * "You surge forth!"
+ */
+extern const char str_battle_action_surge[];
+
+/**
+ * "You cleave through your enemies!"
+ */
+extern const char str_battle_cleave[];
+
+/**
+ * "You sweep your legs low..."
+ */
+extern const char str_battle_trip_attack[];
+
+/**
+ * "You topple your foe!"
+ */
+extern const char str_battle_trip_attack_hit[];
+
+/**
+ * "You growl menacingly!"
+ */
+extern const char str_battle_menace[];
+
+/**
+ * "You feel invincible!"
+ */
+extern const char str_battle_indomitable[];
+
+/**
+ * "You strike with your fists!"
+ */
+extern const char str_battle_monk_attack[];
+
+/**
+ * "You feel light on your feet!"
+ */
+extern const char str_battle_monk_evasion[];
+
+/**
+ * "You strike with an open palm!"
+ */
+extern const char str_battle_monk_open_palm[];
+
+/**
+ * "You trip %monster %c!"
+ */
+extern const char str_battle_monk_open_palm_trip[];
+
+/**
+ * "You become one..."
+ */
+extern const char str_battle_monk_still_mind[];
+
+/**
+ * "You attack with a flurry of blows!"
+ */
+extern const char str_battle_monk_flurry_of_blows[];
+
+/**
+ * "You become tough as diamond."
+ */
+extern const char str_battle_monk_diamond_body[];
+
+/**
+ * "You attack their very essence!"
+ */
+extern const char str_battle_monk_quivering_palm[];
+
+/**
+ * "And end them."
+ */
+extern const char str_battle_monk_quivering_kill[];
+
+/**
+ * "You fire a magic missle!"
+ */
+extern const char str_battle_sorc_magic_missile_one[];
+
+/**
+ * "You fire %1u magic missiles!"
+ */
+extern const char str_battle_sorc_magic_missile[];
+
+/**
+ * "You enshroud your enemies in darkness!"
+ */
+extern const char str_battle_sorc_darkness[];
+
+/**
+ * "EXPLOSSION!"
+ */
+extern const char str_battle_sorc_fireball[];
+
+/**
+ * "You speed up, a lot."
+ */
+extern const char str_battle_sorc_haste[];
+
+/**
+ * "Sleet rains down!"
+ */
+extern const char str_battle_sorc_sleetstorm[];
+
+/**
+ * "You send forth a ray of DEATH!"
+ */
+extern const char str_battle_sorc_disintegrate[];
+
+/**
+ * "And they are no more."
+ */
+extern const char str_battle_sorc_disintegrate_kill[];
+
+/**
+ * "You let loose a storm of magic!"
+ */
+extern const char str_battle_sorc_wild_magic[];
+
+/**
+ * "But it fizzles."
+ */
+extern const char str_battle_sorc_wild_magic_fizzle[];
+
+/**
+ * "And a fireball goes flying!"
+ */
+extern const char str_battle_sorc_wild_magic_fireball[];
+
+/**
+ * "And a sleetstorm descends!"
+ */
+extern const char str_battle_sorc_wild_magic_sleetstorm[];
 
 /**
  * "%monster %c shivers in fear..."
@@ -254,6 +529,26 @@ extern const char str_battle_monster_confuse_attack_other[];
  * "%monster %c stares aimlessly."
  */
 extern const char str_battle_monster_confuse_stupor[];
+
+/**
+ * "%monster %c lies prone!"
+ */
+extern const char str_battle_monster_lies_prone[];
+
+/**
+ * "%monster %c gets up."
+ */
+extern const char str_battle_monter_gets_up[];
+
+/**
+ * "But you evade!"
+ */
+extern const char str_battle_monster_miss_evaded[];
+
+/**
+ * "%monster %c slips on the ice!"
+ */
+extern const char str_battle_monster_ice_slip[];
 
 /**
  * "But you miss!"
@@ -326,12 +621,27 @@ extern const char str_battle_player_flee_success[];
 extern const char str_battle_player_flee_failure[];
 
 /**
+ * "You shiver with fear!"
+ */
+extern const char str_battle_player_scared[];
+
+/**
+ * "You lie prone!"
+ */
+extern const char str_battle_player_prone[];
+
+/**
+ * "You get up!"
+ */
+extern const char str_battle_player_get_up[];
+
+/**
  * "Victory! You gain %exp XP!"
  */
 extern const char str_battle_victory[];
 
 /**
- * "Victory! You gain no XP.\fMust have been too weak..."
+ * "Victory! But you gain no XP..."
  */
 extern const char str_battle_victory_no_xp[];
 
@@ -639,5 +949,55 @@ extern const char str_monster_zombie_bite_hit[];
  * "Zombie %c swipes at you!"
  */
 extern const char str_monster_zombie_slam[];
+
+/**
+ * "Bugbear %c screams "FOR HRUGGEK!""
+ */
+extern const char str_monster_bugbear_for_hruggek[];
+
+/**
+ * "You shiver with fear!"
+ */
+extern const char str_monster_bugbear_for_hruggek_hit[];
+
+/**
+ * "You are unimpressed."
+ */
+extern const char str_monster_bugbear_for_hruggek_miss[];
+
+/**
+ * "Bugbear %c throws a javelin!"
+ */
+extern const char str_monster_bugbear_javelin[];
+
+/**
+ * "Bugbear %c swings a club!"
+ */
+extern const char str_monster_bugbead_club[];
+
+/**
+ * "Owlbear %c pounces!"
+ */
+extern const char str_monster_owlbear_pounce[];
+
+/**
+ * "You take %damage damage and fall prone!"
+ */
+extern const char str_monster_owlbear_pounce_topple[];
+
+/**
+ * "You barely jump out of the way!"
+ */
+extern const char str_monster_owlbear_pounce_miss[];
+
+/**
+ * "Owlbear %c tears at you with beak and claw!"
+ */
+extern const char str_monster_owlbear_multi[];
+
+/**
+ * "Owlbear %c nips at you!"
+ */
+extern const char str_monster_owlbear_beak[];
 
 #endif

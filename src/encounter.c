@@ -157,15 +157,6 @@ static void update_player_status_effects(void) {
     case BUFF_DEF_UP:
       player.def = def_up(player.def_base, effect->tier);
       break;
-    /*
-    // TODO Handle these debuffs (as they come in game design)
-    case BUFF_HASTE: break;
-    case DEBUFF_POISONED: break;
-    case BUFF_REGEN: break;
-    case DEBUFF_SCARED: break;
-    case DEBUFF_PARALZYED: break;
-    case DEBUFF_CONFUSED: break;
-    */
     }
   }
 }
@@ -212,15 +203,6 @@ static void update_monster_status_effects(Monster *monster) {
     case BUFF_DEF_UP:
       monster->def = def_up(monster->def_base, effect->tier);
       break;
-    /*
-    // TODO Handle these debuffs (as they come in game design)
-    case BUFF_HASTE: break;
-    case DEBUFF_POISONED: break;
-    case BUFF_REGEN: break;
-    case DEBUFF_SCARED: break;
-    case DEBUFF_PARALZYED: break;
-    case DEBUFF_CONFUSED: break;
-    */
     }
   }
 }
@@ -254,6 +236,20 @@ inline void player_turn(void) {
     if (!effect->active)
       continue;
     switch (effect->effect) {
+    case DEBUFF_SCARED:
+      if (player.trip_turns > 0)
+        break;
+
+      const uint8_t scared_roll = d256();
+      if (fear_flee_roll(effect->tier)) {
+        player_flee();
+        return;
+      } else if (fear_shiver_roll(effect->tier)) {
+        sprintf(battle_pre_message, str_battle_player_scared);
+        skip_post_message = true;
+        return;
+      }
+      break;
     case DEBUFF_POISONED:
       const uint16_t poison = poison_hp(effect->tier, player.max_hp);
       if (player.hp <= poison) {
@@ -273,6 +269,28 @@ inline void player_turn(void) {
     case BUFF_HASTE:
       apply_special(SPECIAL_HASTE);
       break;
+    }
+  }
+
+  // Player tripped / prone
+  if (player.trip_turns > 0) {
+    player.trip_turns--;
+    if (player.trip_turns == 0)
+      sprintf(battle_pre_message, str_battle_player_get_up);
+    else
+      sprintf(battle_pre_message, str_battle_player_prone);
+    skip_post_message = true;
+    return;
+  }
+
+  // If the target died prior to the player's turn, hit a different target
+  if (!encounter.target->active) {
+    Monster *alt_target = encounter.monsters;
+    for (uint8_t k = 0; k < 3; k++, alt_target++) {
+      if (alt_target->active) {
+        encounter.target = alt_target;
+        break;
+      }
     }
   }
 
@@ -300,6 +318,42 @@ inline void monster_turn(void) {
 
   if (!monster->active)
     return;
+
+  // Sleet storm
+  if (
+    (player.special_flags & SPECIAL_SLEET_STORM) &&
+    !(monster->special_immune & SPECIAL_SLEET_STORM) &&
+    monster->trip_turns == 0
+  ) {
+    uint8_t slip_chance = 3;
+    if (player.level > 60)
+      slip_chance = 5;
+    else if (player.level > 40)
+      slip_chance = 4;
+
+    if (d8() < slip_chance) {
+      monster->trip_turns = 1;
+      sprintf(battle_pre_message, str_battle_monster_ice_slip,
+        monster->name, monster->id);
+      skip_post_message = true;
+      return;
+    }
+  }
+
+  // Special monster "tripped" status
+  if (monster->trip_turns > 0) {
+    monster->trip_turns--;
+    if (monster->trip_turns == 0) {
+      sprintf(battle_pre_message, str_battle_monter_gets_up,
+        monster->name, monster->id);
+    } else {
+      sprintf(battle_pre_message, str_battle_monster_lies_prone,
+        monster->name, monster->id);
+      monster->def = get_monster_def(level_offset(monster->level, -10), C_TIER);
+    }
+    skip_post_message = true;
+    return;
+  }
 
   StatusEffectInstance *effect = monster->status_effects;
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
@@ -506,6 +560,9 @@ void reset_encounter(MonsterLayout layout) NONBANKED {
     reset_status_effects(monster->status_effects);
     monster_deactivate(monster);
   }
+
+  player.aspect_resist = 0;
+  player.trip_turns = 0;
 }
 
 /**

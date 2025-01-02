@@ -132,7 +132,7 @@
 /**
  * Denotes the starting row in the background where the submenu graphics begin.
  */
-#define SUBMENU_Y 18
+#define SUBMENU_Y 0x14
 
 /**
  * Row where submenu body text begins.
@@ -332,6 +332,24 @@ typedef struct BattleMenu {
   ItemId item_at[INVENTORY_LEN];
   uint8_t inventory_entries;
 } BattleMenu;
+
+typedef enum AnimationState {
+  ANIMATION_PREAMBLE,
+  ANIMATION_EFFECT,
+  ANIMATION_RESULT,
+  ANIMATION_COMPLETE,
+} AnimationState;
+
+typedef enum MonsterDeathAnimation {
+  MONSTER_DEATH_START,
+  MONSTER_DEATH_ANIMATE,
+  MONSTER_DEATH_DONE,
+} MonsterDeathAnimation;
+
+#define ANIMATION_HP_DELTA_FACTOR 4
+#define MONSTER_DEATH_INITIAL_DELAY 23
+#define MONSTER_DEATH_FADE_DELAY 5
+
 
 /**
  * Default palettes for the battle system.
