@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 98
-#define DEFAULT_X 6
-#define DEFAULT_Y 12
+#define DEFAULT_X 5
+#define DEFAULT_Y 30
 #define DEFAULT_MAP MAP_A
 
 //------------------------------------------------------------------------------
@@ -17,7 +17,7 @@
 
 static const Map maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_16, floor_three_data, 32, 22 },
+  { MAP_A, BANK_16, floor_three_data, 32, 32 },
 
   { END },
 };
@@ -83,19 +83,19 @@ static const Chest chests[] = {
   */
   {
     CHEST_1,
-    MAP_A, 20, 11, false, false,
+    MAP_A, 15, 12, true, true,
     str_chest_item_2pot_1eth,
     chest_item_2pot_1eth,
   },
   {
     CHEST_2,
-    MAP_A, 24, 10, false, false,
+    MAP_A, 18, 13, false, false,
     str_chest_item_1pots,
     chest_item_1pot,
   },
   {
     CHEST_3,
-    MAP_A, 18, 3, false, false,
+    MAP_A, 3, 12, false, false,
     NULL,
     NULL,
     chest_add_magic_key,
@@ -113,7 +113,7 @@ static const Exit exits[] = {
     {
       MAP_A,        // Map the exit is on
       0, 0,         // Column and row on that map for the exit
-      FLOOR_TWO_ID,    // Floor to which the exit leads (last door, basically)
+      ID,           // Floor to which the exit leads (last door, basically)
       DEST_MAP      // Id of the destination map
       0, 0,         // Column and row
       UP,           // Way the player should be facing leaving the exit
@@ -121,22 +121,28 @@ static const Exit exits[] = {
     },
     */
 
-    {MAP_A, 2, 9, MAP_A, 21, 2, DOWN, EXIT_STAIRS},
-    {MAP_A, 21, 2, MAP_A, 2, 9, DOWN, EXIT_STAIRS},
+    {MAP_A, 6, 26, MAP_A, 3, 17, DOWN, EXIT_STAIRS},
+    {MAP_A, 3, 17, MAP_A, 6, 26, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 10, 9, MAP_A, 14, 2, DOWN, EXIT_STAIRS},
-    {MAP_A, 14, 2, MAP_A, 10, 9, DOWN, EXIT_STAIRS},
+    {MAP_A, 10, 17, MAP_A, 10, 13, UP, EXIT_STAIRS},
+    {MAP_A, 10, 13, MAP_A, 10, 17, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 29, 2, MAP_A, 4, 19, DOWN, EXIT_STAIRS},
-    {MAP_A, 4, 19, MAP_A, 29, 2, DOWN, EXIT_STAIRS},
+    {MAP_A, 5, 6, MAP_A, 4, 11, DOWN, EXIT_STAIRS},
+    {MAP_A, 4, 11, MAP_A, 5, 6, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 12, 17, MAP_A, 18, 16, DOWN, EXIT_STAIRS},
-    {MAP_A, 18, 16, MAP_A, 12, 17, DOWN, EXIT_STAIRS},
+    {MAP_A, 16, 6, MAP_A, 21, 6, DOWN, EXIT_STAIRS},
+    {MAP_A, 21, 6, MAP_A, 16, 6, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 8, MAP_A, 9, 2, DOWN, EXIT_STAIRS},
-    {MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS},
+    {MAP_A, 27, 9, MAP_A, 14, 11, DOWN, EXIT_STAIRS},
+    {MAP_A, 14, 11, MAP_A, 27, 9, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 3, 1, MAP_A, 6, 12, UP, EXIT_STAIRS, &floor_three},
+    {MAP_A, 28, 9, MAP_A, 15, 18, DOWN, EXIT_STAIRS},
+    {MAP_A, 15, 18, MAP_A, 28, 9, DOWN, EXIT_STAIRS},
+
+    {MAP_A, 29, 9, MAP_A, 29, 23, DOWN, EXIT_STAIRS},
+    {MAP_A, 29, 23, MAP_A, 29, 9, DOWN, EXIT_STAIRS},
+
+    {MAP_A, 23, 21, MAP_A, 5, 29, UP, EXIT_STAIRS, &floor_three},
 
     {END},
 };
@@ -154,9 +160,11 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
-  { MAP_A,  5, 8, UP, "Lite Fires,\n to open this\n Doors!" },
-  { MAP_A, 26, 3, UP, "Something used\n have been here." }, // Yep...
-  { MAP_A, 6, 12, DOWN, "There is no\n going back." },
+  { MAP_A, 13, 6, UP, "Make sure to\n turn off the\n telly-porta!" },
+  { MAP_A, 24, 9, UP, "Make sure to\n turn off the\n telly-porta!" },
+  { MAP_A, 23, 13, UP, "Make sure to\n turn off the\n telly-porta!" },
+  { MAP_A, 27, 13, UP, "Make sure to\n turn off the\n telly-porta!" },
+  { MAP_A, 16, 28, UP, "It's so sad\n that Steve Jobs\n Died of Ligma\x60" },
 
   { END },
 };
@@ -164,6 +172,48 @@ static const Sign signs[] = {
 //------------------------------------------------------------------------------
 // Levers
 //------------------------------------------------------------------------------
+
+static void lever_check(void) {
+  if(is_lever_on(LEVER_8) && is_lever_on(LEVER_7) && is_lever_on(LEVER_6))
+    open_door_by_id(DOOR_4);
+
+  if(is_lever_on(LEVER_8) && !is_lever_on(LEVER_7) && is_lever_on(LEVER_6))
+    open_door_by_id(DOOR_5);
+
+  if(is_lever_on(LEVER_8) && !is_lever_on(LEVER_7) && !is_lever_on(LEVER_6) && is_lever_on(LEVER_5))
+    open_door_by_id(DOOR_6);
+}
+
+static void on_lever_pull(const Lever *lever) {
+  switch (lever->id)
+  {
+  case LEVER_1:
+    open_door_by_id(DOOR_1);
+    break;
+  case LEVER_2:
+    break;
+  case LEVER_3:
+    open_door_by_id(DOOR_2);
+    break;
+  case LEVER_4:
+    open_door_by_id(DOOR_3);
+    break;
+  case LEVER_5:
+    lever_check();
+    break;
+  case LEVER_6:
+    lever_check();
+    break;
+  case LEVER_7:
+    lever_check();
+    break;
+  case LEVER_8:
+    lever_check();
+    break;
+  default:
+    break;
+  }
+}
 
 static const Lever levers[] = {
   /*
@@ -176,6 +226,16 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+  { LEVER_1, MAP_A,  4, 28, true, false, on_lever_pull },
+  { LEVER_2, MAP_A, 12, 28, true, false },
+  { LEVER_3, MAP_A,  9,  6, true, false, on_lever_pull },
+  { LEVER_4, MAP_A, 11,  6, true, false, on_lever_pull },
+
+  { LEVER_5, MAP_A, 22, 14, false, false, on_lever_pull },
+  { LEVER_6, MAP_A, 24, 14, false, false, on_lever_pull },
+  { LEVER_7, MAP_A, 26, 14, false, false, on_lever_pull },
+  { LEVER_8, MAP_A, 28, 14, false, false, on_lever_pull },
+
   { END },
 };
 
@@ -193,9 +253,15 @@ static const Door doors[] = {
     true              // Magic key required to unlock
   }
   */
-  { DOOR_1, MAP_A,  6,  8, DOOR_STAIRS_DOWN, false },
-  { DOOR_2, MAP_A, 20, 16, DOOR_NORMAL, true },
-  { DOOR_3, MAP_A,  3,  1, DOOR_NEXT_LEVEL, false },
+  { DOOR_1, MAP_A,  6, 26, DOOR_NORMAL, false },
+  { DOOR_2, MAP_A,  5,  6, DOOR_NORMAL, false },
+  { DOOR_3, MAP_A, 16,  6, DOOR_NORMAL, false },
+
+  { DOOR_4, MAP_A, 27,  9, DOOR_NORMAL, false },
+  { DOOR_5, MAP_A, 28,  9, DOOR_NORMAL, false },
+  { DOOR_6, MAP_A, 29,  9, DOOR_NORMAL, false },
+
+  { DOOR_7, MAP_A, 23, 21, DOOR_NEXT_LEVEL, false },
 
   { END }
 };
@@ -203,30 +269,6 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 // Sconces
 //------------------------------------------------------------------------------
-
-static void on_lit(const Sconce* sconce) {
-  if(is_sconce_lit(SCONCE_2))
-    light_sconce(SCONCE_6, FLAME_RED);
-
-  if(is_sconce_lit(SCONCE_3))
-    light_sconce(SCONCE_7, FLAME_GREEN);
-
-  if(is_sconce_lit(SCONCE_4))
-    light_sconce(SCONCE_8, FLAME_BLUE);
-
-  if(is_sconce_lit(SCONCE_5))
-    light_sconce(SCONCE_1, FLAME_RED);
-
-  if(
-    is_sconce_lit(SCONCE_5) &&
-    is_sconce_lit(SCONCE_6) &&
-    is_sconce_lit(SCONCE_7) &&
-    is_sconce_lit(SCONCE_8)
-    ) {
-    //open the door dave
-    open_door_by_id(DOOR_1);
-  }
-}
 
 static const Sconce sconces[] = {
   /*
@@ -238,43 +280,56 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  { SCONCE_STATIC, MAP_A, 4, 14, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 13, 12, true, FLAME_RED },
-
-  { SCONCE_2, MAP_A,  8, 16, false, FLAME_RED, on_lit },
-  { SCONCE_3, MAP_A, 23, 16, false, FLAME_RED, on_lit },
-  { SCONCE_4, MAP_A, 15,  2, false, FLAME_RED, on_lit },
-  { SCONCE_5, MAP_A, 20,  2, false, FLAME_RED, on_lit },
-
-  { SCONCE_6, MAP_A, 4,  7, false, FLAME_RED },
-  { SCONCE_7, MAP_A, 5,  7, false, FLAME_RED },
-  { SCONCE_8, MAP_A, 7,  7, false, FLAME_RED },
-  { SCONCE_1, MAP_A, 8,  7, false, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 12, 26, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 14, 18, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 16, 18, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 10,  5, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 25, 13, true, FLAME_RED },
 
   { END }
 };
 
 //------------------------------------------------------------------------------
-// NPCs (IMPLS YET)
+// NPCs (NOT IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
-  set_door_open(DOOR_3);
-  set_npc_invisible(NPC_1);
+static void on_boss_victory(void) NONBANKED {
+  set_door_open(DOOR_7);
+  set_npc_invisible(NPC_2);
 }
 
-static bool boss_encounter(void) {
+static void on_elite_victory(void) NONBANKED {
+  grant_ability(ABILITY_1);
+  set_npc_invisible(NPC_1);
+  map_textbox("You get a new ability!");
+}
+
+static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
   kobold_generator(monster, player.level, A_TIER);
   monster->id = 'A';
-  set_on_victory(boss_victory);
+  set_on_victory(on_boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_elite_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  kobold_generator(monster, player.level, A_TIER);
+  monster->id = 'A';
+  set_on_victory(on_elite_victory);
   start_battle();
   return true;
 }
 
 static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action("GROWL!", boss_encounter);
+  if (npc->id == NPC_2){
+    map_textbox_with_action("FIGHT ME!", on_boss_encouter);
+  } else {
+    map_textbox_with_action("I LOVE YOU!", on_elite_encouter);
+  }
   return true;
 }
 
@@ -288,7 +343,8 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-  { NPC_1, MAP_A, 3, 3, MONSTER_KOBOLD, on_npc_action },
+  { NPC_1, MAP_A, 15, 20, MONSTER_KOBOLD, on_npc_action },
+  { NPC_2, MAP_A, 23, 22, MONSTER_KOBOLD, on_npc_action },
 
   { END }
 };
@@ -327,10 +383,10 @@ static bool floor_on_move(void) {
 // Area Definition (shouldn't have to touch this)
 //------------------------------------------------------------------------------
 const Floor floor_three = {
-  ID,                              // Id
-  DEFAULT_MAP,                     // Default Map
+  ID,                   // Id
+  DEFAULT_MAP,          // Default Map
   DEFAULT_X, DEFAULT_Y, // Default Starting (x, y)
-  palettes,                        // Palettes
+  palettes,             // Palettes
   maps,
   exits,
   chests,
