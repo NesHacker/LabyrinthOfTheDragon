@@ -10,19 +10,29 @@
 
 extern const Floor floor_test;
 extern const Floor floor_test2;
-extern const Floor floor_one;
-extern const Floor floor_two;
-extern const Floor floor_three;
-extern const Floor floor_four;
-extern const Floor floor_five;
-extern const Floor floor_six;
-extern const Floor floor_seven;
-extern const Floor floor_eight;
+extern const Floor floor1;
+extern const Floor floor2;
+extern const Floor floor3;
+extern const Floor floor4;
+extern const Floor floor5;
+extern const Floor floor6;
+extern const Floor floor7;
+extern const Floor floor8;
 
 // Floor bank entry externs (define these in `floor.banks.c`)
 
+extern const FloorBank bank_floor1;
+extern const FloorBank bank_floor2;
+extern const FloorBank bank_floor3;
+extern const FloorBank bank_floor4;
+extern const FloorBank bank_floor5;
+extern const FloorBank bank_floor6;
+extern const FloorBank bank_floor7;
+extern const FloorBank bank_floor8;
+
 extern const FloorBank bank_floor_test;
 extern const FloorBank bank_floor_test2;
+
 
 /**
  * Set this as a custom chest handler to have the chest give the player a

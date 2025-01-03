@@ -35,7 +35,7 @@ void test_big_map(void) {
 
   player.has_torch = true;
   grant_ability(ABILITY_ALL);
-  set_active_floor(&floor_one);
+  set_active_floor(&bank_floor1);
   init_world_map();
   game_state = GAME_STATE_WORLD_MAP;
 }
@@ -46,7 +46,7 @@ void test_level(void) {
   player.has_torch = true;
   grant_ability(ABILITY_ALL);
 
-  set_active_floor(&floor_three);
+  set_active_floor(&bank_floor3);
   // set_active_floor(&bank_floor_test2);
   // set_active_floor(&bank_floor_test);
   init_world_map();

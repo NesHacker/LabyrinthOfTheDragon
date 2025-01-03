@@ -199,6 +199,25 @@ addNamespace('floor_test', 2, {
   'growl': "GROWL!",
 })
 
+addNamespace('floor_common', 2, {
+  'growl': "GROWL!",
+  'light_fires': "Light these fires to open this door!",
+  'missing': "Something used to have been here...",
+  'no_return': "There is no going back!",
+  'steve_jobs': "It's so sad that Steve Jobs Died of Ligma...",
+  'tbd': "Placeholders are a big no-no in game development!",
+  'new_ability': "You get an ability!",
+  'fight_me': "Fight Me!",
+  'love': "I LOVE YOU!",
+})
+
+addNamespace('floor_three', 2, {
+  'lever_puzzle': "Levers below open these doors.",
+  'lever_one': "Nine to the boss, Five to a good fight",
+  'lever_two': "Try them all if you have a key",
+
+})
+
 addNamespace('chest_item', 2, {
   '2pot_1eth': 'You get 2 potions and an ether!',
   '1pot': 'You get a potion!',
