@@ -211,6 +211,46 @@
 #define NPC_BASE_PROP 0x00
 
 /**
+ * Maximum maps per floor.
+ */
+#define MAX_MAPS 4 + 1
+
+/**
+ * Maximum exits per floor.
+ */
+#define MAX_EXITS 24 + 1
+
+/**
+ * Maximum chests per floor.
+ */
+#define MAX_CHESTS 8 + 1
+
+/**
+ * Maximum signs per floor.
+ */
+#define MAX_SIGNS 8 + 1
+
+/**
+ * Maximum levers per floor.
+ */
+#define MAX_LEVERS 8 + 1
+
+/**
+ * Max sconces per floor.
+ */
+#define MAX_SCONCES 16 + 1
+
+/**
+ * Max NPCs per floor.
+ */
+#define MAX_NPCS 2 + 1
+
+/**
+ * Max doors per floor.
+ */
+#define MAX_DOORS 12 + 1
+
+/**
  * Sconce flame sprite ids.
  */
 typedef enum SconceFlames {
@@ -363,9 +403,18 @@ typedef enum MapState {
    */
   MAP_STATE_LOAD,
   /**
+   * Denotes that the textbox should be opened with the preset text.
+   */
+  MAP_STATE_TEXTBOX_OPEN,
+  /**
    * Denotes that the textbox is currently displayed.
    */
   MAP_STATE_TEXTBOX,
+  /**
+   * Denotes that battle was initiated from outside the map system and that
+   * gameplay should be transitioned.
+   */
+  MAP_STATE_INITIATE_BATTLE,
   /**
    * Map is being transitioned to the battle system.
    */
@@ -378,6 +427,10 @@ typedef enum MapState {
    * The map menu is being shown or animated.
    */
   MAP_STATE_MENU,
+  /**
+   * The map should teleport the player to the specified location.
+   */
+  MAP_STATE_TELEPORT,
 } MapState;
 
 /**
@@ -472,7 +525,7 @@ typedef struct Exit {
   /**
    * Floor for the destination (optional).
    */
-  struct Floor *to_floor;
+  struct FloorBank *to_floor;
 } Exit;
 
 /**
@@ -630,23 +683,33 @@ typedef enum DoorId {
 /**
  * Type for the door.
  */
-typedef enum DoorType {
+typedef enum DoorOpenGraphic {
   DOOR_NORMAL = 0x4E,
   DOOR_STAIRS_UP = 0x60,
   DOOR_STAIRS_DOWN = 0x88,
   DOOR_NEXT_LEVEL = 0x82,
-} DoorType;
+} DoorOpenGraphic;
 
 /**
- * A door that can be opened, closed, and locked. WARNING: NOT IMPLEMENTED YET.
+ * Closed graphics for doors.
+ */
+typedef enum DoorClosedGraphic {
+  DOOR_CLOSED_NORMAL = 0x64,
+  DOOR_CLOSED_KEY = 0x62,
+  DOOR_CLOSED_NEXT_LEVEL = 0x84,
+} DoorClosedGraphic;
+
+/**
+ * A door that can be opened, closed, and locked.
  */
 typedef struct Door {
   DoorId id;
   MapId map_id;
   int8_t col;
   int8_t row;
-  DoorType type;
+  DoorOpenGraphic type;
   bool magic_key_unlock;
+  bool is_open;
 } Door;
 
 /**
@@ -690,7 +753,7 @@ typedef enum FlameColor {
 #define FLAME_BLUE_PROP 0b00001011
 
 /**
- * A sconce that can be lit. WARNING: Not yet implemented.
+ * A sconce that can be lit.
  */
 typedef struct Sconce {
   /**
@@ -732,7 +795,7 @@ typedef enum NpcId {
 } NpcId;
 
 /**
- * An NPC that can inhabit a map. WARNING: not yet implemented.
+ * An NPC that can inhabit a map.
  */
 typedef struct NPC {
   /**
@@ -772,10 +835,6 @@ typedef struct Floor {
    */
   uint8_t id;
   /**
-   * Index of the starting map for the floor.
-   */
-  uint8_t default_map;
-  /**
    * Default starting column for the player on the starting map.
    */
   uint8_t default_x;
@@ -784,9 +843,8 @@ typedef struct Floor {
    */
   uint8_t default_y;
   /**
-   * Palettes to use for the dungeon.
    */
-  const palette_color_t *palettes;
+  palette_color_t *palettes;
   /**
    * List of all maps for the floor.
    */
@@ -824,28 +882,10 @@ typedef struct Floor {
    */
   const bool (*on_init)(void);
   /**
-   * Called on game loop update when the map is active.
-   */
-  const void (*on_update)(void);
-  /**
-   * Called on VBLANK draw when the map is active.
-   */
-  const void (*on_draw)(void);
-  /**
-   * Called when the player interacts by pressing the "A" button.
-   * @return `true` to prevent the default action behavior.
-   */
-  const bool (*on_action)(void);
-  /**
    * Called when the map is active and the player moves into a special tile.
    * @return `true` if the map should prevent default behavior.
    */
   const bool (*on_special)(void);
-  /**
-   * Called when the map is active and the player moves into an "exit" tile.
-   * @return `true` if the map should prevent default behavior.
-   */
-  const bool (*on_exit)(void);
   /**
    * Called when the map is active and the player moves into a floor tile.
    * @param col The column for the tile.
@@ -854,6 +894,20 @@ typedef struct Floor {
    */
   const bool (*on_move)(void);
 } Floor;
+
+/**
+ * Data bank / floor data pair for the map system's floor loader.
+ */
+typedef struct FloorBank {
+  /**
+   * Bank the floor is on.
+   */
+  uint8_t bank;
+  /**
+   * Pointer to the floor's data.
+   */
+  Floor *floor;
+} FloorBank;
 
 /**
  * Number of entries in the map object hash table.
@@ -1093,12 +1147,26 @@ typedef struct MapSystem {
    * Current walk frame for NPCs.
    */
   uint8_t npc_walk_frame;
+  /**
+   * Message to set when opening the map textbox.
+   */
+  const char *textbox_message;
+  /**
+   * Each bit represents a "changed" flag for doors. This will be set if the
+   * state of the door is changed via scripts, etc.
+   */
+  uint8_t doors_updated;
 } MapSystem;
 
 /**
  * Main state for the map system.
  */
 extern MapSystem map;
+
+/**
+ * Exit used for the `teleport` function.
+ */
+extern Exit teleport_exit;
 
 /**
  * Sets the position of the active map. Note this method will not re-render the
@@ -1126,7 +1194,7 @@ inline void set_hero_position(int8_t x, int8_t y) {
  * to initializing map system controller.
  * @param floor Floor to set.
  */
-void set_active_floor(Floor *floor) BANKED;
+void set_active_floor(FloorBank *f) BANKED;
 
 /**
  * Initialize the world map controller.
@@ -1148,18 +1216,14 @@ void draw_world_map(void);
  * called by area handlers to start battle after initalizing the `encounter`
  * state used by the battle system.
  */
-void start_battle(void);
+inline void start_battle(void) {
+  map.state = MAP_STATE_INITIATE_BATTLE;
+}
 
 /**
  * Called when returning to the map system from the battle system.
  */
 void return_from_battle(void) NONBANKED;
-
-/**
- * Opens a door with the given id.
- * @param id Id of the door to open.
- */
-void open_door_by_id(DoorId id);
 
 /**
  * Clears all active map sprites.
@@ -1194,12 +1258,32 @@ void hide_map_menu(void);
 void take_exit(Exit *exit);
 
 /**
+ * Transports a player to the given map, column, and row.
+ * @param map Id of the map.
+ * @param col Column in the map.
+ * @param row Row in the map.
+ * @param heading Direction the player should "walk out" of the destination.
+ */
+inline void teleport(
+  MapId to_map,
+  uint8_t col,
+  uint8_t row,
+  Direction heading
+) {
+  teleport_exit.to_map = to_map;
+  teleport_exit.to_col = col;
+  teleport_exit.to_row = row;
+  teleport_exit.heading = heading;
+  map.state = MAP_STATE_TELEPORT;
+}
+
+/**
  * Opens a textbox while on the world map.
  * @param text Text to display in the text box.
  */
 inline void map_textbox(const char *text) {
-  map.state = MAP_STATE_TEXTBOX;
-  textbox.open(text);
+  map.state = MAP_STATE_TEXTBOX_OPEN;
+  map.textbox_message = text;
 }
 
 /**
@@ -1244,70 +1328,6 @@ inline bool player_facing(uint8_t col, uint8_t row) {
     player_at_facing(col, row - 1, DOWN) ||
     player_at_facing(col, row + 1, UP)
   );
-}
-
-/**
- * Executes the active area's `on_init` callback if one is set.
- */
-inline bool on_init(void) {
-  if (!map.execute_on_init)
-    return false;
-  map.execute_on_init = false;
-  if (map.active_floor->on_init)
-    return map.active_floor->on_init();
-  return false;
-}
-
-/**
- * Executes the active area's `on_update` callback if one is set.
- */
-inline void on_update(void) {
-  if (map.active_floor->on_update)
-    map.active_floor->on_update();
-}
-
-/**
- * Executes the active area's `on_draw` callback if one is set.
- */
-inline void on_draw(void) {
-  if (map.active_floor->on_draw)
-    map.active_floor->on_draw();
-}
-
-/**
- * Executes the active area's `on_action` callback if one is set.
- */
-inline bool on_action(void) {
-  if (map.active_floor->on_action)
-    return map.active_floor->on_action();
-  return false;
-}
-
-/**
- * Executes the active area's `on_special` callback if one is set.
- */
-inline bool on_special(void) {
-  if (map.active_floor->on_special)
-    return map.active_floor->on_special();
-  return false;
-}
-
-/**
- * Executes the active area's `on_exit` callback if one is set.
- */
-inline bool on_exit(void) {
-  if (map.active_floor->on_exit)
-    return map.active_floor->on_exit();
-  return false;
-}
-
-/**
- * Executes the active area's `on_move` callback if one is set.
- */
-inline bool on_move(void) {
-  if (map.active_floor->on_move)
-    return map.active_floor->on_move();
-  return false;
 }
 
 /**
@@ -1406,14 +1426,6 @@ inline void unstick_lever(LeverId id) {
 }
 
 /**
- * Sets a door to open. Has no effect on graphics.
- * @param id Id for the door to open.
- */
-inline void set_door_open(DoorId id) {
-  map.flags_door_locked &= ~id;
-}
-
-/**
  * @return If a door is open or not.
  * @param id Id of the door to test.
  */
@@ -1422,19 +1434,36 @@ inline bool is_door_open(DoorId id) {
 }
 
 /**
- * Sets a door to be locked. Has no effect on graphics.
- * @param id Id for the door to lock.
+ * Closes a door with the given id.
+ * @param id Id of the door to close.
  */
-inline void set_door_locked(DoorId id) {
+inline void close_door(DoorId id) {
+  if (!is_door_open(id))
+    return;
   map.flags_door_locked |= id;
+  map.doors_updated |= id;
 }
 
 /**
- * @return `true` if the door with the given id is locked.
- * @param id Id of the door to test.
+ * Opens the door with the given id.
+ * @param id Id of the door to open.
  */
-inline bool is_locked_door(DoorId id) {
-  return map.flags_door_locked & id;
+inline void open_door(DoorId id) {
+  if (is_door_open(id))
+    return;
+  map.flags_door_locked &= ~id;
+  map.doors_updated |= id;
+}
+
+/**
+ * Toggles a door open and closed.
+ * @param id Id of the door to toggle.
+ */
+inline void toggle_door(DoorId id) {
+  if (is_door_open(id))
+    close_door(id);
+  else
+    open_door(id);
 }
 
 /**

@@ -32,6 +32,21 @@ typedef enum GameRomBank {
   BANK_14,
   BANK_15,
   BANK_16,
+  BANK_17,
+  BANK_18,
+  BANK_19,
+  BANK_20,
+  BANK_21,
+  BANK_22,
+  BANK_23,
+  BANK_24,
+  BANK_25,
+  BANK_26,
+  BANK_27,
+  BANK_28,
+  BANK_29,
+  BANK_30,
+  BANK_31,
 } GameRomBank;
 
 /**

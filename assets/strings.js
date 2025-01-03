@@ -187,6 +187,18 @@ addNamespace('maps', 2, {
   'sign_monster_no_fire': 'Monsters fear fire!',
 });
 
+addNamespace('floor_test', 2, {
+  'metal_skull': 'This skull is so metal!',
+  'glowing_eyes': 'A pair of glowing eyes peers back...',
+  'click': 'You hear a click...',
+  'creak': 'The other lever creaks.',
+  'groan': 'The other lever groans.',
+  'chest_click': 'The chest clicks.',
+  'no_back': "You cannot return...",
+  'door_opens': "The door opens!",
+  'growl': "GROWL!",
+})
+
 addNamespace('chest_item', 2, {
   '2pot_1eth': 'You get 2 potions and an ether!',
   '1pot': 'You get a potion!',

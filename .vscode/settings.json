@@ -25,6 +25,8 @@
     "text_writer.h": "c",
     "encounter.h": "c",
     "tables.h": "c",
-    "stats.h": "c"
+    "stats.h": "c",
+    "stdlib.h": "c",
+    "stdio.h": "c"
   }
 }
