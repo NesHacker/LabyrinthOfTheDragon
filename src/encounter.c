@@ -485,8 +485,6 @@ void after_action(void) {
   }
 
   encounter.victory = !encounter.player_died && !monster_active;
-  if (encounter.victory)
-    on_victory();
 }
 
 void set_player_fight(Monster *target) {

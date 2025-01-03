@@ -189,7 +189,7 @@ typedef struct Encounter {
    * Callback to execute upon encounter success. This callback is reset after
    * being called.
    */
-  void (*on_victory)(void) NONBANKED;
+  void (*on_victory)(void);
 } Encounter;
 
 /**
@@ -204,16 +204,6 @@ extern Encounter encounter;
  */
 inline void set_on_victory(void (*callback)(void) NONBANKED) {
   encounter.on_victory = callback;
-}
-
-/**
- * Calls and then resets the on_victory callback.
- */
-inline void on_victory(void) {
-  if (encounter.on_victory) {
-    encounter.on_victory();
-    encounter.on_victory = NULL;
-  }
 }
 
 /**

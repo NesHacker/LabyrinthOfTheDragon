@@ -2007,6 +2007,15 @@ void return_from_battle(void) NONBANKED {
   map_fade_in(MAP_STATE_WAITING);
 }
 
+void on_victory(void) NONBANKED {
+  const uint8_t _prev_bank = CURRENT_BANK;
+  SWITCH_ROM(floor_bank->bank);
+  void (*callback)(void) = encounter.on_victory;
+  callback();
+  encounter.on_victory = NULL;
+  SWITCH_ROM(_prev_bank);
+}
+
 bool after_textbox(void) NONBANKED{
   if (!map.after_textbox)
     return false;
@@ -2032,6 +2041,10 @@ void update_map(void) {
 
   switch (map.state) {
   case MAP_STATE_WAITING:
+    if (encounter.on_victory) {
+      on_victory();
+      break;
+    }
     if (on_init())
       break;
     if (was_pressed(J_START)) {

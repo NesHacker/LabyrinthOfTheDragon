@@ -269,6 +269,10 @@ static bool on_init(void) {
   return false;
 }
 
+static void on_victory_test(void) {
+  map_textbox(str_ability_druid_bark_skin);
+}
+
 static bool on_special(void) {
   if (map.active_map->id != MAP_A)
     return false;
@@ -278,6 +282,7 @@ static bool on_special(void) {
     Monster *monster = encounter.monsters;
     dummy_generator(monster, 10, DUMMY_NORMAL);
     monster->id = 'A';
+    set_on_victory(on_victory_test);
     start_battle();
   }
 
