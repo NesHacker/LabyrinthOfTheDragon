@@ -115,6 +115,7 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
+  // TODO: make this sign say a thing or... remove the sign
   { MAP_A, 13, 6, UP, str_floor_common_tbd },
   { MAP_A, 24, 9, UP, str_floor_three_lever_puzzle },
   { MAP_A, 23, 13, UP, str_floor_three_lever_one },
@@ -273,7 +274,7 @@ static void on_elite_victory(void) NONBANKED {
 static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
+  kobold_generator(monster, player.level, B_TIER);
   monster->id = 'A';
   set_on_victory(on_boss_victory);
   start_battle();
@@ -283,7 +284,7 @@ static bool on_boss_encouter(void) {
 static bool on_elite_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
+  kobold_generator(monster, player.level, B_TIER);
   monster->id = 'A';
   set_on_victory(on_elite_victory);
   start_battle();
@@ -319,15 +320,54 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+static const EncounterTable random_encounters[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 6, C_TIER,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_GOBLIN, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  { END }
+};
+
+
 static bool on_init(void) {
+  // TODO: 600 is to high. debugging in progress. revert to lower value.
+  config_random_encounter(600, 1, 1, true);
   return false;
 }
 
 static bool on_special(void) {
+  if (player_at(20, 15) &&
+      (is_lever_on(LEVER_8) ||
+       is_lever_on(LEVER_7) || 
+       is_lever_on(LEVER_6) ||
+       !is_lever_on(LEVER_5))){
+    teleport(MAP_A, 25, 15, LEFT);
+    return true;
+  }
+
+
   return false;
 }
 
 static bool on_move(void) {
+  if (check_random_encounter()) {
+    generate_encounter(random_encounters);
+    start_battle();
+    return true;
+  }
   return false;
 }
 

@@ -86,7 +86,7 @@ static const Exit exits[] = {
     {MAP_A, 6, 18, MAP_A, 6, 13, UP, EXIT_STAIRS},
     {MAP_A, 6, 13, MAP_A, 6, 18, DOWN, EXIT_STAIRS},
 
-    {MAP_A, 6, 3, MAP_A, 6, 12, UP, EXIT_STAIRS, &bank_floor2},
+    {MAP_A, 6, 3, MAP_A, 4, 19, UP, EXIT_STAIRS, &bank_floor2},
 
     {END},
 };
@@ -226,51 +226,43 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+static const EncounterTable random_encounters[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 6, C_TIER,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_GOBLIN, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  { END }
+};
+
 static bool on_init(void) {
-  // map_textbox("You have wandered\ninto a place\n of danger!");
+  config_random_encounter(6, 1, 1, true);
   return false;
 }
 
 static bool on_special(void) {
-  // 21, 19
-  if (player_at(21, 19)) {
-    Monster *monster = encounter.monsters;
-    reset_encounter(MONSTER_LAYOUT_1);
-    kobold_generator(monster, player.level, C_TIER);
-    monster->id = 'A';
-    start_battle();
-    return true;
-  }
-
   return false;
 }
 
-uint8_t enc_reset = 4;
-uint8_t enc_step   = 0;
-uint8_t enc_chance = 1;
-
 static bool on_move(void) {
-  enc_step++;
-  if (player.torch_gauge > 0)
-    return false;
-
-  if (enc_step < enc_reset)
-    return false;
-
-  if (d128() >= enc_chance) {
-    enc_chance++;
-    return false;
+  if (check_random_encounter()) {
+    generate_encounter(random_encounters);
+    start_battle();
+    return true;
   }
-
-  enc_step = 0;
-  enc_chance = 1;
-
-  Monster *monster = encounter.monsters;
-  reset_encounter(MONSTER_LAYOUT_1);
-  beholder_generator(monster, player.level, C_TIER);
-  monster->id = 'A';
-  start_battle();
-  return true;
+  return false;
 }
 
 //------------------------------------------------------------------------------

@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 6
-#define DEFAULT_Y 12
+#define DEFAULT_X 4
+#define DEFAULT_Y 19
 
 //------------------------------------------------------------------------------
 // Maps
@@ -93,7 +93,7 @@ static const Exit exits[] = {
   { MAP_A, 6, 8, MAP_A, 9, 2, DOWN, EXIT_STAIRS },
   { MAP_A, 9, 2, MAP_A, 6, 8, DOWN, EXIT_STAIRS },
 
-  { MAP_A, 3, 1, MAP_A, 6, 12, UP, EXIT_STAIRS, &bank_floor3 },
+  { MAP_A, 3, 1, MAP_A, 5, 30, UP, EXIT_STAIRS, &bank_floor3 },
 
   { END },
 };
@@ -173,7 +173,7 @@ static void on_lit(const Sconce* sconce) {
   if (is_sconce_lit(SCONCE_4))
     light_sconce(SCONCE_8, FLAME_BLUE);
 
-  if (is_sconce_lit(SCONCE_5))
+  if (is_sconce_lit(SCONCE_5)){ }
     light_sconce(SCONCE_1, FLAME_RED);
 
   if (
@@ -256,7 +256,29 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+static const EncounterTable random_encounters[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 6, C_TIER,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_GOBLIN, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 7, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_KOBOLD, 5, C_TIER,
+  },
+  { END }
+};
+
 static bool on_init(void) {
+  config_random_encounter(6, 1, 1, true);
   return false;
 }
 
@@ -265,6 +287,11 @@ static bool on_special(void) {
 }
 
 static bool on_move(void) {
+  if (check_random_encounter()) {
+    generate_encounter(random_encounters);
+    start_battle();
+    return true;
+  }
   return false;
 }
 

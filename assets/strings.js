@@ -215,7 +215,6 @@ addNamespace('floor_three', 2, {
   'lever_puzzle': "Levers below open these doors.",
   'lever_one': "Nine to the boss, Five to a good fight",
   'lever_two': "Try them all if you have a key",
-
 })
 
 addNamespace('chest_item', 2, {

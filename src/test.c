@@ -41,13 +41,11 @@ void test_big_map(void) {
 }
 
 void test_level(void) {
-  init_test_player(CLASS_SORCERER, 70);
+  init_test_player(CLASS_TEST, 70);
 
   player.has_torch = true;
   grant_ability(ABILITY_ALL);
 
-  set_active_floor(&bank_floor3);
-  // set_active_floor(&bank_floor_test2);
-  // set_active_floor(&bank_floor_test);
+  set_active_floor(&bank_floor4);
   init_world_map();
 }
