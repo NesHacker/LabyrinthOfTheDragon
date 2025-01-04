@@ -209,6 +209,7 @@ addNamespace('floor_common', 2, {
   'new_ability': "You get an ability!",
   'fight_me': "Fight Me!",
   'love': "I LOVE YOU!",
+  'strange_wind': "You feel a strong breeze from the north.",
 })
 
 addNamespace('floor_three', 2, {

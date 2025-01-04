@@ -14,3 +14,4 @@ const char str_floor_common_tbd[] = "Placeholders are a\n big no-no in \ngame de
 const char str_floor_common_new_ability[] = "You get an \nability!";
 const char str_floor_common_fight_me[] = "Fight Me!";
 const char str_floor_common_love[] = "I LOVE YOU!";
+const char str_floor_common_strange_wind[] = "You feel a strong \nbreeze from the \nnorth.";

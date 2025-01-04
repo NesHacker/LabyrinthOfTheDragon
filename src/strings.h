@@ -821,6 +821,11 @@ extern const char str_floor_common_fight_me[];
 extern const char str_floor_common_love[];
 
 /**
+ * "You feel a strong breeze from the north."
+ */
+extern const char str_floor_common_strange_wind[];
+
+/**
  * "Levers below open these doors."
  */
 extern const char str_floor_three_lever_puzzle[];

@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 7
-#define DEFAULT_Y 30
+#define DEFAULT_X 14
+#define DEFAULT_Y 14
 
 //------------------------------------------------------------------------------
 // Maps
@@ -17,6 +17,7 @@
 static const Map maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_16, floor_five_data, 32, 32 },
+  { MAP_B, BANK_16, floor_five_sub_data, 15, 10 },
 
   { END },
 };
@@ -38,6 +39,12 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
+  { CHEST_1, MAP_A,  2,  2, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_1, MAP_A,  9, 10, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_1, MAP_A,  6, 16, false, false, str_chest_item_2pot_1eth, chest_item_2pot_1eth },
+  { CHEST_1, MAP_A, 21, 18, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_1, MAP_A, 23, 11, false, false, NULL, NULL, chest_add_magic_key },
+
   { END },
 };
 
@@ -57,6 +64,15 @@ static const Exit exits[] = {
     EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
   },
   */
+  // Boss
+  { MAP_A, 3, 18, MAP_B, 3, 8, UP, EXIT_STAIRS },
+  { MAP_B, 3, 8, MAP_A, 3, 18, DOWN, EXIT_STAIRS },
+
+  // Elite
+  { MAP_A, 26, 6, MAP_B, 12, 4, UP, EXIT_STAIRS },
+  { MAP_B, 12, 4, MAP_A, 26, 6, DOWN, EXIT_STAIRS },
+
+  { MAP_B, 3, 2, MAP_A, 3, 2, DOWN, EXIT_STAIRS, &bank_floor5 },
   { END },
 };
 
@@ -73,6 +89,10 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
+  { MAP_A,  2, 18, UP, str_floor_common_tbd }, // Boss
+  { MAP_A, 13, 14, UP, str_floor_common_tbd }, // Entrance
+  { MAP_A, 25,  6, UP, str_floor_common_tbd }, // Elite
+
   { END },
 };
 
@@ -109,16 +129,14 @@ static const Door doors[] = {
     false,            // Does the door start opened?
   }
   */
+  { DOOR_1, MAP_B,  3, 2, DOOR_NEXT_LEVEL, false },
+
   { END }
 };
 
 //------------------------------------------------------------------------------
 // Sconces
 //------------------------------------------------------------------------------
-
-static void on_lit(const Sconce* sconce) {
-
-}
 
 static const Sconce sconces[] = {
   /*
@@ -130,6 +148,30 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
+  // BOSS
+  { SCONCE_STATIC, MAP_B, 2, 2, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_B, 4, 2, true, FLAME_RED },
+
+  // ELITE
+  { SCONCE_STATIC, MAP_B, 11,  1, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_B, 13, 1, true, FLAME_RED },
+
+  // MAZE
+  { SCONCE_STATIC, MAP_A, 7, 3, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 11, 4, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 27, 6, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 30, 7, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 28, 11, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 15, 14, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 23, 14, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 4, 18, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 12, 20, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 18, 20, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 8, 23, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 4, 26, true, FLAME_RED },
+  // { SCONCE_STATIC, MAP_A, 14, 26, true, FLAME_RED },
+  // { SCONCE_STATIC, MAP_A, 29, 27, true, FLAME_RED },
+
   { END }
 };
 
@@ -137,21 +179,44 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
+static void on_boss_victory(void) NONBANKED {
+  open_door(DOOR_1);
+  set_npc_invisible(NPC_1);
 }
 
-static bool boss_encounter(void) {
+static void on_elite_victory(void) NONBANKED {
+  // TODO: correct ability given
+  grant_ability(ABILITY_1);
+  set_npc_invisible(NPC_2);
+  map_textbox(str_floor_common_new_ability);
+}
+
+static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
+  kobold_generator(monster, player.level, B_TIER);
   monster->id = 'A';
-  set_on_victory(boss_victory);
+  set_on_victory(on_boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_elite_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  kobold_generator(monster, player.level, B_TIER);
+  monster->id = 'A';
+  set_on_victory(on_elite_victory);
   start_battle();
   return true;
 }
 
 static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action(str_floor_common_growl, boss_encounter);
+  if (npc->id == NPC_1){
+    map_textbox_with_action(str_floor_common_fight_me, on_boss_encouter);
+  } else {
+    map_textbox_with_action(str_floor_common_love, on_elite_encouter);
+  }
   return true;
 }
 
@@ -165,7 +230,8 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-  // { NPC_1, MAP_A, 6, 6, MONSTER_KOBOLD, on_npc_action },
+  { NPC_1, MAP_B, 3, 5, MONSTER_KOBOLD, on_npc_action }, // Boss
+  { NPC_2, MAP_B, 12, 2, MONSTER_KOBOLD, on_npc_action }, // Elite
 
   { END }
 };
@@ -179,6 +245,10 @@ static bool on_init(void) {
 }
 
 static bool on_special(void) {
+  if (player_at(6, 27)) {
+    map_textbox(str_floor_common_strange_wind);
+    return true;
+  }
   return false;
 }
 
