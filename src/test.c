@@ -46,6 +46,6 @@ void test_level(void) {
   player.has_torch = true;
   grant_ability(ABILITY_ALL);
 
-  set_active_floor(&bank_floor5);
+  set_active_floor(&bank_floor4);
   init_world_map();
 }
