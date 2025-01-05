@@ -21,9 +21,9 @@ BattleState battle_state;
 BattleMenu battle_menu;
 uint8_t status_effect_x[3] = { 7, 7, 7 };
 
-char battle_pre_message[64];
-char battle_post_message[64];
-char rewards_buf[64];
+char battle_pre_message[128];
+char battle_post_message[128];
+char rewards_buf[128];
 bool skip_post_message = false;
 
 bool flee_sound_played = false;

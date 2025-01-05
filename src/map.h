@@ -238,7 +238,7 @@
 /**
  * Max sconces per floor.
  */
-#define MAX_SCONCES 16 + 1
+#define MAX_SCONCES 32 + 1
 
 /**
  * Max NPCs per floor.
@@ -879,6 +879,7 @@ typedef struct Floor {
   const NPC *npcs;
   /**
    * Called when the map is initialized by the game engine.
+   * @return `true` if the map should prevent default behavior.
    */
   const bool (*on_init)(void);
   /**
@@ -888,11 +889,15 @@ typedef struct Floor {
   const bool (*on_special)(void);
   /**
    * Called when the map is active and the player moves into a floor tile.
-   * @param col The column for the tile.
-   * @param row The row for the tile.
    * @return `true` if the map should prevent default behavior.
    */
   const bool (*on_move)(void);
+  /**
+   * Called when the player presses the 'A' button on the map. Allows for custom
+   * action scripting.
+   * @return `true` if the map should prevent default behavior.
+   */
+  const bool (*on_action)(void);
 } Floor;
 
 /**
@@ -985,6 +990,12 @@ typedef struct MapMenu {
  * Map menu global state.
  */
 extern MapMenu map_menu;
+
+/**
+ * Map tile data for the tile the hero currently occupies and those in every
+ * cardinal direction (index this with a `Direction`).
+ */
+extern MapTile local_tiles[5];
 
 /**
  * Map system main state. Holds all global memory values used in the system.
@@ -1081,10 +1092,6 @@ typedef struct MapSystem {
    */
   MapState fade_to_state;
   /**
-   * Reference to the exit prior to loading the destination for an exit.
-   */
-  const Exit *active_exit;
-  /**
    * Chest "opened" flags for the current floor.
    */
   uint8_t flags_chest_open;
@@ -1156,6 +1163,15 @@ typedef struct MapSystem {
    * state of the door is changed via scripts, etc.
    */
   uint8_t doors_updated;
+  /**
+   * Each bit represents a "changed" flag for sconces. This will be set if the
+   * stat of a sconce changes (if it was lit, etc.).
+   */
+  uint8_t sconces_updated;
+  /**
+   * Set if the player's HP and SP were updated as a result of a floor script.
+   */
+  bool player_hp_and_sp_updated;
 } MapSystem;
 
 /**
@@ -1164,9 +1180,14 @@ typedef struct MapSystem {
 extern MapSystem map;
 
 /**
- * Exit used for the `teleport` function.
+ * Exit used for exit movement and teleporting.
  */
-extern Exit teleport_exit;
+extern Exit active_exit;
+
+/**
+ * Flame colors for sconces that can be lit by the player.
+ */
+extern FlameColor sconce_colors[8];
 
 /**
  * Sets the position of the active map. Note this method will not re-render the
@@ -1241,6 +1262,11 @@ void init_map_menu(void);
 void update_map_menu(void);
 
 /**
+ * Updates HP/SP for the map menu.
+ */
+void update_map_menu_hp_sp(void);
+
+/**
  * Opens the map menu.
  */
 void show_map_menu(void);
@@ -1270,10 +1296,11 @@ inline void teleport(
   uint8_t row,
   Direction heading
 ) {
-  teleport_exit.to_map = to_map;
-  teleport_exit.to_col = col;
-  teleport_exit.to_row = row;
-  teleport_exit.heading = heading;
+  active_exit.to_map = to_map;
+  active_exit.to_col = col;
+  active_exit.to_row = row;
+  active_exit.to_floor = NULL;
+  active_exit.heading = heading;
   map.state = MAP_STATE_TELEPORT;
 }
 
@@ -1475,11 +1502,31 @@ inline bool is_sconce_lit(SconceId id) {
 }
 
 /**
+ * @return The flame sprite id for the given sconce.
+ * @param s The id of the sconce.
+ */
+uint8_t get_sconce_flame_sprite(SconceId sconce_id) NONBANKED;
+
+/**
+ * @return Index for the sconce with the given id.
+ * @param id Id of the sconce.
+ */
+uint8_t get_sconce_index(SconceId sconce_id) NONBANKED;
+
+/**
  * Lights a sconce.
  * @param id Id of the sconce to light.
  * @param color Color of the flame.
  */
-void light_sconce(SconceId id, FlameColor color);
+inline void light_sconce(SconceId id, FlameColor color) {
+  if (id == SCONCE_STATIC)
+    return;
+  map.flags_sconce_lit |= id;
+  map.sconces_updated |= id;
+  sconce_colors[get_sconce_index(id)] = color;
+  const uint8_t sprite = get_sconce_flame_sprite(id);
+  set_sprite_prop(sprite, FLAME_SPRITE_PROP | color);
+}
 
 /**
  * Extinguishes a sconce.

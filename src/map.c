@@ -15,7 +15,7 @@
 #include "sound.h"
 
 MapSystem map = { MAP_STATE_WAITING };
-Exit teleport_exit;
+Exit active_exit;
 
 /**
  * Whether or not to initiate the wall hit sound effect.
@@ -26,7 +26,7 @@ static bool play_wall_hit = true;
  * Map tile data for the tile the hero currently occupies and those in every
  * cardinal direction (index this with a `Direction`).
  */
-static MapTile local_tiles[5];
+MapTile local_tiles[5];
 
 /**
  * Stores a buffer of tiles to be progressively loaded over the animation frames
@@ -108,7 +108,6 @@ static uint8_t default_x;
  */
 static uint8_t default_y;
 
-
 /**
  * Copies data from a source list to a destination list in memory.
  * @param src Source data.
@@ -140,8 +139,6 @@ static void list_copy(
  */
 static void load_floor(FloorBank *f) NONBANKED {
   floor_bank = f;
-
-  *debug = f->bank;
 
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(f->bank);
@@ -201,6 +198,20 @@ static bool on_special(void) NONBANKED {
 }
 
 /**
+ * Switches to the floor's bank and calls the `on_action` function.
+ */
+static bool on_action(void) NONBANKED {
+  if (!floor_bank->floor->on_action)
+    return false;
+  const uint8_t _prev_bank = CURRENT_BANK;
+  bool value;
+  SWITCH_ROM(floor_bank->bank);
+  value = floor_bank->floor->on_action();
+  SWITCH_ROM(_prev_bank);
+  return value;
+}
+
+/**
  * Calls the `on_open` callback for a chest.
  */
 static bool on_open(Chest *chest) NONBANKED {
@@ -237,6 +248,26 @@ static bool on_npc_action(NPC *npc) NONBANKED {
   value = npc->on_action(npc);
   SWITCH_ROM(_prev_bank);
   return value;
+}
+
+uint8_t get_sconce_flame_sprite(SconceId sconce_id) NONBANKED {
+  if (sconce_id == SCONCE_1) return FLAME_1;
+  if (sconce_id == SCONCE_2) return FLAME_2;
+  if (sconce_id == SCONCE_3) return FLAME_3;
+  if (sconce_id == SCONCE_4) return FLAME_4;
+  if (sconce_id == SCONCE_5) return FLAME_5;
+  if (sconce_id == SCONCE_6) return FLAME_6;
+  return FLAME_7;
+}
+
+uint8_t get_sconce_index(SconceId sconce_id) NONBANKED {
+  if (sconce_id == SCONCE_1) return 0;
+  if (sconce_id == SCONCE_2) return 1;
+  if (sconce_id == SCONCE_3) return 2;
+  if (sconce_id == SCONCE_4) return 3;
+  if (sconce_id == SCONCE_5) return 4;
+  if (sconce_id == SCONCE_6) return 5;
+  return 6;
 }
 
 /**
@@ -635,40 +666,6 @@ const palette_color_t magic_keys_palette[] = {
 };
 
 /**
- * @return The flame sprite id for the given sconce.
- * @param s The id of the sconce.
- */
-static uint8_t get_sconce_flame_sprite(SconceId s) {
-  switch (s) {
-  case SCONCE_1: return FLAME_1;
-  case SCONCE_2: return FLAME_2;
-  case SCONCE_3: return FLAME_3;
-  case SCONCE_4: return FLAME_4;
-  case SCONCE_5: return FLAME_5;
-  case SCONCE_6: return FLAME_6;
-  case SCONCE_7: return FLAME_7;
-  default: return FLAME_8;
-  }
-}
-
-/**
- * @return Index for the sconce with the given id.
- * @param id Id of the sconce.
- */
-static uint8_t get_sconce_index(SconceId s) {
-  switch (s) {
-  case SCONCE_1: return 0;
-  case SCONCE_2: return 1;
-  case SCONCE_3: return 2;
-  case SCONCE_4: return 3;
-  case SCONCE_5: return 4;
-  case SCONCE_6: return 5;
-  case SCONCE_7: return 6;
-  default: return 7;
-  }
-}
-
-/**
  * Initializes sconce flame sprites.
  */
 static void init_flames(void) {
@@ -684,12 +681,6 @@ static void init_flames(void) {
 
   const Sconce *sconce = sconces;
   for (uint8_t k = 0; k < MAX_SCONCES && sconce->id != END; k++, sconce++) {
-    // if (sconce->is_lit || sconce->id == SCONCE_STATIC)
-    //   sconce_colors[get_sconce_index(sconce->id)] = sconce->color;
-
-    *debug++ = sconce->id;
-    // *debug++ = get_sconce_index(sconce->id);
-
     const uint8_t sprite_id = get_sconce_flame_sprite(sconce->id);
     switch (sconce->color) {
     case FLAME_RED_PROP:
@@ -705,11 +696,6 @@ static void init_flames(void) {
       set_sprite_prop(sprite_id, FLAME_RED_PROP);
     }
   }
-
-  // const Sconce *sconce = sconces;
-  // for (uint8_t k = 0; k < MAX_SCONCES && sconce->id != END; k++, sconce++) {
-
-  // }
 }
 
 /**
@@ -1359,9 +1345,8 @@ static void reset_map_objects(void) {
   for (sconce = sconces; sconce->id != END; sconce++) {
     hash_object(HASH_TYPE_SCONCE, sconce,
       sconce->map_id, sconce->col, sconce->row);
-    if (sconce->is_lit) {
+    if (sconce->is_lit)
       light_sconce(sconce->id, sconce->color);
-    }
   }
 
   // NPCs
@@ -1380,17 +1365,15 @@ static void reset_map_objects(void) {
  */
 static void load_exit(void) {
   DISPLAY_OFF;
-  const Exit *exit = map.active_exit;
-
-  if (exit->to_floor) {
+  if (active_exit.to_floor) {
     map.execute_on_init = true;
-    set_active_floor(exit->to_floor);
+    set_active_floor(active_exit.to_floor);
   }
 
-  map.active_map = maps + exit->to_map;
-  map.hero_direction = exit->heading;
+  map.active_map = maps + active_exit.to_map;
+  map.hero_direction = active_exit.heading;
 
-  set_hero_position(exit->to_col, exit->to_row);
+  set_hero_position(active_exit.to_col, active_exit.to_row);
   update_local_tiles();
   refresh_map_screen();
   clear_flames();
@@ -1417,7 +1400,11 @@ static bool handle_exit(void) {
       continue;
 
     sfx_stairs();
-    map.active_exit = exit;
+    active_exit.to_map = exit->to_map;
+    active_exit.to_col = exit->to_col;
+    active_exit.to_row = exit->to_row;
+    active_exit.to_floor = exit->to_floor;
+    active_exit.heading = exit->heading;
     map_fade_out(MAP_STATE_LOAD_EXIT);
     return true;
   }
@@ -1870,20 +1857,23 @@ static void light_torch(FlameColor color) {
   core.load_sprite_palette(palette, TORCH_GAUGE_PALETTE, 1);
 }
 
-void light_sconce(SconceId id, FlameColor color) {
-  map.flags_sconce_lit |= id;
-  sconce_colors[get_sconce_index(id)] = color;
-  set_sprite_prop(get_sconce_flame_sprite(id), FLAME_SPRITE_PROP | color);
+/**
+ * Checks to see for sconce changes and calls the on_lit handler for each one
+ * that changed.
+ */
+void check_sconce_changed(void) {
+  if (!map.sconces_updated)
+    return;
 
-  // Call the "on_lit" handler
   const Sconce *sconce;
   for (sconce = sconces; sconce->id != END; sconce++) {
-    if (sconce->id != id)
+    if (sconce->id == SCONCE_STATIC || !is_sconce_lit(sconce->id))
       continue;
-    if (sconce->on_lit)
+    if (map.sconces_updated & sconce->id && sconce->on_lit)
       on_lit(sconce);
     break;
   }
+  map.sconces_updated = 0;
 }
 
 /**
@@ -1955,7 +1945,9 @@ static bool check_action(void) {
       return true;
     if (check_npcs())
       return true;
-    return check_levers();
+    if (check_levers())
+      return true;
+    return on_action();
   }
   return false;
 }
@@ -2004,6 +1996,10 @@ void init_world_map(void) NONBANKED {
 void return_from_battle(void) NONBANKED {
   SWITCH_ROM(MAP_SYSTEM_BANK);
   initialize_world_map();
+  if (local_tiles->bg_priority) {
+    map.move_direction = HERE;
+    set_move_vram_bg_priority(local_tiles->attr);
+  }
   map_fade_in(MAP_STATE_WAITING);
 }
 
@@ -2011,12 +2007,13 @@ void on_victory(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
   void (*callback)(void) = encounter.on_victory;
-  callback();
+  if (encounter.victory)
+    callback();
   encounter.on_victory = NULL;
   SWITCH_ROM(_prev_bank);
 }
 
-bool after_textbox(void) NONBANKED{
+bool after_textbox(void) NONBANKED {
   if (!map.after_textbox)
     return false;
   if (textbox.state != TEXT_BOX_CLOSING)
@@ -2038,6 +2035,12 @@ void update_map(void) {
     return;
 
   update_door_graphics();
+  check_sconce_changed();
+
+  if (map.player_hp_and_sp_updated) {
+    map.player_hp_and_sp_updated = false;
+    update_map_menu_hp_sp();
+  }
 
   switch (map.state) {
   case MAP_STATE_WAITING:
@@ -2082,7 +2085,7 @@ void update_map(void) {
     load_exit();
     break;
   case MAP_STATE_EXIT_LOADED:
-    start_move(map.active_exit->heading);
+    start_move(active_exit.heading);
     break;
   case MAP_STATE_MENU:
     update_map_menu();
@@ -2099,7 +2102,6 @@ void update_map(void) {
     map_fade_out(MAP_STATE_START_BATTLE);
     return;
   case MAP_STATE_TELEPORT:
-    map.active_exit = &teleport_exit;
     map_fade_out(MAP_STATE_LOAD_EXIT);
     sfx_no_no_square();
     return;

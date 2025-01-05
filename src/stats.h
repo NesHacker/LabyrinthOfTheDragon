@@ -38,31 +38,6 @@ typedef enum DamageAspect {
 } DamageAspect;
 
 /**
- * @return The string name for the given aspect type.
- * @param type Aspect type to convert.
- */
-inline const char *damage_aspect_name(DamageAspect type) {
-  switch (type) {
-  case DAMAGE_PHYSICAL:
-    return str_misc_physical;
-  case DAMAGE_MAGICAL:
-    return str_misc_magical;
-  case DAMAGE_EARTH:
-    return str_misc_earth;
-  case DAMAGE_WATER:
-    return str_misc_water;
-  case DAMAGE_AIR:
-    return str_misc_air;
-  case DAMAGE_FIRE:
-    return str_misc_fire;
-  case DAMAGE_LIGHT:
-    return str_misc_light;
-  default:
-    return str_misc_dark;
-  }
-}
-
-/**
  * Enumeration of all status effects (buffs & debuffs) in the game.
  */
 typedef enum StatusEffect {

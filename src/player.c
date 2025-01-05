@@ -69,7 +69,17 @@ static void damage_monster(uint16_t base_damage, DamageAspect type) {
     return;
 
   if (monster->aspect_immune & type) {
-    sprintf(battle_post_message, str_battle_player_hit_immune);
+    sprintf(battle_post_message, str_player_hit_immune);
+    return;
+  }
+
+  switch (monster->type) {
+  case MONSTER_DISPLACER_BEAST:
+    monster->parameter--;
+    if (monster->parameter != 0)
+      break;
+    monster->parameter = monster->exp_tier > B_TIER ? 2 : 4;
+    sprintf(battle_post_message, str_player_displacer_beast_phase);
     return;
   }
 
@@ -82,19 +92,29 @@ static void damage_monster(uint16_t base_damage, DamageAspect type) {
     damage += calc_damage(d16(), base_damage);
 
   if (critical) {
-    sprintf(battle_post_message, str_battle_player_hit_crit, damage);
+    sprintf(battle_post_message, str_player_hit_crit, damage);
   } else if (monster->aspect_resist & type) {
     damage >>= 1;
-    sprintf(battle_post_message, str_battle_player_hit_resist, damage);
+    sprintf(battle_post_message, str_player_hit_resist, damage);
   } else if (monster->aspect_vuln & type) {
     damage <<= 1;
-    sprintf(battle_post_message, str_battle_player_hit_vuln, damage);
+    sprintf(battle_post_message, str_player_hit_vuln, damage);
   } else {
-    sprintf(battle_post_message, str_battle_player_hit, damage);
+    sprintf(battle_post_message, str_player_hit, damage);
   }
 
-  if (monster->target_hp < damage)
+  if (monster->target_hp < damage) {
     monster->target_hp = 0;
+    if (
+      monster->type == MONSTER_DEATHKNIGHT &&
+      !(monster->parameter & DEATH_KNIGHT_REVIVE_USED) &&
+      d16() < 3
+    ) {
+      monster->parameter |= DEATH_KNIGHT_REVIVE_USED;
+      monster->target_hp = monster->max_hp / 4;
+      sprintf(battle_post_message, str_player_deathknight_revive);
+    }
+  }
   else
     monster->target_hp -= damage;
 }
@@ -128,6 +148,21 @@ static uint8_t damage_all(
     if (!monster->active)
       continue;
     if (monster->aspect_immune & type)
+      continue;
+
+    bool evaded = false;
+
+    switch (monster->type) {
+    case MONSTER_DISPLACER_BEAST:
+      monster->parameter--;
+      if (monster->parameter != 0)
+        break;
+      monster->parameter = monster->exp_tier > B_TIER ? 2 : 4;
+      evaded = true;
+      break;
+    }
+
+    if (evaded)
       continue;
 
     const uint8_t def = use_mdef ? monster->mdef : monster->def;
@@ -169,7 +204,22 @@ static void damage_all_no_miss(uint16_t base_damage, DamageAspect type) {
   for (uint8_t k = 0; k < 3; k++, monster++) {
     if (!monster->active)
       continue;
+
     if (monster->aspect_immune & type)
+      continue;
+
+    bool evaded = false;
+    switch (monster->type) {
+    case MONSTER_DISPLACER_BEAST:
+      monster->parameter--;
+      if (monster->parameter != 0)
+        break;
+      monster->parameter = monster->exp_tier > B_TIER ? 2 : 4;
+      evaded = true;
+      break;
+    }
+
+    if (evaded)
       continue;
 
     uint16_t d = damage;
@@ -218,28 +268,28 @@ static void druid_update_stats(void) {
 }
 
 void druid_base_attack(void) {
-  sprintf(battle_pre_message, str_battle_poison_spray);
+  sprintf(battle_pre_message, str_player_poison_spray);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.matk, target->mdef)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
-  PowerTier damage_tier;
-  if (player.level < 35)
-    damage_tier = B_TIER;
-  else if (player.level < 75)
-    damage_tier = A_TIER;
-  else
+  PowerTier damage_tier = C_TIER;
+  if (player.level > 75)
     damage_tier = S_TIER;
+  else if (player.level > 50)
+    damage_tier = A_TIER;
+  else if (player.level > 25)
+    damage_tier = B_TIER;
 
   const uint16_t base_dmg = get_player_damage(player.level, damage_tier);
   damage_monster(base_dmg, DAMAGE_MAGICAL);
 }
 
 void druid_cure_wounds(void) {
-  sprintf(battle_pre_message, str_battle_cure_wounds);
+  sprintf(battle_pre_message, str_player_cure_wounds);
 
   uint8_t heal_tier = B_TIER;
 
@@ -253,26 +303,26 @@ void druid_cure_wounds(void) {
   const uint8_t hp = heal_player(roll, base_hp);
 
   if (is_critical(roll))
-    sprintf(battle_post_message, str_battle_player_heal_crit, hp);
+    sprintf(battle_post_message, str_player_heal_crit, hp);
   else if (is_fumble(roll) && !has_special(SPECIAL_HASTE))
-    sprintf(battle_post_message, str_battle_player_heal_fumble, hp);
+    sprintf(battle_post_message, str_player_heal_fumble, hp);
   else
-    sprintf(battle_post_message, str_battle_player_heal, hp);
+    sprintf(battle_post_message, str_player_heal, hp);
 }
 
 void druid_bark_skin(void) {
-  sprintf(battle_pre_message, str_battle_bark_skin);
+  sprintf(battle_pre_message, str_player_bark_skin);
   skip_post_message = true;
   apply_def_up(encounter.player_status_effects, B_TIER, 0);
   apply_special(SPECIAL_BARKSKIN);
 }
 
 void druid_lightning(void) {
-  sprintf(battle_pre_message, str_battle_lightning);
+  sprintf(battle_pre_message, str_player_lightning);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.matk, target->mdef)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -281,13 +331,13 @@ void druid_lightning(void) {
     damage_tier = S_TIER;
 
   const uint16_t base_dmg = get_player_damage(
-    level_offset(player.level, 5), damage_tier);
+    level_offset(player.level, 10), damage_tier);
 
   damage_monster(base_dmg, DAMAGE_AIR);
 }
 
 void druid_heal(void) {
-  sprintf(battle_pre_message, str_battle_heal);
+  sprintf(battle_pre_message, str_player_heal);
 
   uint16_t heal_hp = player.max_hp / 2;
   const uint8_t roll = d16();
@@ -296,14 +346,15 @@ void druid_heal(void) {
 
   if (player.hp + heal_hp > player.max_hp) {
     player.hp = player.max_hp;
-    sprintf(battle_post_message, str_battle_heal_complete);
+    sprintf(battle_post_message, str_player_heal_complete);
   } else {
-    sprintf(battle_post_message, str_battle_player_heal, heal_hp);
+    player.hp += heal_hp;
+    sprintf(battle_post_message, str_player_heal, heal_hp);
   }
 }
 
 void druid_insect_plague(void) {
-  sprintf(battle_pre_message, str_battle_insect_plague);
+  sprintf(battle_pre_message, str_player_insect_plague);
 
   PowerTier tier = B_TIER;
   if (player.level > 75)
@@ -316,13 +367,13 @@ void druid_insect_plague(void) {
   uint8_t hits = damage_all(base_damage, player.matk, true, DAMAGE_MAGICAL);
 
   if (hits == 0)
-    sprintf(battle_post_message, str_battle_player_miss_all);
+    sprintf(battle_post_message, str_player_miss_all);
   else
     skip_post_message = true;
 }
 
 void druid_regen(void) {
-  sprintf(battle_pre_message, str_battle_regen);
+  sprintf(battle_pre_message, str_player_regen);
   skip_post_message = true;
   PowerTier tier = player.level > 75 ? S_TIER : A_TIER;
   apply_regen(encounter.player_status_effects, tier, 0);
@@ -345,11 +396,11 @@ void fighter_update_stats(void) {
 }
 
 void fighter_base_attack(void) {
-  sprintf(battle_pre_message, str_battle_fighter_attack);
+  sprintf(battle_pre_message, str_player_fighter_attack);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.atk, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -371,12 +422,12 @@ void fighter_second_wind(void) {
   heal_hp /= 4;
   if (player.hp + heal_hp > player.max_hp)
     heal_hp = player.max_hp - player.hp;
-  sprintf(battle_pre_message, str_battle_second_wind, heal_hp);
+  sprintf(battle_pre_message, str_player_second_wind, heal_hp);
   skip_post_message = true;
 }
 
 void fighter_action_surge(void) {
-  sprintf(battle_pre_message, str_battle_action_surge);
+  sprintf(battle_pre_message, str_player_action_surge);
 
   PowerTier tier = B_TIER;
   if (player.level > 20)
@@ -391,7 +442,7 @@ void fighter_action_surge(void) {
 }
 
 void fighter_cleave(void) {
-  sprintf(battle_pre_message, str_battle_cleave);
+  sprintf(battle_pre_message, str_player_cleave);
 
   PowerTier tier = C_TIER;
   if (player.level > 20)
@@ -406,18 +457,18 @@ void fighter_cleave(void) {
   uint8_t hits = damage_all(base_damage, player.matk, true, DAMAGE_MAGICAL);
 
   if (hits == 0)
-    sprintf(battle_post_message, str_battle_player_miss_all);
+    sprintf(battle_post_message, str_player_miss_all);
   else
     skip_post_message = true;
 }
 
 void fighter_trip_attack(void) {
-  sprintf(battle_pre_message, str_battle_trip_attack);
+  sprintf(battle_pre_message, str_player_trip_attack);
 
   Monster *target = encounter.target;
   uint8_t def = get_monster_def(level_offset(target->level, -5), C_TIER);
   if (!roll_attack(player.atk, def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -428,11 +479,11 @@ void fighter_trip_attack(void) {
     turns = 3;
 
   target->trip_turns = turns;
-  sprintf(battle_post_message, str_battle_trip_attack_hit);
+  sprintf(battle_post_message, str_player_trip_attack_hit);
 }
 
 void fighter_menace(void) {
-  sprintf(battle_pre_message, str_battle_menace);
+  sprintf(battle_pre_message, str_player_menace);
   skip_post_message = true;
 
   PowerTier tier = A_TIER;
@@ -453,7 +504,7 @@ void fighter_menace(void) {
 }
 
 void fighter_indomitable(void) {
-  sprintf(battle_pre_message, str_battle_indomitable);
+  sprintf(battle_pre_message, str_player_indomitable);
   skip_post_message = true;
   player.aspect_resist = 0xFF;
 }
@@ -475,11 +526,11 @@ void monk_update_stats(void) {
 }
 
 void monk_base_attack(void) {
-  sprintf(battle_pre_message, str_battle_monk_attack);
+  sprintf(battle_pre_message, str_player_monk_attack);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.atk + player.agl, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -495,7 +546,7 @@ void monk_base_attack(void) {
 }
 
 void monk_evasion(void) {
-  sprintf(battle_pre_message, str_battle_monk_evasion);
+  sprintf(battle_pre_message, str_player_monk_evasion);
   skip_post_message = true;
 
   player.special_flags |= SPECIAL_EVASION;
@@ -520,7 +571,8 @@ void monk_open_palm(void) {
   uint8_t atk = player.atk + player.agl;
 
   if (!roll_attack(atk, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_pre_message, str_player_monk_open_palm);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -536,12 +588,12 @@ void monk_open_palm(void) {
   else if (player.level > 30)
     trip_chance = 3;
 
-  if (d8() < trip_chance) {
+  if (d8() < trip_chance && !(target->special_immune & SPECIAL_SLEET_STORM)) {
     encounter.target->trip_turns = player.level > 30 ? 3 : 2;
-    sprintf(battle_pre_message, str_battle_monk_open_palm_trip,
+    sprintf(battle_pre_message, str_player_monk_open_palm_trip,
       encounter.target->name, encounter.target->id);
   } else {
-    sprintf(battle_pre_message, str_battle_monk_open_palm);
+    sprintf(battle_pre_message, str_player_monk_open_palm);
   }
 
   uint8_t attack_level = level_offset(player.level, player.agl);
@@ -557,16 +609,16 @@ void monk_still_mind(void) {
     if (is_debuff(effect->effect))
       effect->active = false;
   }
-  sprintf(battle_pre_message, str_battle_monk_still_mind);
-  skip_post_message = true;
+  sprintf(battle_pre_message, str_player_monk_still_mind);
+  sprintf(battle_post_message, str_player_monk_still_mind_post);
 }
 
 void monk_flurry(void) {
-  sprintf(battle_pre_message, str_battle_monk_flurry_of_blows);
+  sprintf(battle_pre_message, str_player_monk_flurry_of_blows);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.atk + player.agl, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -590,7 +642,7 @@ void monk_flurry(void) {
 }
 
 void monk_diamond_body(void) {
-  sprintf(battle_pre_message, str_battle_monk_diamond_body);
+  sprintf(battle_pre_message, str_player_monk_diamond_body);
   skip_post_message = true;
 
   PowerTier def_up_tier = B_TIER;
@@ -602,11 +654,11 @@ void monk_diamond_body(void) {
 }
 
 void monk_quivering_palm(void) {
-  sprintf(battle_pre_message, str_battle_monk_quivering_palm);
+  sprintf(battle_pre_message, str_player_monk_quivering_palm);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.atk + player.agl, target->def)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -618,7 +670,7 @@ void monk_quivering_palm(void) {
       kill_chance = 3;
 
     if (d8() < kill_chance) {
-      sprintf(battle_post_message, str_battle_monk_quivering_kill);
+      sprintf(battle_post_message, str_player_monk_quivering_kill);
       encounter.target->target_hp = 0;
       return;
     }
@@ -651,15 +703,15 @@ void sorcerer_base_attack(void) {
   uint8_t num_missiles = 1;
   if (player.level >= 15)
     num_missiles = 2;
-  if (player.level >= 30)
-    num_missiles = 3;
   if (player.level >= 45)
+    num_missiles = 3;
+  if (player.level >= 75)
     num_missiles = 4;
 
   if (num_missiles == 1)
-    sprintf(battle_pre_message, str_battle_sorc_magic_missile_one);
+    sprintf(battle_pre_message, str_player_sorc_magic_missile_one);
   else
-    sprintf(battle_pre_message, str_battle_sorc_magic_missile, num_missiles);
+    sprintf(battle_pre_message, str_player_sorc_magic_missile, num_missiles);
 
   PowerTier tier = C_TIER;
   if (player.level >= 30)
@@ -667,12 +719,14 @@ void sorcerer_base_attack(void) {
   if (player.level >= 60)
     tier = A_TIER;
 
-  uint8_t base_damage = num_missiles * get_player_damage(player.level, tier);
+  uint16_t missle_damage = get_player_damage(
+    level_offset(player.level, -5), tier);
+  uint16_t base_damage = num_missiles * missle_damage;
   damage_monster(base_damage, DAMAGE_MAGICAL);
 }
 
 void sorcerer_darkness(void) {
-  sprintf(battle_pre_message, str_battle_sorc_darkness);
+  sprintf(battle_pre_message, str_player_sorc_darkness);
   skip_post_message = true;
 
   uint8_t turns = 2;
@@ -694,7 +748,7 @@ void sorcerer_darkness(void) {
 }
 
 void sorcerer_fireball(void) {
-  sprintf(battle_pre_message, str_battle_sorc_fireball);
+  sprintf(battle_pre_message, str_player_sorc_fireball);
   skip_post_message = true;
 
   Monster *monster = encounter.monsters;
@@ -720,23 +774,23 @@ void sorcerer_fireball(void) {
 }
 
 void sorcerer_haste(void) {
-  sprintf(battle_pre_message, str_battle_sorc_haste);
+  sprintf(battle_pre_message, str_player_sorc_haste);
   skip_post_message = true;
   apply_haste(encounter.player_status_effects, B_TIER, 0);
 }
 
 void sorcerer_sleetstorm(void) {
-  sprintf(battle_pre_message, str_battle_sorc_sleetstorm);
+  sprintf(battle_pre_message, str_player_sorc_sleetstorm);
   skip_post_message = true;
   player.special_flags |= SPECIAL_SLEET_STORM;
 }
 
 void sorcerer_disintegrate(void) {
-  sprintf(battle_pre_message, str_battle_sorc_disintegrate);
+  sprintf(battle_pre_message, str_player_sorc_disintegrate);
 
   Monster *target = encounter.target;
   if (!roll_attack(player.matk + 10, target->mdef)) {
-    sprintf(battle_post_message, str_battle_player_miss);
+    sprintf(battle_post_message, str_player_miss);
     return;
   }
 
@@ -749,7 +803,7 @@ void sorcerer_disintegrate(void) {
       kill_chance = 4;
 
     if (d8() < kill_chance) {
-      sprintf(battle_post_message, str_battle_sorc_disintegrate_kill);
+      sprintf(battle_post_message, str_player_sorc_disintegrate_kill);
       encounter.target->target_hp = 0;
       return;
     }
@@ -793,7 +847,7 @@ void sorcerer_wild_magic(void) {
     }
   }
 
-  sprintf(battle_pre_message, str_battle_sorc_wild_magic);
+  sprintf(battle_pre_message, str_player_sorc_wild_magic);
   skip_post_message = true;
 }
 
@@ -823,7 +877,7 @@ void test_class_ability0(void) {
   const uint8_t hits = damage_all(base_damage, player.atk, false, DAMAGE_PHYSICAL);
 
   if (!hits) {
-    sprintf(battle_post_message, str_battle_player_miss_all);
+    sprintf(battle_post_message, str_player_miss_all);
   } else {
     sprintf(battle_post_message, "Damage Applied.");
   }

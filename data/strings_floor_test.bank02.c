@@ -14,3 +14,4 @@ const char str_floor_test_chest_click[] = "The chest clicks.";
 const char str_floor_test_no_back[] = "You cannot return\x60";
 const char str_floor_test_door_opens[] = "The door opens!";
 const char str_floor_test_growl[] = "GROWL!";
+const char str_floor_test_healed[] = "You are fully \nrestored!";

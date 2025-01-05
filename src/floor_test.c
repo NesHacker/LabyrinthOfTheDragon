@@ -43,6 +43,8 @@ static const Exit exits[] = {
   { MAP_A, 8, 1, MAP_B, 4, 1, DOWN, EXIT_STAIRS },
   { MAP_B, 4, 1, MAP_A, 8, 1, DOWN, EXIT_STAIRS },
 
+  { MAP_A, 19, 1, MAP_A, 2, 15, UP, EXIT_STAIRS, &bank_floor_test2 },
+
   { MAP_A, 25, 27, MAP_B, 4, 5, DOWN, EXIT_STAIRS },
   { MAP_B, 4, 5, MAP_A, 25, 27, DOWN, EXIT_STAIRS },
 
@@ -53,7 +55,6 @@ static const Exit exits[] = {
   { MAP_C, 4, 7, MAP_A, 14, 1, DOWN, EXIT_STAIRS },
   { MAP_C, 3, 7, MAP_A, 14, 1, DOWN, EXIT_STAIRS },
 
-  { MAP_A, 19, 1, MAP_A, 2, 15, UP, EXIT_STAIRS, &bank_floor_test2 },
 
   { END },
 };
@@ -156,7 +157,7 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  { SCONCE_STATIC, MAP_A, 7, 5, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 8, 5, true, FLAME_RED },
   { SCONCE_STATIC, MAP_A, 11, 1, true, FLAME_GREEN },
   { SCONCE_STATIC, MAP_A, 16, 1, true, FLAME_BLUE },
   { SCONCE_STATIC, MAP_A, 23, 1, true, FLAME_RED },
@@ -195,6 +196,9 @@ static void on_lever(const Lever *lever) {
     toggle_door(DOOR_2);
     toggle_door(DOOR_3);
     break;
+  case LEVER_6:
+    light_sconce(SCONCE_1, FLAME_RED);
+    break;
   }
 }
 
@@ -214,6 +218,7 @@ static const Lever levers[] = {
   { LEVER_3, MAP_A, 20, 3, true, true, on_lever },
   { LEVER_4, MAP_A, 5, 2, false, false, on_lever },
   { LEVER_5, MAP_A, 17, 2, false, false, on_lever },
+  { LEVER_6, MAP_A, 7, 2, false, false, on_lever },
   { END },
 };
 
@@ -280,20 +285,41 @@ static bool on_special(void) {
   if (player_at(3, 4)) {
     reset_encounter(MONSTER_LAYOUT_1);
     Monster *monster = encounter.monsters;
-    dummy_generator(monster, 10, DUMMY_NORMAL);
+    dragon_generator(monster, 40, B_TIER);
     monster->id = 'A';
     set_on_victory(on_victory_test);
     start_battle();
+    return true;
   }
 
   if (player_at(7, 8)) {
     teleport(MAP_A, 26, 21, UP);
+    return true;
+  }
+
+  if (player_at(9, 8)) {
+    reset_encounter(MONSTER_LAYOUT_1);
+    Monster *monster = encounter.monsters;
+    dummy_generator(monster, 10, DUMMY_NORMAL);
+    monster->id = 'A';
+    set_on_victory(on_victory_test);
+    start_battle();
+    return true;
   }
 
   return false;
 }
 
 static bool on_move(void) {
+  return false;
+}
+
+static bool on_action(void) {
+  if (player_facing(7, 4)) {
+    full_heal_player();
+    map_textbox(str_floor_test_healed);
+    return true;
+  }
   return false;
 }
 
@@ -356,5 +382,6 @@ const Floor floor_test = {
   on_init,
   on_special,
   on_move,
+  on_action,
 };
 

@@ -19,6 +19,11 @@ void config_random_encounter(uint8_t s, uint8_t ic, uint8_t i, bool ts) {
 }
 
 bool check_random_encounter(void) {
+  MapTile *here = local_tiles;
+
+  if (here->map_attr == MAP_EXIT)
+    return false;
+
   if (torch_safe && player.torch_gauge > 0)
     return false;
 

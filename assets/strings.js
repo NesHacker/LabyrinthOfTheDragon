@@ -93,7 +93,43 @@ addNamespace('ability', 0, {
   'sorc_wild_magic':      'Wild Magic   ',
 });
 
-addNamespace('battle', 0, {
+addNamespace('battle', 3, {
+  'monster_scared_frozen': '%monster %c shivers in fear...',
+  'monster_paralyzed': "%monster %c can't move!",
+  'monster_poison_death': '%monster %c succumbs to the poison!',
+  'monster_confuse_attack_self': 'Confused, %monster %c attacks itself!',
+  'monster_confuse_attack_other': 'Confused, %monster %c attacks any ally!',
+  'monster_confuse_stupor': '%monster %c stares aimlessly.',
+  'monster_lies_prone': '%monster %c lies prone!',
+  'monter_gets_up': '%monster %c gets up.',
+  'monster_miss_evaded': 'But you evade!',
+  'monster_ice_slip': '%monster %c slips on the ice!',
+  'player_flee_attempt': 'You attempt to flee...',
+  'player_flee_success': 'And get away!',
+  'player_flee_failure': 'But are blocked!',
+  'player_scared': 'You shiver with fear!',
+  'player_prone': 'You lie prone!',
+  'player_get_up': 'You get up!',
+  'player_paralyzed': 'You are paralyzed and cannot move!',
+  'player_confused_attack': 'You deal %damage damage to yourself!',
+  'player_confused_mumble': 'You mumble some gibberish and giggle a little.',
+  'victory': 'Victory! You gain %exp XP!',
+  'victory_no_xp': 'Victory! But you gain no XP...',
+  'level_up': 'LEVEL UP! You reach %level!',
+})
+
+addNamespace('player', 4, {
+  // Common
+  'miss': 'But you miss!',
+  'hit': 'You deal %damage damage!',
+  'hit_immune': "They're completely immune!",
+  'hit_resist': "They resist your attack, only %damage damage...",
+  'hit_vuln': "SUPER EFFECTIVE %damage damage!",
+  'hit_crit': 'CRITICAL HIT! You deal %damage damage!',
+  'heal': 'You heal %damage HP.',
+  'heal_crit': 'CRITICAL! You heal a whopping %damage HP!',
+  'heal_fumble': 'You only heal a measly %damage HP.',
+  'miss_all': 'A COMPLETE WHIFF.',
   // Druid abilities
   'poison_spray': 'Poison gas erupts from your palm!',
   'cure_wounds': "You're enveloped in blue light...",
@@ -117,7 +153,8 @@ addNamespace('battle', 0, {
   'monk_evasion': 'You feel light on your feet!',
   'monk_open_palm': 'You strike with an open palm!',
   'monk_open_palm_trip': 'You trip %monster %c!',
-  'monk_still_mind': 'You become one...',
+  'monk_still_mind': 'You become one with the multiverse...',
+  'monk_still_mind_post': 'And are healed of all ill effects!',
   'monk_flurry_of_blows': 'You attack with a flurry of blows!',
   'monk_diamond_body': 'You become tough as diamond.',
   'monk_quivering_palm': 'You attack their very essence!',
@@ -135,38 +172,10 @@ addNamespace('battle', 0, {
   'sorc_wild_magic_fizzle': 'But it fizzles.',
   'sorc_wild_magic_fireball': 'And a fireball goes flying!',
   'sorc_wild_magic_sleetstorm': 'And a sleetstorm descends!',
-  // Monster / Player common
-  'monster_scared_frozen': '%monster %c shivers in fear...',
-  'monster_paralyzed': "%monster %c can't move!",
-  'monster_poison_death': '%monster %c succumbs to the poison!',
-  'monster_confuse_attack_self': 'Confused, %monster %c attacks itself!',
-  'monster_confuse_attack_other': 'Confused, %monster %c attacks any ally!',
-  'monster_confuse_stupor': '%monster %c stares aimlessly.',
-  'monster_lies_prone': '%monster %c lies prone!',
-  'monter_gets_up': '%monster %c gets up.',
-  'monster_miss_evaded': 'But you evade!',
-  'monster_ice_slip': '%monster %c slips on the ice!',
-  'player_miss': 'But you miss!',
-  'player_magic_miss': 'But it has no effect!',
-  'player_hit': 'You deal %damage damage!',
-  'player_hit_immune': "They're completely immune!",
-  'player_hit_resist': "They resist your attack, only %damage damage...",
-  'player_hit_vuln': "SUPER EFFECTIVE %damage damage!",
-  'player_hit_crit': 'CRITICAL HIT! You deal %damage damage!',
-  'player_heal': 'You heal %damage HP.',
-  'player_heal_crit': 'CRITICAL! You heal a whopping %damage HP!',
-  'player_heal_fumble': 'You only heal a measly %damage HP.',
-  'player_miss_all': 'A COMPLETE WHIFF.',
-  'player_flee_attempt': 'You attempt to flee...',
-  'player_flee_success': 'And get away!',
-  'player_flee_failure': 'But are blocked!',
-  'player_scared': 'You shiver with fear!',
-  'player_prone': 'You lie prone!',
-  'player_get_up': 'You get up!',
-  'victory': 'Victory! You gain %exp XP!',
-  'victory_no_xp': 'Victory! But you gain no XP...',
-  'level_up': 'LEVEL UP! You reach %level!',
-})
+  // `damage_monster` strings (in player.c)
+  'displacer_beast_phase': 'They phase out and evade the attack!',
+  'deathknight_revive': 'The deathknight falls, but then revives!',
+});
 
 addNamespace('maps', 2, {
   'chest_locked': "The chest is locked.",
@@ -197,6 +206,7 @@ addNamespace('floor_test', 2, {
   'no_back': "You cannot return...",
   'door_opens': "The door opens!",
   'growl': "GROWL!",
+  'healed': 'You are fully restored!',
 })
 
 addNamespace('floor_common', 2, {
@@ -284,6 +294,70 @@ addNamespace('monster', 6, {
   'owlbear_pounce_miss': 'You barely jump out of the way!',
   'owlbear_multi': 'Owlbear %c tears at you with beak and claw!',
   'owlbear_beak': 'Owlbear %c nips at you!',
+  // G. Cube specials
+  'gcube_search': 'Gelatinous Cube %c sends out feelers...',
+  'gcube_paralyze': 'You are engulfed and paralyzed!',
+  'gcube_poison': 'You are engulfed and poisoned!',
+  'gcube_engulf_fail': 'You dodge as Gelatinous Cube %c tries to engulf you!',
+  'gcube_attack': 'Gelatinous Cube %c swipes at you!',
+  // Displacer Beast specials
+  'displacer_beast_tentacle': 'Displacer Beast %c strikes with its tentacles!',
+  'displacer_beast_2hit': 'They hit twice for %damage damage!',
+  'displacer_beast_1hit': 'They hit once for %damage damage!',
+  'displacer_beast_miss': 'But they miss with both tentalces!',
+  // Will-o-wisp specials
+  'will_o_wisp_lightning': 'Will-o-wisp %c sends lightning forth...',
+  'will_o_wisp_scare': 'Will-o-wisp %c passes through you!',
+  'will_o_wisp_scare_hit': 'Terror fills your soul!',
+  'will_o_wisp_scare_miss': 'But you hold fast!',
+  'will_o_wisp_siphon': 'Will-o-wisp %c siphons your soul...',
+  'will_o_wisp_siphon_hit': 'They steal %damage HP!',
+  'will_o_wisp_hit': 'They shock you for %damage damage!',
+  // Deathknight Specials
+  'deathknight_attack': 'Death Knight %c swings their longsword...',
+  'deathknight_hit1': 'They slash you for %damage damage!',
+  'deathknight_hit2': 'They hit twice! %damage damage!',
+  'deathknight_hellfire': 'Death Knight %c sends forth a hellfire orb!',
+  'deathknight_hellfire_hit': 'Direct hit! You take %damage damage!',
+  'deathknight_hellfire_miss': 'You dodge! But still take %damage damage!',
+});
+
+addNamespace('monster2', 7, {
+  'does_nothing': '%monster %c does nothing.',
+  // Mindflayer special
+  'mindflayer_mind_blast': 'Mind Flayer %c emits a wave of psychic energy!',
+  'mindflayer_mind_blast_miss': 'But you resist!',
+  'mindflayer_mind_blast_hit': 'You take %damage damage, and are confused!',
+  'mindflayer_tentacle': 'Mind Flayer %c lashes out with its tentacles!',
+  'mindflayer_extract_brain': 'Mind Flayer %c attempts to eat your brain!',
+  'mindflayer_extract_brain_hit': 'Your brain is gobbled up!',
+  // Beholder special
+  'beholder_bite': 'Beholder %c chomps at you...',
+  'beholder_shoot_ray': 'Beholder %c shoots a ray from an eyestalk...',
+  'beholder_ray_paralyze': 'You take %damage damage and are paralyzed!',
+  'beholder_ray_fear': 'You take %damage damage and you feel dread!',
+  'beholder_ray_slow': 'You take %damage damage and you slow down!',
+  'beholder_ray_necro': 'You take %damage damage and are poisoned!',
+  'beholder_ray_trip': 'You take %damage damage and fall prone!',
+  'beholder_ray_death': 'Your soul escapes your body...',
+  'beholder_ray_miss': 'But you dodge the ray!',
+  'beholder_bit_miss': 'But their bite misses!',
+  // Dragon Specials
+  'dragon_attack': 'Dragon %c swoops down and attacks!',
+  'dragon_miss': 'But their attacks miss!',
+  'dragon_hit_triple': 'They hit THREE TIMES for %damage damage!',
+  'dragon_hit_double': 'They hit TWICE for %damage damage!',
+  'dragon_hit_single': 'They hit for %damage damage!',
+  'dragon_legendary_tail': 'Dragon %c sweeps its tail!',
+  'dragon_legendary_tail_miss': 'But you dodge out of the way!',
+  'dragon_legendary_wing': 'Dragon %c beats its wings!',
+  'dragon_legendary_wing_miss': 'But you take cover!',
+  'dragon_legendary_wing_hit': 'You are toppled and take %damage damage!',
+  'dragon_fright': 'Dragon %c towers above you!',
+  'dragon_fright_miss': 'But your resolve does not waiver!',
+  'dragon_fright_hit': 'And you fear for your life!',
+  'dragon_fire_breath': 'Dragon %c exhales a wave of fire!',
+  'dragon_fire_breath_miss': 'You dodge, but still take %damage damage!',
 })
 
 // Export the namespaces

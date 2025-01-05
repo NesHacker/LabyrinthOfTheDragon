@@ -313,6 +313,24 @@ void player_use_ability(const Ability *ability) BANKED;
 inline void full_heal_player(void) {
   player.hp = player.max_hp;
   player.sp = player.max_sp;
+  map.player_hp_and_sp_updated = true;
+}
+
+/**
+ * Sets the player's HP and SP.
+ */
+inline void set_hp_and_sp(uint16_t hp, uint16_t sp) {
+  if (hp > player.max_hp)
+    player.hp = player.max_hp;
+  else
+    player.hp = hp;
+
+  if (sp > player.max_sp)
+    player.sp = player.max_sp;
+  else
+    player.sp = sp;
+
+  map.player_hp_and_sp_updated = true;
 }
 
 /**

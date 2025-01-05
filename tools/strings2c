@@ -91,7 +91,7 @@ function encodeString(namespace, key, str, debugOn=false) {
 
   const maxLineLength = 18;
   const maxTokenLength = 18;
-  const maxStringLength = maxLineLength * 3;
+  const maxStringLength = maxLineLength * 5;
 
   // Break the string down into a series of tokens
   let tokens = str.match(/([ ]+)|([%][a-z]+)|(:[a-z-]+:)|([\n\f])|([^\s]+)/g);

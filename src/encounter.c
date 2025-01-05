@@ -231,24 +231,25 @@ void check_status_effects(void) {
 inline void player_turn(void) {
   remove_special(SPECIAL_HASTE);
 
+  bool paralyzed = false;
+  bool afraid = false;
+  bool fleeing = false;
+  bool confused = false;
+  PowerTier confused_tier = C_TIER;
+
   StatusEffectInstance *effect = encounter.player_status_effects;
+
   for (uint8_t k = 0; k < MAX_ACTIVE_EFFECTS; k++, effect++) {
     if (!effect->active)
       continue;
+
     switch (effect->effect) {
     case DEBUFF_SCARED:
-      if (player.trip_turns > 0)
-        break;
-
       const uint8_t scared_roll = d256();
-      if (fear_flee_roll(effect->tier)) {
-        player_flee();
-        return;
-      } else if (fear_shiver_roll(effect->tier)) {
-        sprintf(battle_pre_message, str_battle_player_scared);
-        skip_post_message = true;
-        return;
-      }
+      if (fear_flee_roll(effect->tier))
+        fleeing = true;
+      else if (fear_shiver_roll(effect->tier))
+        afraid = true;
       break;
     case DEBUFF_POISONED:
       const uint16_t poison = poison_hp(effect->tier, player.max_hp);
@@ -258,6 +259,25 @@ inline void player_turn(void) {
       }
       else
         player.hp -= poison;
+      break;
+    case DEBUFF_PARALYZED:
+      if (
+        player.player_class != CLASS_MONK ||
+        encounter.player_action != PLAYER_ACTION_ABILITY ||
+        encounter.player_ability != &monk2
+      ) {
+        paralyzed = true;
+      }
+      break;
+    case DEBUFF_CONFUSED:
+      if (
+        player.player_class != CLASS_MONK ||
+        encounter.player_action != PLAYER_ACTION_ABILITY ||
+        encounter.player_ability != &monk2
+      ) {
+        confused = true;
+        confused_tier = effect->tier;
+      }
       break;
     case BUFF_REGEN:
       uint16_t regen = regen_hp(effect->tier, player.max_hp);
@@ -272,7 +292,38 @@ inline void player_turn(void) {
     }
   }
 
-  // Player tripped / prone
+  if (paralyzed) {
+    sprintf(battle_pre_message, str_battle_player_paralyzed);
+    skip_post_message = true;
+    return;
+  }
+
+  if (confused) {
+    if (confused_attack(confused_tier)) {
+      uint16_t base_damage = get_player_damage(player.level, C_TIER) / 2;
+      uint16_t damage = calc_damage(d8(), base_damage);
+      if (player.hp < damage)
+        player.hp = 0;
+      else
+        player.hp -= damage;
+      sprintf(battle_pre_message, str_battle_player_confused_attack, damage);
+      skip_post_message = true;
+      return;
+    }
+
+    if (d16() < 3) {
+      sprintf(battle_pre_message, str_battle_player_confused_mumble);
+      skip_post_message = true;
+      return;
+    }
+  }
+
+  if (afraid) {
+    sprintf(battle_pre_message, str_battle_player_scared);
+    skip_post_message = true;
+    return;
+  }
+
   if (player.trip_turns > 0) {
     player.trip_turns--;
     if (player.trip_turns == 0)
@@ -280,6 +331,11 @@ inline void player_turn(void) {
     else
       sprintf(battle_pre_message, str_battle_player_prone);
     skip_post_message = true;
+    return;
+  }
+
+  if (fleeing) {
+    player_flee();
     return;
   }
 
@@ -299,7 +355,6 @@ inline void player_turn(void) {
     player_base_attack();
     break;
   case PLAYER_ACTION_ABILITY:
-    // No sp bounds checking here, should be handled in battle UI
     player.sp -= encounter.player_ability->sp_cost;
     player_use_ability(encounter.player_ability);
     break;
@@ -475,7 +530,7 @@ void after_action(void) {
       monster->active = false;
     } else if (monster->hp == 0) {
       encounter.xp_reward += calc_monster_exp(
-        monster->level,
+        monster->exp_level,
         monster->exp_tier
       );
       monster->active = false;
@@ -484,7 +539,9 @@ void after_action(void) {
     }
   }
 
-  encounter.victory = !encounter.player_died && !monster_active;
+  encounter.victory = !encounter.player_died &&
+    !encounter.player_fled &&
+    !monster_active;
 }
 
 void set_player_fight(Monster *target) {

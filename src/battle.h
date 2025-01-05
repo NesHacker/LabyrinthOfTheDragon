@@ -375,13 +375,13 @@ extern BattleState battle_state;
  * Message to show prior to an action animation.
  * Ex: The kobold attacks with a stone axe...
  */
-extern char battle_pre_message[64];
+extern char battle_pre_message[128];
 
 /**
  * Message to show after the action animation.
  * Ex: But they miss!
  */
-extern char battle_post_message[64];
+extern char battle_post_message[128];
 
 /**
  * Whether or not a message should show up after an effect animation.
@@ -391,7 +391,7 @@ extern bool skip_post_message;
 /**
  * Battle rewards message.
  */
-extern char rewards_buf[64];
+extern char rewards_buf[128];
 
 /**
  * Animation to play prior to the results of a player or monster action.

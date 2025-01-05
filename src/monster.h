@@ -10,6 +10,16 @@
 #include "stats.h"
 
 /**
+ * Flag used to determine if a death knight has used their hellfire orb attack.
+ */
+#define DEATH_KNIGHT_ORB_USED FLAG(0)
+
+/**
+ * Flag used to determine if the death knight has revived.
+ */
+#define DEATH_KNIGHT_REVIVE_USED FLAG(1)
+
+/**
  * Number of tiles in a full monster tileset.
  */
 #define MONSTER_TILES 7 * 7 * 2
@@ -67,6 +77,10 @@ typedef struct Monster {
    * Monster level.
    */
   uint8_t level;
+  /**
+   * Level used when calculating monster experience.
+   */
+  uint8_t exp_level;
   /**
    * The power tier to use when awarding experience for the monster.
    */
@@ -181,6 +195,10 @@ typedef struct Monster {
    * Immunities for player special abilities.
    */
   uint8_t special_immune;
+  /**
+   * Bank to use when calling the monster's `take_turn` method.
+   */
+  GameRomBank bank;
   /**
    * Routine to determine how the monster acts on its turn.
    */
@@ -331,7 +349,28 @@ void monster_flee(Monster *monster) BANKED;
 /**
  * Performs a battle turn for the given monster.
  */
-void monster_take_turn(Monster *monster) BANKED;
+void monster_take_turn(Monster *monster) NONBANKED;
+
+/**
+ * Applies damage to the player.
+ * @param base_damage Base damage for the attck.
+ * @param type Type of damage dealt.
+ */
+uint16_t damage_player(uint16_t base_damage, DamageAspect type) BANKED;
+
+/**
+ * Initializes a monster instance for a monster generator.
+ * @param i Monster instance to reset.
+ * @param m Base monster for the instance.
+ */
+void monster_init_instance(
+  Monster *monster,
+  MonsterType type,
+  const char *name,
+  const Tileset *ts,
+  uint8_t level,
+  PowerTier tier
+) BANKED;
 
 // Data externs (see: monster.data.c, stored on bank 0)
 

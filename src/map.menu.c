@@ -59,6 +59,11 @@ static void hide_cursor(void) {
   move_sprite(CURSOR_SPRITE_ID + 3, 0, 0);
 }
 
+void update_map_menu_hp_sp(void) {
+  core.print_fraction(VRAM_WINDOW_XY(0x6, 0x14), player.hp, player.max_hp);
+  core.print_fraction(VRAM_WINDOW_XY(0x6, 0x15), player.sp, player.max_sp);
+}
+
 void update_map_menu_stats(void) {
   char buf[16];
 
@@ -97,8 +102,7 @@ void update_map_menu_stats(void) {
   core.draw_text(VRAM_WINDOW_XY(0x2, 0x15), buf, 2);
 
   // HP & MP
-  core.print_fraction(VRAM_WINDOW_XY(0x6, 0x14), player.hp, player.max_hp);
-  core.print_fraction(VRAM_WINDOW_XY(0x6, 0x15), player.sp, player.max_sp);
+  update_map_menu_hp_sp();
 
   // ATK, DEF, MATK, MDEF, AGL
   draw_number_at(player.atk_base, 0x6, 0x17);
