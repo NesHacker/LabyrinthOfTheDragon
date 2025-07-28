@@ -193,8 +193,8 @@ static uint16_t new_seed = 1;
  * Holds the color of the flames for the sconces in the current floor.
  */
 FlameColor sconce_colors[8] = {
-  FLAME_RED, FLAME_RED, FLAME_RED, FLAME_RED,
-  FLAME_RED, FLAME_RED, FLAME_RED, FLAME_RED,
+  FLAME_NONE, FLAME_NONE, FLAME_NONE, FLAME_NONE,
+  FLAME_NONE, FLAME_NONE, FLAME_NONE, FLAME_NONE,
 };
 
 /**
