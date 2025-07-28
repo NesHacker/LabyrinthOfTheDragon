@@ -1373,6 +1373,7 @@ inline bool is_lever_on(LeverId id) {
  */
 inline bool toggle_lever_state(LeverId id) {
   flags_lever_on ^= id;
+  *debug = flags_lever_on;
 }
 
 /**

@@ -1631,7 +1631,6 @@ static bool handle_exit(void) {
  */
 static void start_move(Direction d) {
   if (init_random) {
-    *debug = 0xA0;
     initarand(new_seed);
     init_random = false;
   }

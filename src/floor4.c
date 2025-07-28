@@ -153,6 +153,24 @@ static const Sign signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
+static void on_pull(const Lever *lever) {
+  const bool lever1 = is_lever_on(LEVER_1);
+  const bool lever2 = is_lever_on(LEVER_2);
+  const bool lever3 = is_lever_on(LEVER_3);
+
+
+  if (!lever1 && lever2 && lever3) {
+    play_sound(sfx_big_powerup);
+    open_door(DOOR_3);
+    open_door(DOOR_4);
+    map_textbox(str_floor2_door_opens);
+  } else {
+    play_sound(sfx_door_unlock);
+    close_door(DOOR_3);
+    close_door(DOOR_4);
+  }
+}
+
 static const Lever levers[] = {
   /*
   {
@@ -164,6 +182,16 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+
+  // West Wing
+  { LEVER_1, MAP_A, 1, 17, false, false, on_pull },
+
+  // Central Hall
+  { LEVER_2, MAP_A, 10, 16, false, false, on_pull },
+
+  // East Wing
+  { LEVER_3, MAP_A, 19, 17, false, false, on_pull },
+
   { END },
 };
 
