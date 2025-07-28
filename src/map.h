@@ -1476,6 +1476,14 @@ inline void light_sconce(SconceId id, FlameColor color) {
 }
 
 /**
+ * @param id Id of the sconce for which to get the color.
+ * @return The color of the sconce if lit.
+ */
+inline FlameColor get_sconce_color(SconceId id) {
+  return sconce_colors[get_sconce_index(id)];
+}
+
+/**
  * Extinguishes a sconce.
  * @param id Id of the sconce to extinguish.
  */
