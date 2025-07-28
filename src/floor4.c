@@ -182,6 +182,19 @@ static const Door doors[] = {
     false,            // Does the door start opened?
   }
   */
+
+  // Boss Door
+  { DOOR_1, MAP_A, 28, 27, DOOR_NORMAL, false, false },
+
+  // Next Floor
+  { DOOR_2, MAP_A, 28, 19, DOOR_NEXT_LEVEL, false, false },
+
+  // Elite Door (West Wing)
+  { DOOR_3, MAP_A, 1, 8, DOOR_NORMAL, false, false },
+
+  // Treasure Room Door (East Wing)
+  { DOOR_4, MAP_A, 19, 8, DOOR_NORMAL, false, false },
+
   { END }
 };
 
@@ -204,8 +217,7 @@ static void test_sconces(SconceId a, SconceId b, FlameColor c) {
       if (puzzle_count >= 3) {
         play_sound(sfx_monster_critical);
         map_textbox(str_floor2_door_opens);
-        // TODO Open the door
-        // open_door(DOOR_2);
+        open_door(DOOR_1);
       } else {
         play_sound(sfx_big_powerup);
       }
