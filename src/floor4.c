@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 14
-#define DEFAULT_Y 19
+#define DEFAULT_X 24
+#define DEFAULT_Y 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -50,18 +50,47 @@ static const Exit exits[] = {
   {
     MAP_A,        // Map the exit is on
     0, 0,         // Column and row on that map for the exit
-    FLOOR_TEST_ID,    // Floor to which the exit leads (last door, basically)
     DEST_MAP      // Id of the destination map
     0, 0,         // Column and row
     UP,           // Way the player should be facing leaving the exit
-    EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
+    EXIT_STAIRS,  // Type of exit (not sure if we'll use this yet)
+    &bank_floor2  // (optional) bank reference for exits between floors
   },
   */
+
+  // Boss door
+  { MAP_A, 28, 27, MAP_A, 28, 23, UP, EXIT_STAIRS },
+  { MAP_A, 28, 23, MAP_A, 28, 27, DOWN, EXIT_STAIRS },
+
+  // West Wing
+  { MAP_A, 19, 27, MAP_A,  5,  9, DOWN, EXIT_STAIRS },
+  { MAP_A,  5,  9, MAP_A, 19, 27, DOWN, EXIT_STAIRS },
+
+  // Elite Room
+  { MAP_A, 1, 8, MAP_A, 1, 5, UP, EXIT_STAIRS },
+  { MAP_A, 1, 5, MAP_A, 1, 8, DOWN, EXIT_STAIRS },
+
+  // Central Hall
+  { MAP_A, 20, 27, MAP_A, 10, 12, UP, EXIT_STAIRS },
+  { MAP_A, 10, 12, MAP_A, 20, 27, DOWN, EXIT_STAIRS },
+
+  // East Wing
+  { MAP_A, 21, 27, MAP_A, 15,  9, DOWN, EXIT_STAIRS },
+  { MAP_A, 15,  9, MAP_A, 21, 27, DOWN, EXIT_STAIRS },
+
+  // Treasure Room
+  { MAP_A, 19, 8, MAP_A, 19, 5, UP, EXIT_STAIRS },
+  { MAP_A, 19, 5, MAP_A, 19, 8, DOWN, EXIT_STAIRS },
+
+  // Floor Exit
+  // TODO Map this to floor 5
+  { MAP_A, 28, 19, MAP_A, DEFAULT_X, DEFAULT_Y, UP, EXIT_STAIRS },
+
   { END },
 };
 
 //------------------------------------------------------------------------------
-// Exits
+// Signs
 //------------------------------------------------------------------------------
 
 static const Sign signs[] = {

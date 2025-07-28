@@ -81,11 +81,11 @@ static const Exit exits[] = {
   {
     MAP_A,        // Map the exit is on
     0, 0,         // Column and row on that map for the exit
-    FLOOR_TEST_ID,    // Floor to which the exit leads (last door, basically)
     DEST_MAP      // Id of the destination map
     0, 0,         // Column and row
     UP,           // Way the player should be facing leaving the exit
-    EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
+    EXIT_STAIRS,  // Type of exit (not sure if we'll use this yet)
+    &bank_floor2  // (optional) bank reference for exits between floors
   },
   */
 
