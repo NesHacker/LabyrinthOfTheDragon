@@ -38,6 +38,49 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
+  // Secret 1
+  {
+    CHEST_1,
+    MAP_A, 12, 28, false, false,
+    str_chest_item_1pots,
+    chest_item_1pot,
+  },
+  // Secret 2
+  {
+    CHEST_2,
+    MAP_A, 3, 28, false, false,
+    str_chest_item_1eths,
+    chest_item_1eth,
+  },
+  // West Wing Chest
+  {
+    CHEST_3,
+    MAP_A, 2, 13, false, false,
+    NULL, NULL,
+    chest_add_magic_key
+  },
+  // East Wing Chest
+  {
+    CHEST_4,
+    MAP_A, 18, 13, false, false,
+    str_chest_item_1eth,
+    chest_item_1eth,
+  },
+
+  // Treasure Room
+  {
+    CHEST_5,
+    MAP_A, 18, 3, true, true,
+    str_chest_item_regen_pot,
+    chest_item_regen_pot,
+  },
+  {
+    CHEST_6,
+    MAP_A, 20, 3, true, true,
+    str_chest_item_haste_pot,
+    chest_item_haste_pot,
+  },
+
   { END },
 };
 
@@ -245,11 +288,11 @@ static const palette_color_t palettes[] = {
   RGB8(110, 70, 110),
   RGB8(40, 50, 40),
   RGB8(32, 0, 32),
-  // Palette 5
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
+  // Palette 5 - Regen Chest
+  RGB8(20, 177, 100),
+  RGB8(110, 70, 110),
+  RGB8(40, 50, 40),
+  RGB8(32, 0, 32),
   // Palette 6
   RGB_WHITE,
   RGB8(120, 120, 120),

@@ -51,7 +51,7 @@ void test_level(void) {
 
   SET_HAS_TORCH;
   DISABLE_ENCOUNTERS;
-  // SET_MAGIC_KEYS(1);
+  SET_MAGIC_KEYS(2);
 
   // set_active_floor(&bank_floor1);
   // set_active_floor(&bank_floor2);
