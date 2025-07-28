@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "floor.h"
+#include "sound.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -188,8 +189,50 @@ static const Door doors[] = {
 // Sconces
 //------------------------------------------------------------------------------
 
-static void on_lit(const Sconce* sconce) {
+/**
+ * Keeps track of the number of sconce puzzles (out of 3) that have been solved.
+ */
+uint8_t puzzle_count = 0;
 
+/**
+ * Handles the logic for the three color flame puzzle.
+ */
+static void test_sconces(SconceId a, SconceId b, FlameColor c) {
+  if (is_sconce_lit(a) && is_sconce_lit(b)) {
+    if (get_sconce_color(a) == c && get_sconce_color(b) == c) {
+      puzzle_count++;
+      if (puzzle_count >= 3) {
+        play_sound(sfx_monster_critical);
+        map_textbox(str_floor2_door_opens);
+        // TODO Open the door
+        // open_door(DOOR_2);
+      } else {
+        play_sound(sfx_big_powerup);
+      }
+    }
+    else {
+      play_sound(sfx_error);
+      extinguish_sconce(a);
+      extinguish_sconce(b);
+    }
+  }
+}
+
+static void on_lit(const Sconce* sconce) {
+  switch (sconce->id) {
+  case SCONCE_1:
+  case SCONCE_2:
+    test_sconces(SCONCE_1, SCONCE_2, FLAME_GREEN);
+    break;
+  case SCONCE_3:
+  case SCONCE_4:
+    test_sconces(SCONCE_3, SCONCE_4, FLAME_RED);
+    break;
+  case SCONCE_5:
+  case SCONCE_6:
+    test_sconces(SCONCE_5, SCONCE_6, FLAME_BLUE);
+    break;
+  }
 }
 
 static const Sconce sconces[] = {
@@ -202,6 +245,28 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
+
+  // West Wing
+  { SCONCE_1, MAP_A, 2, 9, false, FLAME_NONE, on_lit },
+  { SCONCE_2, MAP_A, 4, 9, false, FLAME_NONE, on_lit },
+
+  // Central Hall
+  { SCONCE_3, MAP_A, 9, 9, false, FLAME_NONE, on_lit },
+  { SCONCE_4, MAP_A, 10, 9, false, FLAME_NONE, on_lit },
+
+  // East Wing
+  { SCONCE_5, MAP_A, 17, 9, false, FLAME_NONE, on_lit },
+  { SCONCE_6, MAP_A, 18, 9, false, FLAME_NONE, on_lit },
+
+  // Main Room (colored sconces)
+  { SCONCE_STATIC, MAP_A, 23, 27, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 24, 27, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 25, 27, true, FLAME_RED },
+
+  // Treasure & Elite Room
+  { SCONCE_STATIC, MAP_A, 1, 2, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 19, 2, true, FLAME_RED },
+
   { END }
 };
 
@@ -248,6 +313,7 @@ static const NPC npcs[] = {
 //------------------------------------------------------------------------------
 
 static bool on_init(void) {
+  puzzle_count = 0;
   return false;
 }
 
