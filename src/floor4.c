@@ -226,25 +226,25 @@ static bool on_action(void) {
 
 static const palette_color_t palettes[] = {
   // Palette 1 - Core background tiles
-  RGB8(190, 200, 190),
-  RGB8(100, 100, 140),
-  RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
+  RGB8(175, 160, 177),
+  RGB8(110, 70, 110),
+  RGB8(40, 50, 40),
+  RGB8(32, 0, 32),
   // Palette 2 - Treasure chests
   RGB8(192, 138, 40),
-  RGB8(100, 100, 140),
-  RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
-  // Palette 3
-  RGB8(120, 120, 120),
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB8(36, 0, 0),
-  // Palette 4
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
+  RGB8(110, 70, 110),
+  RGB8(40, 50, 40),
+  RGB8(32, 0, 32),
+  // Palette 3 - Levers
+  RGB8(192, 40, 40),
+  RGB8(110, 70, 110),
+  RGB8(40, 50, 40),
+  RGB8(32, 0, 32),
+  // Palette 4 - Special Skull
+  RGB8(20, 100, 177),
+  RGB8(110, 70, 110),
+  RGB8(40, 50, 40),
+  RGB8(32, 0, 32),
   // Palette 5
   RGB_WHITE,
   RGB8(120, 120, 120),
