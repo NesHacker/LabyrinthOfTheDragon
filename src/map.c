@@ -35,6 +35,7 @@ uint8_t sconces_updated;
 bool player_hp_and_sp_updated;
 bool refresh_local_tiles;
 MapCallbacks map_callbacks;
+bool pass_doors;
 
 /**
  * Direction the player is currently moving.
@@ -152,7 +153,7 @@ uint8_t npc_walk_frame;
 /**
  * Whether or not to initiate the wall hit sound effect.
  */
-static bool play_wall_hit = true;
+static bool play_wall_hit_sfx = true;
 
 /**
  * Map tile data for the tile the hero currently occupies and those in every
@@ -1239,8 +1240,12 @@ static void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
     case HASH_TYPE_DOOR:
       Door *door = (Door *)entry->data;
       tile->door = door;
-      if (!is_door_open(door->id))
-        map_attr = MAP_WALL;
+      if (!is_door_open(door->id)) {
+        if (pass_doors)
+          map_attr = MAP_EXIT;
+        else
+          map_attr = MAP_WALL;
+      }
       else {
         map_tile = door->type;
         map_attr = MAP_EXIT;
@@ -1639,17 +1644,17 @@ static void start_move(Direction d) {
 
   if (hero_direction != d) {
     hero_direction = d;
-    play_wall_hit = true;
+    play_wall_hit_sfx = true;
   }
 
   if (destination->map_attr == MAP_WALL) {
-    if (play_wall_hit) {
+    if (play_wall_hit_sfx) {
       play_sound(sfx_wall_hit);
-      play_wall_hit = false;
+      play_wall_hit_sfx = false;
     }
     return;
   } else {
-    play_wall_hit = true;
+    play_wall_hit_sfx = true;
   }
 
   move_direction = d;

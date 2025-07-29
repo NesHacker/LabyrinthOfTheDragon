@@ -1121,6 +1121,10 @@ extern Exit active_exit;
  */
 extern FlameColor sconce_colors[8];
 
+/**
+ * Debugging flag that allows the player to pass through locked doors.
+ */
+extern bool pass_doors;
 
 typedef struct MapCallbacks {
   /**
