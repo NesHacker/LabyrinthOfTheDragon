@@ -388,8 +388,64 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+/*
+Owlbear
+Bugbear
+Zombie
+Goblin
+*/
+
+// Max Level: 29
+static const EncounterTable encounters_low[] = {
+  {
+    ODDS_10P, MONSTER_LAYOUT_1,
+    MONSTER_OWLBEAR, 25, B_TIER,
+  },
+  {
+    ODDS_20P, MONSTER_LAYOUT_1,
+    MONSTER_BUGBEAR, 24, C_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_2,
+    MONSTER_GOBLIN, 25, C_TIER,
+    MONSTER_GOBLIN, 25, B_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 19, C_TIER,
+    MONSTER_ZOMBIE, 18, C_TIER,
+  },
+  { END }
+};
+
+// Max Level: 33
+static const EncounterTable encounters_high[] = {
+  {
+    ODDS_20P, MONSTER_LAYOUT_2,
+    MONSTER_OWLBEAR, 27, C_TIER,
+    MONSTER_OWLBEAR, 29, C_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_BUGBEAR, 31, B_TIER,
+  },
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 29, C_TIER,
+    MONSTER_ZOMBIE, 29, C_TIER,
+  },
+  {
+    ODDS_30P, MONSTER_LAYOUT_3S,
+    MONSTER_GOBLIN, 28, C_TIER,
+    MONSTER_GOBLIN, 29, B_TIER,
+    MONSTER_GOBLIN, 28, C_TIER,
+  },
+  { END }
+};
+
 static bool on_init(void) {
   puzzle_count = 0;
+  config_random_encounter(4, 1, 1, true);
   return false;
 }
 
@@ -398,6 +454,14 @@ static bool on_special(void) {
 }
 
 static bool on_move(void) {
+  if (check_random_encounter()) {
+    if (player.level < 29)
+      generate_encounter(encounters_low);
+    else
+      generate_encounter(encounters_high);
+    start_battle();
+    return true;
+  }
   return false;
 }
 
