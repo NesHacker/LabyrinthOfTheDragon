@@ -232,6 +232,12 @@ addNamespace('floor3', 2, {
   'boss_not_yet': 'Jiggle?',
 });
 
+addNamespace('floor4', 2, {
+  'elite_attack': 'KWAAAAAAHHH!',
+  'boss': 'NyaAAAHHHH!',
+  'boss_not_yet': 'Nya?',
+});
+
 addNamespace('floor_common', 2, {
   'growl': "GROWL!",
   'light_fires': "Light these fires to open this door!",

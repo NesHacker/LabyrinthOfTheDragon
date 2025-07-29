@@ -25,6 +25,8 @@
 
 #define DISABLE_ENCOUNTERS disable_encounters = true
 
+#define PASS_DOORS pass_doors = true
+
 void init_test_player(PlayerClass c, uint8_t level) {
   init_player(c);
   set_player_level(level);
@@ -45,10 +47,12 @@ void fill_inventory(uint8_t amt) {
 }
 
 void test_level(void) {
-  init_test_player(CLASS_SORCERER, 21);
-  grant_ability(ABILITY_0);
+  init_test_player(CLASS_SORCERER, 32);
+  // grant_ability(ABILITY_0);
+  grant_ability(ABILITY_0 | ABILITY_1 | ABILITY_2);
   fill_inventory(5);
 
+  PASS_DOORS;
   SET_HAS_TORCH;
   DISABLE_ENCOUNTERS;
   SET_MAGIC_KEYS(2);

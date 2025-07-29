@@ -314,22 +314,55 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
+static void on_boss_victory(void) NONBANKED {
+  open_door(DOOR_2);
+  set_npc_invisible(NPC_1);
+  play_sound(sfx_big_door_open);
 }
 
-static bool boss_encounter(void) {
+static void on_elite_victory(void) NONBANKED {
+  set_npc_invisible(NPC_2);
+  grant_ability(ABILITY_3);
+  play_sound(sfx_big_powerup);
+  map_textbox(get_grant_message(ABILITY_3));
+}
+
+static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
+  displacer_beast_generator(monster, 31, A_TIER);
   monster->id = 'A';
-  set_on_victory(boss_victory);
+  set_on_victory(on_boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_elite_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  owlbear_generator(monster, 29, B_TIER);
+  monster->id = 'A';
+  set_on_victory(on_elite_victory);
   start_battle();
   return true;
 }
 
 static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action(str_floor_common_growl, boss_encounter);
-  return true;
+  switch (npc->id) {
+  case NPC_1:
+    if (player.level < 29) {
+      map_textbox(str_floor4_boss_not_yet);
+      return true;
+    }
+    play_sound(sfx_monster_attack2);
+    map_textbox_with_action(str_floor4_boss, on_boss_encouter);
+    return true;
+  case NPC_2:
+    play_sound(sfx_monster_attack1);
+    map_textbox_with_action(str_floor4_elite_attack, on_elite_encouter);
+    return true;
+  }
+  return false;
 }
 
 static const NPC npcs[] = {
@@ -344,6 +377,9 @@ static const NPC npcs[] = {
   }
   */
   // { NPC_1, MAP_A, 6, 6, MONSTER_KOBOLD, on_npc_action },
+
+  { NPC_1, MAP_A, 28, 21, MONSTER_DISPLACER_BEAST, S_TIER, on_npc_action },
+  { NPC_2, MAP_A, 1, 3, MONSTER_OWLBEAR, A_TIER, on_npc_action },
 
   { END }
 };
