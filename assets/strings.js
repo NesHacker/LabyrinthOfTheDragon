@@ -294,6 +294,7 @@ addNamespace('chest_item', 2, {
   '1eth': 'You get an ether!',
   '1eths': 'You get an ethers!',
   '1remedy': 'You get a remedy!',
+  '3potions': 'You get 3 potions!',
 });
 
 addNamespace('items', 3, {

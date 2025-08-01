@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "floor.h"
+#include "sound.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -133,6 +134,7 @@ static const Door doors[] = {
   }
   */
   { DOOR_1, MAP_B,  3, 2, DOOR_NEXT_LEVEL, false },
+  { DOOR_2, MAP_A, 2, 9, DOOR_STAIRS_DOWN, false, false },
 
   { END }
 };
@@ -140,6 +142,14 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 // Sconces
 //------------------------------------------------------------------------------
+
+static void on_lit(const Sconce* sconce) {
+  if (sconce->id == SCONCE_4) {
+    // Open the door to the item room
+    open_door(DOOR_2);
+    play_sound(sfx_big_door_open);
+  }
+}
 
 static const Sconce sconces[] = {
   /*
@@ -158,7 +168,7 @@ static const Sconce sconces[] = {
   { SCONCE_3, MAP_A, 10, 10, false },
 
   // Lightable Maze Sconces
-  { SCONCE_4, MAP_A, 4, 26, false },
+  { SCONCE_4, MAP_A, 3, 9, false, FLAME_NONE, on_lit },
   { SCONCE_5, MAP_A, 13, 12, false },
   { SCONCE_6, MAP_A, 7, 11, false },
   { SCONCE_7, MAP_A, 22, 7, false },
@@ -177,6 +187,7 @@ static const Sconce sconces[] = {
   { SCONCE_STATIC, MAP_A, 28, 27, true, FLAME_RED },
   { SCONCE_STATIC, MAP_A, 19, 1, true, FLAME_RED },
   { SCONCE_STATIC, MAP_A, 28, 11, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 4, 18, true, FLAME_BLUE },
 
   // Static Boss Room
   { SCONCE_STATIC, MAP_B, 2, 2, true, FLAME_RED },
@@ -196,19 +207,20 @@ static const Sconce sconces[] = {
 static void on_boss_victory(void) NONBANKED {
   open_door(DOOR_1);
   set_npc_invisible(NPC_1);
+  play_sound(sfx_big_door_open);
 }
 
 static void on_elite_victory(void) NONBANKED {
-  // TODO: correct ability given
-  grant_ability(ABILITY_1);
   set_npc_invisible(NPC_2);
-  map_textbox(str_floor_common_new_ability);
+  grant_ability(ABILITY_4);
+  play_sound(sfx_big_powerup);
+  map_textbox(get_grant_message(ABILITY_3));
 }
 
 static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, B_TIER);
+  deathknight_generator(monster, player.level, B_TIER);
   monster->id = 'A';
   set_on_victory(on_boss_victory);
   start_battle();
