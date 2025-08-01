@@ -61,3 +61,10 @@ const Item chest_item_1remedy[] = {
   { ITEM_REMEDY, 1 },
   { END }
 };
+
+const Item chest_item_3potions[] = {
+  { ITEM_POTION, 1 },
+  { ITEM_POTION, 1 },
+  { ITEM_POTION, 1 },
+  { END }
+};

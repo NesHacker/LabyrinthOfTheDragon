@@ -65,5 +65,6 @@ extern const Item chest_item_1pot[];
 extern const Item chest_item_2pots[];
 extern const Item chest_item_1eth[];
 extern const Item chest_item_1remedy[];
+extern const Item chest_item_3potions[];
 
 #endif

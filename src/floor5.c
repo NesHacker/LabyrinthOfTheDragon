@@ -39,11 +39,12 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
-  // { CHEST_1, MAP_A,  2,  2, false, false, NULL, NULL, chest_add_magic_key },
-  // { CHEST_1, MAP_A,  9, 10, false, false, NULL, NULL, chest_add_magic_key },
-  // { CHEST_1, MAP_A,  6, 16, false, false, str_chest_item_2pot_1eth, chest_item_2pot_1eth },
-  // { CHEST_1, MAP_A, 21, 18, false, false, NULL, NULL, chest_add_magic_key },
-  // { CHEST_1, MAP_A, 23, 11, false, false, NULL, NULL, chest_add_magic_key },
+
+  // Maze Chests
+  { CHEST_1, MAP_A, 23, 11, false, false, str_chest_item_1remedy, chest_item_1remedy },
+  { CHEST_2, MAP_A, 21, 18, false, false, str_chest_item_3potions, chest_item_3potions },
+  { CHEST_3, MAP_A, 6, 16, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_4, MAP_A, 6, 30, false, false, NULL, NULL, chest_add_magic_key },
 
   { END },
 };
