@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 2 // 12
-#define DEFAULT_Y 4 // 30
+#define DEFAULT_X 3 // 12
+#define DEFAULT_Y 19 // 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -18,7 +18,7 @@
 static const Map maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_16, floor_five_data, 32, 32 },
-  { MAP_B, BANK_16, floor_five_sub_data, 15, 10 },
+  { MAP_B, BANK_16, floor_five_sub_data, 23, 7 },
 
   { END },
 };
@@ -67,14 +67,20 @@ static const Exit exits[] = {
   },
   */
   // Boss
-  { MAP_A, 3, 18, MAP_B, 3, 8, UP, EXIT_STAIRS },
-  { MAP_B, 3, 8, MAP_A, 3, 18, DOWN, EXIT_STAIRS },
+  { MAP_A, 3, 18, MAP_B, 3, 5, UP, EXIT_STAIRS },
+  { MAP_B, 3, 5, MAP_A, 3, 18, DOWN, EXIT_STAIRS },
 
   // Elite
-  { MAP_A, 26, 6, MAP_B, 12, 4, UP, EXIT_STAIRS },
-  { MAP_B, 12, 4, MAP_A, 26, 6, DOWN, EXIT_STAIRS },
+  { MAP_A, 26, 6, MAP_B, 11, 5, UP, EXIT_STAIRS },
+  { MAP_B, 11, 5, MAP_A, 26, 6, DOWN, EXIT_STAIRS },
 
-  { MAP_B, 3, 2, MAP_A, 3, 2, DOWN, EXIT_STAIRS, &bank_floor5 },
+  // Item Room
+  { MAP_A, 2, 9, MAP_B, 19, 5, UP, EXIT_STAIRS },
+  { MAP_B, 19, 5, MAP_A, 2, 9, DOWN, EXIT_STAIRS },
+
+  // Next Level
+  // TODO Map this to floor 6
+  { MAP_B, 3, 1, MAP_A, 12, 30, UP, EXIT_STAIRS, &bank_floor5 },
   { END },
 };
 
@@ -92,6 +98,7 @@ static const Sign signs[] = {
   }
   */
   { MAP_A, 12, 27, UP, str_floor5_demands }, // Cryptic entry message
+  { MAP_A, 20, 29, UP, str_floor5_secrets }, // Cryptic secret message
 
   // { MAP_A,  2, 18, UP, str_floor_common_tbd }, // Boss
   // { MAP_A, 13, 14, UP, str_floor_common_tbd }, // Entrance
@@ -197,7 +204,7 @@ static const Door doors[] = {
   */
 
   // Next Level Door
-  { DOOR_1, MAP_B,  3, 2, DOOR_NEXT_LEVEL, false },
+  { DOOR_1, MAP_B,  3, 1, DOOR_NEXT_LEVEL, false },
 
   // Item Room Door
   { DOOR_2, MAP_A, 2, 9, DOOR_STAIRS_DOWN, false, false },
@@ -259,12 +266,8 @@ static const Sconce sconces[] = {
   { SCONCE_STATIC, MAP_A, 4, 18, true, FLAME_BLUE },
 
   // Static Boss Room
-  { SCONCE_STATIC, MAP_B, 2, 2, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_B, 4, 2, true, FLAME_RED },
-
-  // Static Elite Room
-  { SCONCE_STATIC, MAP_B, 11,  1, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_B, 13, 1, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_B, 2, 1, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_B, 4, 1, true, FLAME_RED },
 
   { END }
 };
@@ -326,8 +329,8 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-  { NPC_1, MAP_B, 3, 5, MONSTER_DEATHKNIGHT, S_TIER, on_npc_action }, // Boss
-  { NPC_2, MAP_B, 12, 2, MONSTER_GELATINOUS_CUBE, A_TIER, on_npc_action }, // Elite
+  { NPC_1, MAP_B, 3, 3, MONSTER_DEATHKNIGHT, S_TIER, on_npc_action }, // Boss
+  { NPC_2, MAP_B, 11, 3, MONSTER_GELATINOUS_CUBE, A_TIER, on_npc_action }, // Elite
 
   { END }
 };

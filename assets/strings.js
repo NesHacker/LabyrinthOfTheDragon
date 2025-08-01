@@ -239,7 +239,8 @@ addNamespace('floor4', 2, {
 });
 
 addNamespace('floor5', 2, {
-  'demands': 'The Dragon demands a rainbow.',
+  'demands': 'The Dragon demands a rainbow...',
+  'secrets': 'The walls have secrets...',
 });
 
 addNamespace('floor_common', 2, {
