@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 14
-#define DEFAULT_Y 14
+#define DEFAULT_X 12
+#define DEFAULT_Y 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -39,11 +39,11 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
-  { CHEST_1, MAP_A,  2,  2, false, false, NULL, NULL, chest_add_magic_key },
-  { CHEST_1, MAP_A,  9, 10, false, false, NULL, NULL, chest_add_magic_key },
-  { CHEST_1, MAP_A,  6, 16, false, false, str_chest_item_2pot_1eth, chest_item_2pot_1eth },
-  { CHEST_1, MAP_A, 21, 18, false, false, NULL, NULL, chest_add_magic_key },
-  { CHEST_1, MAP_A, 23, 11, false, false, NULL, NULL, chest_add_magic_key },
+  // { CHEST_1, MAP_A,  2,  2, false, false, NULL, NULL, chest_add_magic_key },
+  // { CHEST_1, MAP_A,  9, 10, false, false, NULL, NULL, chest_add_magic_key },
+  // { CHEST_1, MAP_A,  6, 16, false, false, str_chest_item_2pot_1eth, chest_item_2pot_1eth },
+  // { CHEST_1, MAP_A, 21, 18, false, false, NULL, NULL, chest_add_magic_key },
+  // { CHEST_1, MAP_A, 23, 11, false, false, NULL, NULL, chest_add_magic_key },
 
   { END },
 };
@@ -89,9 +89,11 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
-  { MAP_A,  2, 18, UP, str_floor_common_tbd }, // Boss
-  { MAP_A, 13, 14, UP, str_floor_common_tbd }, // Entrance
-  { MAP_A, 25,  6, UP, str_floor_common_tbd }, // Elite
+  { MAP_A, 12, 27, UP, str_floor5_demands }, // Cryptic entry message
+
+  // { MAP_A,  2, 18, UP, str_floor_common_tbd }, // Boss
+  // { MAP_A, 13, 14, UP, str_floor_common_tbd }, // Entrance
+  // { MAP_A, 25,  6, UP, str_floor_common_tbd }, // Elite
 
   { END },
 };
@@ -148,29 +150,40 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
-  // BOSS
+
+  // Puzzle Sconces
+  { SCONCE_1, MAP_A, 10, 10, false },
+  { SCONCE_2, MAP_A, 10, 10, false },
+  { SCONCE_3, MAP_A, 10, 10, false },
+
+  // Lightable Maze Sconces
+  { SCONCE_4, MAP_A, 4, 26, false },
+  { SCONCE_5, MAP_A, 13, 12, false },
+  { SCONCE_6, MAP_A, 7, 11, false },
+  { SCONCE_7, MAP_A, 22, 7, false },
+  { SCONCE_8, MAP_A, 30, 7, false },
+
+  // Signpost Sconces in Entryway
+  { SCONCE_STATIC, MAP_A, 11, 26, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 12, 26, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 13, 26, true, FLAME_BLUE },
+
+  // Static Maze Sconces
+  { SCONCE_STATIC, MAP_A, 5, 1, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 14, 17, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 8, 27, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 16, 27, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 28, 27, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 19, 1, true, FLAME_RED },
+  { SCONCE_STATIC, MAP_A, 28, 11, true, FLAME_RED },
+
+  // Static Boss Room
   { SCONCE_STATIC, MAP_B, 2, 2, true, FLAME_RED },
   { SCONCE_STATIC, MAP_B, 4, 2, true, FLAME_RED },
 
-  // ELITE
+  // Static Elite Room
   { SCONCE_STATIC, MAP_B, 11,  1, true, FLAME_RED },
   { SCONCE_STATIC, MAP_B, 13, 1, true, FLAME_RED },
-
-  // MAZE
-  { SCONCE_STATIC, MAP_A, 7, 3, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 11, 4, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 27, 6, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 30, 7, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 28, 11, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 15, 14, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 23, 14, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 4, 18, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 12, 20, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 18, 20, true, FLAME_RED },
-  { SCONCE_STATIC, MAP_A, 8, 23, true, FLAME_GREEN },
-  { SCONCE_STATIC, MAP_A, 4, 26, true, FLAME_RED },
-  // { SCONCE_STATIC, MAP_A, 14, 26, true, FLAME_RED },
-  // { SCONCE_STATIC, MAP_A, 29, 27, true, FLAME_RED },
 
   { END }
 };

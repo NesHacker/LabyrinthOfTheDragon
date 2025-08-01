@@ -238,6 +238,10 @@ addNamespace('floor4', 2, {
   'boss_not_yet': 'Nya?',
 });
 
+addNamespace('floor5', 2, {
+  'demands': 'The Dragon demands a rainbow.',
+});
+
 addNamespace('floor_common', 2, {
   'growl': "GROWL!",
   'light_fires': "Light these fires to open this door!",
