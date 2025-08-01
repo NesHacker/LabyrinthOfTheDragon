@@ -241,6 +241,9 @@ addNamespace('floor4', 2, {
 addNamespace('floor5', 2, {
   'demands': 'The Dragon demands a rainbow...',
   'secrets': 'The walls have secrets...',
+  'elite_attack': 'JIGGLE!',
+  'boss': 'Come and meet DEATH!',
+  'boss_not_yet': 'You are... unworthy.',
 });
 
 addNamespace('floor_common', 2, {

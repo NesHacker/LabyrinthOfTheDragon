@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "floor.h"
+#include "monster.h"
 #include "sound.h"
 
 //------------------------------------------------------------------------------
@@ -8,8 +9,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 2 // 12
-#define DEFAULT_Y 10 // 30
+#define DEFAULT_X 3 // 12
+#define DEFAULT_Y 19 // 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -291,13 +292,13 @@ static void on_elite_victory(void) NONBANKED {
   set_npc_invisible(NPC_2);
   grant_ability(ABILITY_4);
   play_sound(sfx_big_powerup);
-  map_textbox(get_grant_message(ABILITY_3));
+  map_textbox(get_grant_message(ABILITY_4));
 }
 
 static bool on_boss_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  deathknight_generator(monster, player.level, B_TIER);
+  deathknight_generator(monster, 39, B_TIER);
   monster->id = 'A';
   set_on_victory(on_boss_victory);
   start_battle();
@@ -307,7 +308,7 @@ static bool on_boss_encouter(void) {
 static bool on_elite_encouter(void) {
   Monster *monster = encounter.monsters;
   reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, B_TIER);
+  gelatinous_cube_generator(monster, 37, B_TIER);
   monster->id = 'A';
   set_on_victory(on_elite_victory);
   start_battle();
@@ -315,12 +316,21 @@ static bool on_elite_encouter(void) {
 }
 
 static bool on_npc_action(const NPC *npc) {
-  if (npc->id == NPC_1){
-    map_textbox_with_action(str_floor_common_fight_me, on_boss_encouter);
-  } else {
-    map_textbox_with_action(str_floor_common_love, on_elite_encouter);
+  switch (npc->id) {
+  case NPC_1:
+    if (player.level < 40) {
+      map_textbox(str_floor5_boss_not_yet);
+      return true;
+    }
+    play_sound(sfx_monster_attack2);
+    map_textbox_with_action(str_floor5_boss, on_boss_encouter);
+    return true;
+  case NPC_2:
+    play_sound(sfx_monster_attack1);
+    map_textbox_with_action(str_floor5_elite_attack, on_elite_encouter);
+    return true;
   }
-  return true;
+  return false;
 }
 
 static const NPC npcs[] = {
@@ -344,7 +354,63 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+/*
+G. Cube
+Owlbear
+Bugbear
+Zombie
+*/
+
+// Max Level: 36
+static const EncounterTable encounters_low[] = {
+  {
+    ODDS_10P, MONSTER_LAYOUT_1,
+    MONSTER_GELATINOUS_CUBE, 30, B_TIER,
+  },
+  {
+    ODDS_20P, MONSTER_LAYOUT_2,
+    MONSTER_BUGBEAR, 32, C_TIER,
+    MONSTER_BUGBEAR, 32, C_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_1,
+    MONSTER_OWLBEAR, 30, B_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 30, C_TIER,
+    MONSTER_ZOMBIE, 32, C_TIER,
+  },
+  { END }
+};
+
+// Max Level: 42
+static const EncounterTable encounters_high[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_2,
+    MONSTER_GELATINOUS_CUBE, 34, C_TIER,
+    MONSTER_GELATINOUS_CUBE, 34, C_TIER,
+  },
+  {
+    ODDS_30P, MONSTER_LAYOUT_1,
+    MONSTER_OWLBEAR, 38, B_TIER,
+  },
+  {
+    ODDS_30P, MONSTER_LAYOUT_2,
+    MONSTER_ZOMBIE, 36, C_TIER,
+    MONSTER_ZOMBIE, 36, B_TIER,
+  },
+  {
+    ODDS_15P, MONSTER_LAYOUT_3S,
+    MONSTER_GOBLIN, 39, C_TIER,
+    MONSTER_GOBLIN, 38, B_TIER,
+    MONSTER_GOBLIN, 39, C_TIER,
+  },
+  { END }
+};
+
 static bool on_init(void) {
+  config_random_encounter(4, 1, 1, true);
 
   // Reset the boss door flame puzzle
   lever1_flame = FLAME_NONE;
@@ -363,6 +429,14 @@ static bool on_special(void) {
 }
 
 static bool on_move(void) {
+  if (check_random_encounter()) {
+    if (player.level < 37)
+      generate_encounter(encounters_low);
+    else
+      generate_encounter(encounters_high);
+    start_battle();
+    return true;
+  }
   return false;
 }
 
