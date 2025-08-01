@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 3 // 12
-#define DEFAULT_Y 19 // 30
+#define DEFAULT_X 2 // 12
+#define DEFAULT_Y 10 // 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -46,6 +46,11 @@ static const Chest chests[] = {
   { CHEST_2, MAP_A, 21, 18, false, false, str_chest_item_3potions, chest_item_3potions },
   { CHEST_3, MAP_A, 6, 16, false, false, NULL, NULL, chest_add_magic_key },
   { CHEST_4, MAP_A, 6, 30, false, false, NULL, NULL, chest_add_magic_key },
+
+  // Treasure Room Chests
+  { CHEST_5, MAP_B, 17, 3, true, true, str_chest_item_3ethers, chest_item_3ethers },
+  { CHEST_6, MAP_B, 19, 2, true, true, str_chest_item_1elixer, chest_item_1elixer },
+  { CHEST_7, MAP_B, 21, 3, true, true, str_chest_item_1atkup_1defup, chest_item_1atkup_1defup },
 
   { END },
 };
