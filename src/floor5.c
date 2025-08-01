@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 12
-#define DEFAULT_Y 30
+#define DEFAULT_X 2 // 12
+#define DEFAULT_Y 4 // 30
 
 //------------------------------------------------------------------------------
 // Maps
@@ -104,6 +104,58 @@ static const Sign signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
+/**
+ * Holds the state of the flame above the first lever for the boss door puzzle.
+ */
+FlameColor lever1_flame = FLAME_NONE;
+
+/**
+ * Holds the state of the flame above the second lever for the boss door puzzle.
+ */
+FlameColor lever2_flame = FLAME_NONE;
+
+/**
+ * Holds the state of the flame above the third lever for the boss door puzzle.
+ */
+FlameColor lever3_flame = FLAME_NONE;
+
+static void on_lever_pulled(const Lever *lever) {
+  switch (lever->id) {
+  case LEVER_1:
+    lever1_flame++;
+    if (lever1_flame > FLAME_BLUE)
+      lever1_flame = FLAME_RED;
+    light_sconce(SCONCE_1, lever1_flame);
+    break;
+  case LEVER_2:
+    lever2_flame++;
+    if (lever2_flame > FLAME_BLUE)
+      lever2_flame = FLAME_RED;
+    light_sconce(SCONCE_2, lever2_flame);
+    break;
+  case LEVER_3:
+    lever3_flame++;
+    if (lever3_flame > FLAME_BLUE)
+      lever3_flame = FLAME_RED;
+    light_sconce(SCONCE_3, lever3_flame);
+    break;
+  }
+
+
+  if (
+    lever1_flame == FLAME_RED &&
+    lever2_flame == FLAME_GREEN &&
+    lever3_flame == FLAME_BLUE
+  ) {
+    play_sound(sfx_big_door_open);
+    open_door(DOOR_3);
+    map_textbox(str_floor2_door_opens);
+  } else {
+    play_sound(sfx_door_unlock);
+    close_door(DOOR_3);
+  }
+}
+
 static const Lever levers[] = {
   /*
   {
@@ -115,6 +167,16 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+
+  // Skull Lever (needs red)
+  { LEVER_1, MAP_A, 10, 12, false, false, on_lever_pulled },
+
+  // Potion Lever (needs green)
+  { LEVER_2, MAP_A, 2, 3, false, false, on_lever_pulled },
+
+  // Boss Lever (needs blue)
+  { LEVER_3, MAP_A, 27, 20, false, false, on_lever_pulled },
+
   { END },
 };
 
@@ -133,8 +195,15 @@ static const Door doors[] = {
     false,            // Does the door start opened?
   }
   */
+
+  // Next Level Door
   { DOOR_1, MAP_B,  3, 2, DOOR_NEXT_LEVEL, false },
+
+  // Item Room Door
   { DOOR_2, MAP_A, 2, 9, DOOR_STAIRS_DOWN, false, false },
+
+  // Boss Room Door
+  { DOOR_3, MAP_A, 3, 18, DOOR_STAIRS_DOWN, false, false },
 
   { END }
 };
@@ -164,8 +233,8 @@ static const Sconce sconces[] = {
 
   // Puzzle Sconces
   { SCONCE_1, MAP_A, 10, 10, false },
-  { SCONCE_2, MAP_A, 10, 10, false },
-  { SCONCE_3, MAP_A, 10, 10, false },
+  { SCONCE_2, MAP_A, 2, 1, false },
+  { SCONCE_3, MAP_A, 27, 18, false },
 
   // Lightable Maze Sconces
   { SCONCE_4, MAP_A, 3, 9, false, FLAME_NONE, on_lit },
@@ -257,8 +326,8 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-  { NPC_1, MAP_B, 3, 5, MONSTER_KOBOLD, S_TIER, on_npc_action }, // Boss
-  { NPC_2, MAP_B, 12, 2, MONSTER_KOBOLD, A_TIER, on_npc_action }, // Elite
+  { NPC_1, MAP_B, 3, 5, MONSTER_DEATHKNIGHT, S_TIER, on_npc_action }, // Boss
+  { NPC_2, MAP_B, 12, 2, MONSTER_GELATINOUS_CUBE, A_TIER, on_npc_action }, // Elite
 
   { END }
 };
@@ -268,6 +337,12 @@ static const NPC npcs[] = {
 //------------------------------------------------------------------------------
 
 static bool on_init(void) {
+
+  // Reset the boss door flame puzzle
+  lever1_flame = FLAME_NONE;
+  lever2_flame = FLAME_NONE;
+  lever3_flame = FLAME_NONE;
+
   return false;
 }
 
