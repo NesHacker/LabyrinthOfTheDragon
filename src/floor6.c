@@ -230,14 +230,54 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
+static void on_boss_victory(void) NONBANKED {
+  open_door(DOOR_2);
+  set_npc_invisible(NPC_1);
+  play_sound(sfx_big_door_open);
 }
 
-static bool boss_encounter(void) {
-  return false;
+static void on_elite_victory(void) NONBANKED {
+  set_npc_invisible(NPC_2);
+  grant_ability(ABILITY_5);
+  play_sound(sfx_big_powerup);
+  map_textbox(get_grant_message(ABILITY_5));
 }
+static bool on_boss_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  mindflayer_generator(monster, 45, A_TIER);
+  monster->id = 'A';
+  set_on_victory(on_boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_elite_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  will_o_wisp_generator(monster, 43, B_TIER);
+  monster->id = 'A';
+  set_on_victory(on_elite_victory);
+  start_battle();
+  return true;
+}
+
 
 static bool on_npc_action(const NPC *npc) {
+  switch (npc->id) {
+  case NPC_1:
+    if (player.level < 45) {
+      map_textbox(str_floor6_boss_not_yet);
+      return true;
+    }
+    play_sound(sfx_monster_attack2);
+    map_textbox_with_action(str_floor6_boss, on_boss_encouter);
+    return true;
+  case NPC_2:
+    play_sound(sfx_monster_attack1);
+    map_textbox_with_action(str_floor6_elite_attack, on_elite_encouter);
+    return true;
+  }
   return false;
 }
 
@@ -252,7 +292,8 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-
+  { NPC_1, MAP_B, 3, 4, MONSTER_MINDFLAYER, S_TIER, on_npc_action }, // Boss
+  { NPC_2, MAP_A, 23, 4, MONSTER_WILL_O_WISP, A_TIER, on_npc_action }, // Elite
   { END }
 };
 

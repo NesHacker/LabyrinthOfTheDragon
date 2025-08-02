@@ -246,6 +246,12 @@ addNamespace('floor5', 2, {
   'boss_not_yet': 'You are... unworthy.',
 });
 
+addNamespace('floor6', 2, {
+  'elite_attack': 'BZZZTTT!',
+  'boss': 'OH! What a delicious brain!',
+  'boss_not_yet': 'You have yet to ripen...',
+});
+
 addNamespace('floor_common', 2, {
   'growl': "GROWL!",
   'light_fires': "Light these fires to open this door!",
