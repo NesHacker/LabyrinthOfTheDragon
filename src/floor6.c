@@ -238,6 +238,18 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
+  { SCONCE_STATIC, MAP_A, 0, 19, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 5, 12, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 14, 19, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 8, 21, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 19, 25, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 22, 17, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 24, 3, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 28, 8, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 4, 5, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 12, 5, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_B, 2, 2, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_B, 4, 2, true, FLAME_BLUE },
   { END }
 };
 
