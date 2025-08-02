@@ -1956,18 +1956,6 @@ static void tile_to_state_off(const MapTile *tile, uint8_t *vram) {
 }
 
 /**
- * Sets a chest as open and updates the graphics.
- * @param tile Map tile containing the chest.
- */
-static void open_chest(const MapTile *tile) {
-  const Chest *chest = tile->chest;
-  if (!chest)
-    return;
-  set_chest_open(chest->id);
-  tile_to_state_on(tile, get_local_vram(hero_direction));
-}
-
-/**
  * Checks for chests and handles chest interactions at the current location.
  * @return `true` to prevent the default behavior of the action handler.
  */
@@ -1975,20 +1963,15 @@ static bool check_chests(void) {
   const MapTile *tile = local_tiles + hero_direction;
   const Chest *chest = tile->chest;
 
+  // If there is no chest, return
   if (!chest)
     return false;
 
+  // If the chest has already been opened, return
   if (flags_chest_open & chest->id)
     return false;
 
-  if (chest->on_open) {
-    if (on_open(chest)) {
-      open_chest(tile);
-      play_sound(sfx_open_chest);
-    }
-    return true;
-  }
-
+  // Determine if the chest is locked and can be opened by a magic key
   const bool locked = flags_chest_locked & chest->id;
   const bool has_keys = player.magic_keys > 0;
   bool used_key = false;
@@ -2006,20 +1989,30 @@ static bool check_chests(void) {
     return true;
   }
 
-  open_chest(tile);
+  // Set the chest as "opened", swap graphics, and play the sound effect
   play_sound(sfx_open_chest);
+  set_chest_open(chest->id);
+  tile_to_state_on(tile, get_local_vram(hero_direction));
 
+  // Call the "on_open" callback and see if we should prevent default behavior
+  bool prevent_default = chest->on_open ? on_open(chest) : false;
+  if (prevent_default)
+    return true;
+
+  // If the chest has items, add all of those items to the player's inventory
   if (chest->items) {
     for (const Item *item = chest->items; item->id != END; item++)
       add_items(item->id, item->quantity);
   }
 
+  // Display the correct "open" message
   const char *message = (chest->open_msg) ?
     chest->open_msg :
     str_maps_chest_open;
 
   if (used_key) {
     char buf[96];
+
     sprintf(buf, "%s\f%s", str_maps_chest_unlock_key, message);
     map_textbox(buf);
   } else {
