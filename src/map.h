@@ -608,9 +608,10 @@ typedef struct Chest {
    */
   const Item *items;
   /**
-   * Custom callback to execute on open (for special scrited chests).
+   * Custom callback to execute on open. Allows for scripting chests.
    * @param chest The chest the player is attempting to open.
-   * @return `true` if the chest was opened.
+   * @return `true` if the default opening behavior for the chest should be
+   *   prevented.
    */
   const bool (*on_open)(const struct Chest *chest);
 } Chest;
