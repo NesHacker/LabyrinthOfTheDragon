@@ -521,7 +521,7 @@ typedef struct Exit {
   /**
    * Type of exit.
    */
-  ExitType exit;
+  ExitType exit_type;
   /**
    * Floor for the destination (optional).
    */

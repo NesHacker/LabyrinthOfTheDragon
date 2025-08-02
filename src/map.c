@@ -1725,7 +1725,17 @@ static bool handle_exit(void) {
     if (exit->col != x || exit->row != y)
       continue;
 
-    play_sound(sfx_stairs);
+    switch (exit->exit_type) {
+    case EXIT_HOLE:
+      play_sound(sfx_falling);
+      break;
+    case EXIT_PORTAL:
+      play_sound(sfx_no_no_square);
+      break;
+    default:
+      play_sound(sfx_stairs);
+    }
+
     active_exit.to_map = exit->to_map;
     active_exit.to_col = exit->to_col;
     active_exit.to_row = exit->to_row;
@@ -2490,7 +2500,8 @@ void update_map(void) {
     load_exit();
     break;
   case MAP_STATE_EXIT_LOADED:
-    start_move(active_exit.heading);
+    if (active_exit.exit_type != EXIT_HOLE)
+      start_move(active_exit.heading);
     break;
   case MAP_STATE_MENU:
     update_map_menu();
