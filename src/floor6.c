@@ -321,9 +321,56 @@ palette_color_t portal_color_palette[4] = {
   RGB8(24, 0, 0),
 };
 
+static const EncounterTable encounters_low[] = {
+  {
+    ODDS_10P, MONSTER_LAYOUT_1,
+    MONSTER_WILL_O_WISP, 39, C_TIER,
+  },
+  {
+    ODDS_20P, MONSTER_LAYOUT_2,
+    MONSTER_GELATINOUS_CUBE, 41, C_TIER,
+    MONSTER_GELATINOUS_CUBE, 41, C_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_1,
+    MONSTER_OWLBEAR, 42, B_TIER,
+  },
+  {
+    ODDS_35P, MONSTER_LAYOUT_2,
+    MONSTER_BUGBEAR, 41, C_TIER,
+    MONSTER_BUGBEAR, 41, C_TIER,
+  },
+  { END }
+};
+
+static const EncounterTable encounters_high[] = {
+  {
+    ODDS_25P, MONSTER_LAYOUT_1,
+    MONSTER_GELATINOUS_CUBE, 45, C_TIER,
+  },
+  {
+    ODDS_30P, MONSTER_LAYOUT_2,
+    MONSTER_OWLBEAR, 43, B_TIER,
+    MONSTER_OWLBEAR, 43, B_TIER,
+  },
+  {
+    ODDS_30P, MONSTER_LAYOUT_1,
+    MONSTER_DISPLACER_BEAST, 45, C_TIER,
+  },
+  {
+    ODDS_15P, MONSTER_LAYOUT_3S,
+    MONSTER_GOBLIN, 41, C_TIER,
+    MONSTER_KOBOLD, 43, B_TIER,
+    MONSTER_GOBLIN, 41, C_TIER,
+  },
+  { END }
+};
+
+
 static bool on_init(void) {
   active_portal = 0;
   init_timer(portal_color_timer, 4);
+  config_random_encounter(4, 1, 1, true);
   return false;
 }
 
@@ -358,6 +405,14 @@ static bool on_special(void) {
 }
 
 static bool on_move(void) {
+  if (check_random_encounter()) {
+    if (player.level < 43)
+      generate_encounter(encounters_low);
+    else
+      generate_encounter(encounters_high);
+    start_battle();
+    return true;
+  }
   return false;
 }
 
