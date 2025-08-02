@@ -406,25 +406,25 @@ static bool on_special(void) {
   case 0:
     if (player_at(1, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 2, 21, UP);
+      teleport(MAP_A, 2, 21, UP, EXIT_PORTAL);
     }
     break;
   case 1:
     if (player_at(3, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 26, 21, UP);
+      teleport(MAP_A, 26, 21, UP, EXIT_PORTAL);
     }
     break;
   case 2:
     if (player_at(13, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 22, 29, LEFT);
+      teleport(MAP_A, 22, 29, LEFT, EXIT_PORTAL);
     }
     break;
   case 3:
     if (player_at(15, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 12, 21, UP);
+      teleport(MAP_A, 12, 21, UP, EXIT_PORTAL);
     }
     break;
   }

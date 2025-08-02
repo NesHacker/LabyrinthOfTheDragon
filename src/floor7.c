@@ -286,6 +286,20 @@ static bool on_init(void) {
 }
 
 static bool on_special(void) {
+  // Cracked floor holes
+  if (player_at(2, 6)) {
+    set_tile_at(MAP_A, 2, 6, 0xEC);
+    teleport(MAP_A, 2, 29, HERE, EXIT_HOLE);
+    play_sound(sfx_falling);
+  }
+
+  if (player_at(18, 6)) {
+    set_tile_at(MAP_A, 18, 6, 0xEC);
+    teleport(MAP_A, 14, 29, HERE, EXIT_HOLE);
+    play_sound(sfx_falling);
+  }
+
+
   return false;
 }
 
