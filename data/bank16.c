@@ -12,6 +12,6 @@ INCBIN(floor_three_data, "res/maps/floor3.tilemap")
 INCBIN(floor_four_data, "res/maps/floor4.tilemap")
 INCBIN(floor_five_data, "res/maps/floor5.tilemap")
 INCBIN(floor_five_sub_data, "res/maps/floor5b.tilemap")
-INCBIN(floor_six_data, "res/maps/floor6.tilemap")
+
 INCBIN(floor_seven_data, "res/maps/floor7.tilemap")
 INCBIN(floor_eight_data, "res/maps/floor8.tilemap")

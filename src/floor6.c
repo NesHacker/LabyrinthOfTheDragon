@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 7
-#define DEFAULT_Y 30
+#define DEFAULT_X 8
+#define DEFAULT_Y 7
 
 //------------------------------------------------------------------------------
 // Maps
@@ -16,8 +16,8 @@
 
 static const Map maps[] = {
   // id, bank, data, width, height
-  { MAP_A, BANK_16, floor_six_data, 32, 32 },
-
+  { MAP_A, BANK_17, floor_six_a, 32, 32 },
+  { MAP_B, BANK_17, floor_six_b, 16, 8 },
   { END },
 };
 
@@ -141,18 +141,11 @@ static void boss_victory(void) NONBANKED {
 }
 
 static bool boss_encounter(void) {
-  Monster *monster = encounter.monsters;
-  reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
-  monster->id = 'A';
-  set_on_victory(boss_victory);
-  start_battle();
-  return true;
+  return false;
 }
 
 static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action(str_floor_common_growl, boss_encounter);
-  return true;
+  return false;
 }
 
 static const NPC npcs[] = {
@@ -166,7 +159,6 @@ static const NPC npcs[] = {
     action_callback,  // Action callback to execute when the player interacts
   }
   */
-  // { NPC_1, MAP_A, 6, 6, MONSTER_KOBOLD, on_npc_action },
 
   { END }
 };

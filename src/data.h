@@ -44,18 +44,21 @@ INCBIN_EXTERN(floor_test_data)
 INCBIN_EXTERN(floor_test_mini)
 INCBIN_EXTERN(floor_test_17x12)
 
+// 16
 INCBIN_EXTERN(floor_one_data)
 INCBIN_EXTERN(floor_two_data)
 INCBIN_EXTERN(floor_three_data)
 INCBIN_EXTERN(floor_four_data)
 INCBIN_EXTERN(floor_five_data)
 INCBIN_EXTERN(floor_five_sub_data)
-INCBIN_EXTERN(floor_six_data)
 INCBIN_EXTERN(floor_seven_data)
 INCBIN_EXTERN(floor_eight_data)
 
+// 17
 INCBIN_EXTERN(floor_one_v2)
 INCBIN_EXTERN(floor_two_v2)
 INCBIN_EXTERN(floor_two_v2_b)
+INCBIN_EXTERN(floor_six_a)
+INCBIN_EXTERN(floor_six_b)
 
 #endif
