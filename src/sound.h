@@ -51,5 +51,6 @@ void sfx_poison_spray(void);
 void sfx_monk_strike(void);
 void sfx_evade(void);
 void sfx_magic_missile(void);
+void sfx_falling(void);
 
 #endif
