@@ -39,6 +39,21 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
+  // Puzzle floors
+  { CHEST_1, MAP_A, 12, 16, false, false, str_chest_item_1elixer, chest_item_1elixer },
+  { CHEST_2, MAP_A, 7, 25, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_3, MAP_A, 20, 25, false, false, NULL, NULL, chest_add_magic_key },
+
+  // Treasure Room
+  { CHEST_4, MAP_A, 26, 4, true, true, str_chest_item_3potions, chest_item_3potions },
+  { CHEST_5, MAP_A, 27, 4, true, true, str_chest_item_3regen, chest_item_3regen},
+  { CHEST_6, MAP_A, 28, 4, true, true, str_chest_item_3ethers, chest_item_3ethers },
+
+  // Secret Boss Room
+  { CHEST_7, MAP_B, 11, 3, false, false, str_chest_item_1pots, chest_item_1pot },
+  { CHEST_8, MAP_B, 13, 3, false, false, str_chest_item_1eths, chest_item_1eth },
+
+  // Treasure Room Chests
   { END },
 };
 

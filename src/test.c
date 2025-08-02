@@ -47,13 +47,13 @@ void fill_inventory(uint8_t amt) {
 }
 
 void test_level(void) {
-  init_test_player(CLASS_SORCERER, 40);
+  init_test_player(CLASS_SORCERER, 50);
   // grant_ability(ABILITY_0);
-  grant_ability(ABILITY_0 | ABILITY_1 | ABILITY_2 | ABILITY_3);
+  grant_ability(ABILITY_0 | ABILITY_1 | ABILITY_2 | ABILITY_3 | ABILITY_4);
   fill_inventory(5);
 
   SET_HAS_TORCH;
-  // SET_MAGIC_KEYS(2);
+  SET_MAGIC_KEYS(9);
   PASS_DOORS;
   DISABLE_ENCOUNTERS;
 
