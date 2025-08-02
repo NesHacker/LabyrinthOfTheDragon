@@ -2556,7 +2556,7 @@ void update_world_map(void) NONBANKED {
 }
 
 void draw_world_map(void) {
-  if (map_state == MAP_STATE_FADE_IN)
+  if (map_state == MAP_STATE_FADE_IN || map_state == MAP_STATE_FADE_OUT)
     return;
   on_draw();
 }
