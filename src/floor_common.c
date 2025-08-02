@@ -81,3 +81,8 @@ const Item chest_item_1atkup_1defup[] = {
   { ITEM_DEF_UP, 1 },
   { END },
 };
+
+const Item chest_item_3regen[] = {
+  { ITEM_REGEN, 3 },
+  { END },
+};
