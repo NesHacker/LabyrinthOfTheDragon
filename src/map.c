@@ -1697,7 +1697,8 @@ static void load_exit(void) {
   }
 
   active_map = maps + active_exit.to_map;
-  hero_direction = active_exit.heading;
+  if (active_exit.heading != HERE)
+    hero_direction = active_exit.heading;
 
   set_hero_position(active_exit.to_col, active_exit.to_row);
   update_local_tiles();
@@ -1740,8 +1741,7 @@ static bool handle_exit(void) {
     active_exit.to_col = exit->to_col;
     active_exit.to_row = exit->to_row;
     active_exit.to_floor = exit->to_floor;
-    if (exit->heading != HERE)
-      active_exit.heading = exit->heading;
+    active_exit.heading = exit->heading;
     active_exit.exit_type = exit->exit_type;
     map_fade_out(MAP_STATE_LOAD_EXIT);
     return true;
