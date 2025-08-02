@@ -2556,7 +2556,14 @@ void update_world_map(void) NONBANKED {
 }
 
 void draw_world_map(void) {
-  if (map_state == MAP_STATE_FADE_IN || map_state == MAP_STATE_FADE_OUT)
+  if (
+    map_state == MAP_STATE_FADE_IN ||
+    map_state == MAP_STATE_FADE_OUT ||
+    map_state == MAP_STATE_START_BATTLE ||
+    map_state == MAP_STATE_INITIATE_BATTLE ||
+    map_state == MAP_STATE_FROM_BATTLE
+  ) {
     return;
+  }
   on_draw();
 }
