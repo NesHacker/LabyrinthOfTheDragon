@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "floor.h"
+#include "sound.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -80,6 +81,37 @@ static const Sign signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
+uint8_t active_portal = 0;
+
+static void on_pulled(const Lever *lever) {
+  const uint8_t a = is_lever_on(LEVER_1) ? 1 : 0;
+  const uint8_t b = is_lever_on(LEVER_2) ? 2 : 0;
+
+  active_portal = a + b;
+
+  set_palette_at(MAP_A, 1, 2, 0);
+  set_palette_at(MAP_A, 3, 2, 0);
+  set_palette_at(MAP_A, 13, 2, 0);
+  set_palette_at(MAP_A, 15, 2, 0);
+
+  switch (active_portal) {
+  case 0:
+    set_palette_at(MAP_A, 1, 2, 2);
+    break;
+  case 1:
+    set_palette_at(MAP_A, 3, 2, 2);
+    break;
+  case 2:
+    set_palette_at(MAP_A, 13, 2, 2);
+    break;
+  case 3:
+    set_palette_at(MAP_A, 15, 2, 2);
+    break;
+  }
+
+  play_sound(sfx_door_unlock);
+}
+
 static const Lever levers[] = {
   /*
   {
@@ -91,6 +123,8 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+  { LEVER_1, MAP_A, 7, 4, false, false, on_pulled },
+  { LEVER_2, MAP_A, 9, 4, false, false, on_pulled },
   { END },
 };
 
@@ -167,11 +201,59 @@ static const NPC npcs[] = {
 // Scripting Callbacks
 //------------------------------------------------------------------------------
 
+uint8_t portal_color_idx = 0;
+Timer portal_color_timer;
+#define MAX_PORTAL_COLOR_FRAMES 6
+
+const palette_color_t portal_color[MAX_PORTAL_COLOR_FRAMES] = {
+  RGB8(220, 0, 220),
+  RGB8(180, 0, 240),
+  RGB8(100, 120, 120),
+  RGB8(20, 240, 0),
+  RGB8(0, 200, 0),
+  RGB8(100, 0, 100),
+};
+
+palette_color_t portal_color_palette[4] = {
+  RGB8(220, 0, 220),
+  RGB8(100, 100, 140),
+  RGB8(40, 60, 40),
+  RGB8(24, 0, 0),
+};
+
 static bool on_init(void) {
+  active_portal = 0;
+  init_timer(portal_color_timer, 4);
   return false;
 }
 
 static bool on_special(void) {
+  switch (active_portal) {
+  case 0:
+    if (player_at(1, 2)) {
+      play_sound(sfx_no_no_square);
+      teleport(MAP_A, 2, 21, UP);
+    }
+    break;
+  case 1:
+    if (player_at(3, 2)) {
+      play_sound(sfx_no_no_square);
+      teleport(MAP_A, 22, 29, LEFT);
+    }
+    break;
+  case 2:
+    if (player_at(13, 2)) {
+      play_sound(sfx_no_no_square);
+      teleport(MAP_A, 26, 21, UP);
+    }
+    break;
+  case 3:
+    if (player_at(15, 2)) {
+      play_sound(sfx_no_no_square);
+      teleport(MAP_A, 12, 21, UP);
+    }
+    break;
+  }
   return false;
 }
 
@@ -181,6 +263,19 @@ static bool on_move(void) {
 
 static bool on_action(void) {
   return false;
+}
+
+static void on_draw(void) {
+  if (!update_timer(portal_color_timer))
+    return;
+  reset_timer(portal_color_timer);
+
+  portal_color_idx++;
+  if (portal_color_idx >= MAX_PORTAL_COLOR_FRAMES)
+    portal_color_idx = 0;
+
+  portal_color_palette[0] = portal_color[portal_color_idx];
+  core.load_bg_palette(portal_color_palette, 2, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -198,11 +293,11 @@ static const palette_color_t palettes[] = {
   RGB8(100, 100, 140),
   RGB8(40, 60, 40),
   RGB8(24, 0, 0),
-  // Palette 3
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
+  // Palette 3 - Active portal
+  RGB8(220, 0, 220),
+  RGB8(100, 100, 140),
+  RGB8(40, 60, 40),
+  RGB8(24, 0, 0),
   // Palette 4
   RGB_WHITE,
   RGB8(120, 120, 120),
@@ -242,4 +337,6 @@ const Floor floor6 = {
   on_special,
   on_move,
   on_action,
+  NULL,
+  on_draw,
 };
