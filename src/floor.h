@@ -58,6 +58,12 @@ bool chest_add_magic_key(Chest *chest);
  */
 bool chest_add_torch(Chest *chest);
 
+/**
+ * Handles some specialized logic for a couple chests in floor 7. I'm putting it
+ * here as a temporary work around so I can avoid using bytes in ROM0.
+ */
+bool floor7_chest_on_open(const Chest *chest);
+
 extern const Item chest_item_2pot_1eth[];
 extern const Item chest_item_haste_pot[];
 extern const Item chest_item_regen_pot[];
@@ -70,5 +76,6 @@ extern const Item chest_item_3ethers[];
 extern const Item chest_item_1elixer[];
 extern const Item chest_item_1atkup_1defup[];
 extern const Item chest_item_3regen[];
+extern const Item chest_item_3elixers[];
 
 #endif

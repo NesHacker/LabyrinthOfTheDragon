@@ -49,7 +49,15 @@ void fill_inventory(uint8_t amt) {
 void test_level(void) {
   init_test_player(CLASS_SORCERER, 50);
   // grant_ability(ABILITY_0);
-  grant_ability(ABILITY_0 | ABILITY_1 | ABILITY_2 | ABILITY_3 | ABILITY_4);
+  grant_ability(
+  // ABILITY_ALL
+    ABILITY_0
+  | ABILITY_1
+  | ABILITY_2
+  | ABILITY_3
+  | ABILITY_4
+  | ABILITY_5
+  );
   fill_inventory(5);
 
   SET_HAS_TORCH;
@@ -75,8 +83,9 @@ void test_level(void) {
   // set_active_floor(&bank_floor3);
   // set_active_floor(&bank_floor4);
   // set_active_floor(&bank_floor5);
-
-  set_active_floor(&bank_floor6);
+  // set_active_floor(&bank_floor6);
+  set_active_floor(&bank_floor7);
+  // set_active_floor(&bank_floor8);
 
   init_world_map();
 

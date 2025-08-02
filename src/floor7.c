@@ -7,8 +7,8 @@
 //------------------------------------------------------------------------------
 
 #define ID 99
-#define DEFAULT_X 7
-#define DEFAULT_Y 30
+#define DEFAULT_X 8
+#define DEFAULT_Y 31
 
 //------------------------------------------------------------------------------
 // Maps
@@ -17,7 +17,6 @@
 static const Map maps[] = {
   // id, bank, data, width, height
   { MAP_A, BANK_16, floor_seven_data, 32, 32 },
-
   { END },
 };
 
@@ -38,6 +37,33 @@ static const Chest chests[] = {
     NULL,       // Scripting "on open" callback (optional)
   }
   */
+
+  // Left & Right Wing Magic Key Chests
+  { CHEST_1, MAP_A, 2, 1, false, false, NULL, NULL, chest_add_magic_key },
+  { CHEST_2, MAP_A, 18, 1, false, false, NULL, NULL, chest_add_magic_key },
+
+  // Left & Right Wing Item Chests
+  { CHEST_3, MAP_A, 6, 5, false, false, str_chest_item_haste_pot, chest_item_haste_pot },
+  { CHEST_4, MAP_A, 14, 5, false, false, str_chest_item_regen_pot, chest_item_regen_pot },
+
+  // Item Room Chest
+  {
+    CHEST_5, MAP_A, 10, 17,
+    false, false,
+    str_chest_item_3elixers, chest_item_3elixers,
+    floor7_chest_on_open
+  },
+
+  // Secret Maze Chests
+  {
+    CHEST_6, MAP_A, 25, 28,
+    false, false,
+    str_chest_item_regen_pot, chest_item_regen_pot,
+    floor7_chest_on_open
+  },
+  { CHEST_7, MAP_A, 30, 22, false, false, str_chest_item_regen_pot, chest_item_regen_pot },
+  { CHEST_8, MAP_A, 25, 18, false, false, str_chest_item_1pots, chest_item_1pot },
+
   { END },
 };
 
@@ -50,13 +76,38 @@ static const Exit exits[] = {
   {
     MAP_A,        // Map the exit is on
     0, 0,         // Column and row on that map for the exit
-    FLOOR_TEST_ID,    // Floor to which the exit leads (last door, basically)
     DEST_MAP      // Id of the destination map
     0, 0,         // Column and row
     UP,           // Way the player should be facing leaving the exit
     EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
   },
   */
+  // Boss Door
+  { MAP_A, 8, 27, MAP_A, 27, 9, UP, EXIT_STAIRS },
+  { MAP_A, 27, 9, MAP_A, 8, 27, DOWN, EXIT_STAIRS },
+
+  // Elite Room
+  { MAP_A, 7, 27, MAP_A, 2, 19, UP, EXIT_STAIRS },
+  { MAP_A, 2, 19, MAP_A, 7, 27, DOWN, EXIT_STAIRS },
+
+  // Item Room
+  { MAP_A, 9, 27, MAP_A, 10, 19, UP, EXIT_STAIRS },
+  { MAP_A, 10, 19, MAP_A, 9, 27, DOWN, EXIT_STAIRS },
+
+  // Left Wing Portal & Hole
+  { MAP_A, 1, 29, MAP_A, 7, 11, HERE, EXIT_PORTAL },
+  { MAP_A, 9, 6, MAP_A, 7, 30, HERE, EXIT_HOLE },
+
+  // Right Wing Portal & Hole
+  { MAP_A, 15, 29, MAP_A, 13, 11, HERE, EXIT_PORTAL },
+  { MAP_A, 11, 6, MAP_A, 9, 30, HERE, EXIT_HOLE },
+
+  // Secret Maze
+  { MAP_A, 24, 7, MAP_A, 31, 29, LEFT, EXIT_STAIRS },
+  { MAP_A, 31, 29, MAP_A, 24, 7, RIGHT, EXIT_STAIRS },
+
+  // Next Floor
+  { MAP_A, 27, 25, MAP_A, DEFAULT_X, DEFAULT_Y, UP, EXIT_STAIRS, &bank_floor7 },
   { END },
 };
 
@@ -73,12 +124,24 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
+  { MAP_A, 10, 27, UP, str_floor7_riddle },
   { END },
 };
 
 //------------------------------------------------------------------------------
 // Levers
 //------------------------------------------------------------------------------
+
+#define START_STUCK false
+
+static void on_pulled(const Lever *lever) {
+  // switch (lever->id) {
+  // case LEVER_1:
+  //   break;
+  // case LEVER_2:
+  //   break;
+  // }
+}
 
 static const Lever levers[] = {
   /*
@@ -91,6 +154,8 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
+  { LEVER_1, MAP_A, 7, 29, false, START_STUCK, on_pulled },
+  { LEVER_2, MAP_A, 9, 29, false, START_STUCK, on_pulled },
   { END },
 };
 
@@ -109,6 +174,14 @@ static const Door doors[] = {
     false,            // Does the door start opened?
   }
   */
+  { DOOR_1, MAP_A, 27, 5, DOOR_NEXT_LEVEL, false, false },  // Next Level
+  { DOOR_2, MAP_A, 8, 27, DOOR_NEXT_LEVEL, false, false },  // Boss
+  { DOOR_3, MAP_A, 7, 27, DOOR_STAIRS_DOWN, false, false }, // Elite
+  { DOOR_4, MAP_A, 9, 27, DOOR_STAIRS_DOWN, false, false }, // Item Room
+  { DOOR_5, MAP_A, 7, 9, DOOR_NORMAL, true, false },   // Left Wing Locked
+  { DOOR_6, MAP_A, 2, 4, DOOR_NORMAL, false, false },  // Left Wing Switch
+  { DOOR_7, MAP_A, 13, 9, DOOR_NORMAL, true, false },  // Right Wing Locked
+  { DOOR_8, MAP_A, 18, 4, DOOR_NORMAL, false, false }, // Right Wing Switch
   { END }
 };
 
@@ -117,7 +190,6 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 
 static void on_lit(const Sconce* sconce) {
-
 }
 
 static const Sconce sconces[] = {
@@ -136,24 +208,6 @@ static const Sconce sconces[] = {
 //------------------------------------------------------------------------------
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
-
-static void boss_victory(void) NONBANKED {
-}
-
-static bool boss_encounter(void) {
-  Monster *monster = encounter.monsters;
-  reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
-  monster->id = 'A';
-  set_on_victory(boss_victory);
-  start_battle();
-  return true;
-}
-
-static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action(str_floor_common_growl, boss_encounter);
-  return true;
-}
 
 static const NPC npcs[] = {
   /*

@@ -25,6 +25,18 @@ bool chest_add_torch(Chest *chest) {
   return true;
 }
 
+bool floor7_chest_on_open(const Chest *chest) {
+  // The floor uses some "fake" chest graphics to provide a hint that for the
+  // existence of a secret maze. Basically I need to ensure that those graphics
+  // are toggled from closed -> opened if the corresponding "actual" chests are
+  // opened by the player.
+  if (chest->id == CHEST_5)
+    set_tile_at(MAP_A, 21, 28, 0x1E);
+  else if (chest->id == CHEST_6)
+    set_tile_at(MAP_A, 14, 17, 0x0E);
+  return false;
+}
+
 const Item chest_item_2pot_1eth[] = {
   { ITEM_POTION, 2 },
   { ITEM_ETHER, 1 },
@@ -84,5 +96,10 @@ const Item chest_item_1atkup_1defup[] = {
 
 const Item chest_item_3regen[] = {
   { ITEM_REGEN, 3 },
+  { END },
+};
+
+extern const Item chest_item_3elixers[] = {
+  { ITEM_ELIXER, 3 },
   { END },
 };
