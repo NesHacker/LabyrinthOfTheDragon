@@ -305,7 +305,7 @@ static void load_floor(FloorBank *f) NONBANKED {
   default_y = floor->default_y;
 
   list_copy(floor->maps, maps, MAX_MAPS, sizeof(Map));
-  list_copy(floor->exits, exits, MAX_EXITS, sizeof(Map));
+  list_copy(floor->exits, exits, MAX_EXITS, sizeof(Exit));
   list_copy(floor->signs, signs, MAX_SIGNS, sizeof(Sign));
   list_copy(floor->chests, chests, MAX_CHESTS, sizeof(Chest));
   list_copy(floor->levers, levers, MAX_LEVERS, sizeof(Lever));
