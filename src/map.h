@@ -914,6 +914,10 @@ typedef struct Floor {
    * Called when the floor is loaded.
    */
   const void (*on_load)(void);
+  /**
+   * Called on render frames to update graphics for the floor.
+   */
+  const void (*on_draw)(void);
 } Floor;
 
 /**

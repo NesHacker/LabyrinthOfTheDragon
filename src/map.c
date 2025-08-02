@@ -375,13 +375,25 @@ static bool on_action(void) NONBANKED {
 }
 
 /**
- * Switches to the floor's bank and calls the `on_action` function.
+ * Switches to the floor's bank and calls the `on_load` function.
  */
 static void on_load(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
   if (floor_bank->floor->on_load)
     floor_bank->floor->on_load();
+  SWITCH_ROM(_prev_bank);
+}
+
+/**
+ * Switches to the floor's bank and calls the `on_draw` function.
+ */
+static void on_draw(void) NONBANKED {
+  *(debug + 0x20) = *(debug + 0x20) + 1;
+  const uint8_t _prev_bank = CURRENT_BANK;
+  SWITCH_ROM(floor_bank->bank);
+  if (floor_bank->floor->on_draw)
+    floor_bank->floor->on_draw();
   SWITCH_ROM(_prev_bank);
 }
 
@@ -2527,4 +2539,5 @@ void update_world_map(void) NONBANKED {
 }
 
 void draw_world_map(void) {
+  on_draw();
 }
