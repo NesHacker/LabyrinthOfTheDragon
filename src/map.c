@@ -174,6 +174,12 @@ static MapTile tile_buf[2 * MAP_HORIZ_LOADS];
 static TileHashEntry tile_object_hashtable[TILE_HASHTABLE_SIZE];
 
 /**
+ * Hashtable that holds palette and tile id overrides. Makes it easy to set and
+ * lookup overrides for tile position in a floor's map.
+ */
+static TileOverrideHashEntry tile_override_hashtable[TILE_HASHTABLE_SIZE];
+
+/**
  * Timer used to add a small delay after the fade-out and before handing things
  * over to the battle system.
  */
@@ -487,6 +493,68 @@ static void hash_object(
 }
 
 /**
+ * TODO document me
+ */
+static TileOverrideHashEntry *find_override_entry(
+  int8_t x,
+  int8_t y
+) {
+  uint8_t map_id = active_map->id;
+  TileOverrideHashEntry *entry = tile_override_hashtable + hash(map_id, x, y);
+  while (entry) {
+    if (entry->map_id == 0xFF)
+      return NULL;
+    if (entry->map_id == map_id && entry->x == x && entry->y == y)
+      return entry;
+    entry = entry->next;
+  }
+  return NULL;
+}
+
+/**
+ * TODO document me
+ */
+static TileOverrideHashEntry *find_or_create_override_entry(
+  uint8_t map_id,
+  int8_t x,
+  int8_t y
+) {
+  TileOverrideHashEntry *entry = tile_override_hashtable + hash(map_id, x, y);
+
+  // The first bucket item is empty, so reserve it
+  if (entry->map_id == 0xFF) {
+    entry->map_id = map_id;
+    entry->x = x;
+    entry->y = y;
+    return entry;
+  }
+
+  // We've found the override entry for the given coordinates
+  if (entry->map_id == map_id && entry->x == x && entry->y == y)
+    return entry;
+
+  // Handle collisions
+  while (entry->next) {
+    entry = entry->next;
+    if (entry->map_id == map_id && entry->x == x && entry->y == y)
+      return entry;
+  }
+
+  // All previous entries were set for other coorindates, make a new entry
+  TileOverrideHashEntry *next =
+    (TileOverrideHashEntry*)malloc(sizeof(TileOverrideHashEntry));
+  entry->next = next;
+  entry = next;
+  entry->next = NULL;
+
+  entry->map_id = map_id;
+  entry->x = x;
+  entry->y = y;
+
+  return entry;
+}
+
+/**
  * Gets a hash entry at the given coordinates in the active map.
  */
 static TileHashEntry *get_hash_entry(int8_t x, int8_t y) {
@@ -504,9 +572,9 @@ static TileHashEntry *get_hash_entry(int8_t x, int8_t y) {
 }
 
 /**
- * Resets the object hash and frees allocated bucket items.
+ * Resets the object and override hashtables and frees allocated bucket items.
  */
-static void reset_object_hash(void) {
+static void reset_hashtables(void) {
   TileHashEntry *entry = tile_object_hashtable;
 
   for (uint8_t k = 0; k < TILE_HASHTABLE_SIZE; k++, entry++) {
@@ -520,8 +588,26 @@ static void reset_object_hash(void) {
 
     while (sibling) {
       TileHashEntry *tmp = sibling;
-      free(tmp);
       sibling = sibling->next;
+      free(tmp);
+    }
+  }
+
+  TileOverrideHashEntry *override = tile_override_hashtable;
+  for (uint8_t k = 0; k < TILE_HASHTABLE_SIZE; k++, override++) {
+    override->map_id = 0xFF;
+    override->x = (int8_t)0xFF;
+    override->y = (int8_t)0xFF;
+    override->palette = 0xFF;
+    override->tile = 0xFF;
+
+    TileOverrideHashEntry *sibling = override->next;
+    override->next = NULL;
+
+    while (sibling) {
+      TileOverrideHashEntry *tmp = sibling;
+      sibling = sibling->next;
+      free(tmp);
     }
   }
 }
@@ -1218,6 +1304,16 @@ static void get_map_tile(MapTile *tile, int8_t x, int8_t y) NONBANKED {
   tile->sconce = NULL;
   tile->npc = NULL;
 
+  TileOverrideHashEntry *override = find_override_entry(x, y);
+  if (override) {
+    if (override->tile != 0xFF) {
+      map_tile = map_tile_lookup[override->tile & MAP_TILE_MASK];
+    }
+    if (override->palette < 8) {
+      attr = (attr & 0xF8) | override->palette;
+    }
+  }
+
   TileHashEntry *entry = get_hash_entry(x, y);
   if (entry) {
     switch(entry->type) {
@@ -1517,7 +1613,7 @@ static void update_local_tiles(void) {
  * Resets all stateful objects on the flooor (chests, doors, npc, levers, etc.)
  */
 static void reset_map_objects(void) {
-  reset_object_hash();
+  reset_hashtables();
 
   // Chests
   flags_chest_open = 0;
@@ -2012,6 +2108,54 @@ void update_door_graphics(void) {
 
   if (door_updated)
     update_local_tiles();
+}
+
+/**
+ * Redraws the tile at the given location. Does nothing if the map isn't active,
+ * the tile isn't in the rendering view, or if the tile is out of bounds.
+ *
+ * Note: I am using this for scriptable tile and palette overrides in level
+ *       scripts, but I have this feeling I do something *like* this in various
+ *       ways throughout the map code. Might be a good place for a refactor?
+ *
+ * @param map_id Id of the map.
+ * @param x X-coordinate in the map.
+ * @param y X-coordinate in the map.
+ */
+static void redraw_tile(uint8_t map_id, int8_t x, int8_t y) {
+  // Only redraw active map tiles
+  if (map_id != active_map->id)
+    return;
+
+  // Bounds checking
+  if (x < 0 || y < 0)
+    return;
+  if (x >= active_map->width || y >= active_map->height)
+    return;
+
+  // Not in the render window
+  if (x < hero_x() - 6 || x > hero_x() + 7)
+    return;
+  if (y < hero_y() - 6 || y > hero_y() + 6)
+    return;
+
+  // Redraw the tile
+  uint8_t *vram = get_vram_at(x, y);
+  MapTile map_tile;
+  get_map_tile(&map_tile, x, y);
+  draw_map_tile(vram, &map_tile);
+}
+
+void set_palette_at(uint8_t map_id, int8_t x, int8_t y, uint8_t palette) BANKED {
+  TileOverrideHashEntry *entry = find_or_create_override_entry(map_id, x, y);
+  entry->palette = palette;
+  redraw_tile(map_id, x, y);
+}
+
+void set_tile_at(uint8_t map_id, int8_t x, int8_t y, uint8_t tile) BANKED {
+  TileOverrideHashEntry *entry = find_or_create_override_entry(map_id, x, y);
+  entry->tile = tile;
+  redraw_tile(map_id, x, y);
 }
 
 /**
