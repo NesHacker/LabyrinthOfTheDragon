@@ -252,6 +252,18 @@ addNamespace('floor6', 2, {
   'boss_not_yet': 'You have yet to ripen...',
 });
 
+addNamespace('floor7', 2, {
+  'riddle': 'Only those unseen may pass...',
+  'elite_attack': 'HISSSSS!',
+  'boss': 'STARING INTENSIFIES',
+  'boss_not_yet': 'EYEBROW RAISES'
+});
+
+addNamespace('floor8', 2, {
+  'boss': '...',
+  'boss_not_yet': '...',
+});
+
 addNamespace('floor_common', 2, {
   'growl': "GROWL!",
   'light_fires': "Light these fires to open this door!",
@@ -308,7 +320,8 @@ addNamespace('chest_item', 2, {
   '3potions': 'You get 3 potions!',
   '3ethers': 'You get 3 ethers!',
   '1elixer': 'You get an elixer!',
-  '1atkup_1defup': 'You get an ATK& and DEF&!'
+  '1atkup_1defup': 'You get an ATK& and DEF&!',
+  '3elixers': 'You get 3 elixers!'
 });
 
 addNamespace('items', 3, {
