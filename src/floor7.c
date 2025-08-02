@@ -11,6 +11,11 @@
 #define DEFAULT_X 8
 #define DEFAULT_Y 31
 
+bool switch_lever_1 = false;
+bool switch_lever_2 = false;
+bool switch_door_6 = false;
+bool switch_door_8 = false;
+
 //------------------------------------------------------------------------------
 // Maps
 //------------------------------------------------------------------------------
@@ -133,7 +138,7 @@ static const Sign signs[] = {
 // Levers
 //------------------------------------------------------------------------------
 
-#define START_STUCK false
+#define START_STUCK true
 
 static void on_pulled(const Lever *lever) {
   // switch (lever->id) {
@@ -191,6 +196,23 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 
 static void on_lit(const Sconce* sconce) {
+  if (sconce->id == SCONCE_3) {
+    if (switch_door_6) {
+      open_door(DOOR_6);
+      play_sound(sfx_big_door_open);
+    } else {
+      play_sound(sfx_door_unlock);
+    }
+  }
+
+  if (sconce->id == SCONCE_6) {
+    if (switch_door_8) {
+      open_door(DOOR_8);
+      play_sound(sfx_big_door_open);
+    } else {
+      play_sound(sfx_door_unlock);
+    }
+  }
 }
 
 static const Sconce sconces[] = {
@@ -203,6 +225,30 @@ static const Sconce sconces[] = {
     FLAME_BLUE  // Flame color for the sconce if it starts lit.
   }
   */
+
+  // Left wing puzzle sconces
+  { SCONCE_1, MAP_A, 3, 28, false, FLAME_NONE },
+  { SCONCE_2, MAP_A, 3, 9, false, FLAME_NONE },
+  { SCONCE_3, MAP_A, 3, 4, false, FLAME_NONE, on_lit },
+
+  // Right wing puzzle sconces
+  { SCONCE_4, MAP_A, 13, 28, false, FLAME_NONE },
+  { SCONCE_5, MAP_A, 17, 9, false, FLAME_NONE },
+  { SCONCE_6, MAP_A, 17, 4, false, FLAME_NONE, on_lit },
+
+  // Prelit sconces
+  { SCONCE_STATIC, MAP_A, 6, 27, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 22, 27, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 1, 16, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 3, 16, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 9, 16, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 11, 16, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 2, 0, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 8, 4, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 12, 4, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 18, 0, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 26, 5, true, FLAME_BLUE },
+  { SCONCE_STATIC, MAP_A, 28, 5, true, FLAME_GREEN },
   { END }
 };
 
@@ -282,6 +328,10 @@ static const NPC npcs[] = {
 //------------------------------------------------------------------------------
 
 static bool on_init(void) {
+  switch_lever_1 = false;
+  switch_lever_2 = false;
+  switch_door_6 = false;
+  switch_door_8 = false;
   return false;
 }
 
@@ -299,6 +349,47 @@ static bool on_special(void) {
     play_sound(sfx_falling);
   }
 
+  // Lever Unlock Switches
+  if (player_at(7, 5) && !switch_lever_1) {
+    play_sound(sfx_door_unlock);
+    unstick_lever(LEVER_1);
+    set_tile_at(MAP_A, 7, 5, 0xF4);
+    set_palette_at(MAP_A, 7, 4, 4);
+    set_palette_at(MAP_A, 7, 29, 4);
+  }
+
+  if (player_at(13, 5) && !switch_lever_1) {
+    play_sound(sfx_door_unlock);
+    unstick_lever(LEVER_2);
+    set_tile_at(MAP_A, 13, 5, 0xF4);
+    set_palette_at(MAP_A, 13, 4, 4);
+    set_palette_at(MAP_A, 9, 29, 4);
+  }
+
+  // Door unlock switches
+  if (player_at(4, 6) && !switch_door_6) {
+    switch_door_6 = true;
+    if (is_sconce_lit(SCONCE_3)) {
+      open_door(DOOR_6);
+      play_sound(sfx_big_door_open);
+    } else {
+      play_sound(sfx_door_unlock);
+    }
+    set_tile_at(MAP_A, 4, 6, 0xF4);
+    set_palette_at(MAP_A, 4, 5, 4);
+  }
+
+  if (player_at(16, 6) && !switch_door_8) {
+    switch_door_8 = true;
+    if (is_sconce_lit(SCONCE_6)) {
+      open_door(DOOR_8);
+      play_sound(sfx_big_door_open);
+    } else {
+      play_sound(sfx_door_unlock);
+    }
+    set_tile_at(MAP_A, 16, 6, 0xF4);
+    set_palette_at(MAP_A, 16, 5, 4);
+  }
 
   return false;
 }
@@ -332,12 +423,12 @@ static const palette_color_t palettes[] = {
   RGB8(60, 60, 60),
   RGB_BLACK,
   // Palette 4
-  RGB_WHITE,
+  RGB8(40, 0, 0),
   RGB8(120, 120, 120),
   RGB8(60, 60, 60),
   RGB_BLACK,
   // Palette 5
-  RGB_WHITE,
+  RGB8(20, 180, 20),
   RGB8(120, 120, 120),
   RGB8(60, 60, 60),
   RGB_BLACK,
