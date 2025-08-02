@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "floor.h"
+#include "sound.h"
 
 //------------------------------------------------------------------------------
 // Floorwide settings
@@ -107,7 +108,7 @@ static const Exit exits[] = {
   { MAP_A, 31, 29, MAP_A, 24, 7, RIGHT, EXIT_STAIRS },
 
   // Next Floor
-  { MAP_A, 27, 25, MAP_A, DEFAULT_X, DEFAULT_Y, UP, EXIT_STAIRS, &bank_floor7 },
+  { MAP_A, 27, 5, MAP_A, DEFAULT_X, DEFAULT_Y, UP, EXIT_STAIRS, &bank_floor7 },
   { END },
 };
 
@@ -208,6 +209,56 @@ static const Sconce sconces[] = {
 //------------------------------------------------------------------------------
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
+static void on_boss_victory(void) BANKED {
+  open_door(DOOR_1);
+  set_npc_invisible(NPC_1);
+  play_sound(sfx_big_door_open);
+}
+
+static void on_elite_victory(void) BANKED {
+  set_npc_invisible(NPC_2);
+  add_items(ITEM_HASTE, 1);
+  play_sound(sfx_big_powerup);
+  map_textbox(str_chest_item_haste_pot);
+}
+
+static bool on_boss_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  beholder_generator(monster, 54, A_TIER);
+  monster->id = 'A';
+  set_on_victory(on_boss_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_elite_encouter(void) {
+  Monster *monster = encounter.monsters;
+  reset_encounter(MONSTER_LAYOUT_1);
+  displacer_beast_generator(monster, 50, B_TIER);
+  monster->id = 'A';
+  set_on_victory(on_elite_victory);
+  start_battle();
+  return true;
+}
+
+static bool on_npc_action(const NPC *npc) {
+  switch (npc->id) {
+  case NPC_1:
+    if (player.level < 45) {
+      map_textbox(str_floor6_boss_not_yet);
+      return true;
+    }
+    play_sound(sfx_monster_attack2);
+    map_textbox_with_action(str_floor6_boss, on_boss_encouter);
+    return true;
+  case NPC_2:
+    play_sound(sfx_monster_attack1);
+    map_textbox_with_action(str_floor6_elite_attack, on_elite_encouter);
+    return true;
+  }
+  return false;
+}
 
 static const NPC npcs[] = {
   /*
@@ -221,7 +272,8 @@ static const NPC npcs[] = {
   }
   */
   // { NPC_1, MAP_A, 6, 6, MONSTER_KOBOLD, on_npc_action },
-
+  { NPC_1, MAP_A, 27, 7, MONSTER_BEHOLDER, S_TIER, on_npc_action }, // Boss
+  { NPC_2, MAP_A, 2, 17, MONSTER_DISPLACER_BEAST, A_TIER, on_npc_action }, // Elite
   { END }
 };
 

@@ -47,7 +47,7 @@ void fill_inventory(uint8_t amt) {
 }
 
 void test_level(void) {
-  init_test_player(CLASS_SORCERER, 50);
+  init_test_player(CLASS_SORCERER, 90);
   // grant_ability(ABILITY_0);
   grant_ability(
   // ABILITY_ALL
