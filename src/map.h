@@ -1274,18 +1274,21 @@ void take_exit(Exit *exit);
  * @param col Column in the map.
  * @param row Row in the map.
  * @param heading Direction the player should "walk out" of the destination.
+ * @param exit_type Type for the exit (primarily handles SFX).
  */
 inline void teleport(
   MapId to_map,
   uint8_t col,
   uint8_t row,
-  Direction heading
+  Direction heading,
+  ExitType exit_type
 ) {
   active_exit.to_map = to_map;
   active_exit.to_col = col;
   active_exit.to_row = row;
   active_exit.to_floor = NULL;
   active_exit.heading = heading;
+  active_exit.exit_type = exit_type;
   map_state = MAP_STATE_TELEPORT;
 }
 
