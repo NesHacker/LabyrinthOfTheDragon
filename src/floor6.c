@@ -58,6 +58,18 @@ static const Exit exits[] = {
   },
   */
 
+  // Boss Room Door
+  { MAP_A, 8, 1, MAP_B, 3, 6, UP, EXIT_STAIRS },
+  { MAP_B, 3, 6, MAP_A, 8, 1, DOWN, EXIT_STAIRS },
+
+  // Elite Door
+  { MAP_A, 2, 18, MAP_A, 20, 9, UP, EXIT_STAIRS },
+  { MAP_A, 20, 9, MAP_A, 2, 18, DOWN, EXIT_STAIRS },
+
+  // Item Room Door
+  { MAP_A, 12, 19, MAP_A, 30, 10, UP, EXIT_STAIRS },
+  { MAP_A, 30, 10, MAP_A, 12, 19, DOWN, EXIT_STAIRS },
+
   // 2nd Floor Holes
   { MAP_A, 4, 20, MAP_A, 5, 4, HERE, EXIT_HOLE },
   { MAP_A, 7, 18, MAP_A, 8, 2, HERE, EXIT_HOLE },
@@ -73,12 +85,16 @@ static const Exit exits[] = {
   { MAP_A, 24, 24, MAP_A, 10, 4, HERE, EXIT_HOLE },
   { MAP_A, 22, 25, MAP_A, 8, 5, HERE, EXIT_HOLE },
 
+  // Next floor
+  // TODO Fix this to point to floor 7
+  // { MAP_B, 3, 2, MAP_A, 8, 7, UP, EXIT_STAIRS },
+  { MAP_B, 3, 2, MAP_A, 8, 7, UP, EXIT_STAIRS, &bank_floor6},
 
   { END },
 };
 
 //------------------------------------------------------------------------------
-// Exits
+// Signs
 //------------------------------------------------------------------------------
 
 static const Sign signs[] = {
@@ -99,7 +115,7 @@ static const Sign signs[] = {
 
 uint8_t active_portal = 0;
 
-static void on_pulled(const Lever *lever) {
+static void pull_routing_lever(const Lever *lever) {
   const uint8_t a = is_lever_on(LEVER_1) ? 1 : 0;
   const uint8_t b = is_lever_on(LEVER_2) ? 2 : 0;
 
@@ -128,6 +144,21 @@ static void on_pulled(const Lever *lever) {
   play_sound(sfx_door_unlock);
 }
 
+static void on_pulled(const Lever *lever) {
+  switch (lever->id) {
+  case (LEVER_3):
+    open_door(DOOR_3);
+    play_sound(sfx_big_door_open);
+    break;
+  case (LEVER_4):
+    open_door(DOOR_4);
+    play_sound(sfx_big_door_open);
+    break;
+  default:
+    pull_routing_lever(lever);
+  }
+}
+
 static const Lever levers[] = {
   /*
   {
@@ -141,6 +172,8 @@ static const Lever levers[] = {
   */
   { LEVER_1, MAP_A, 7, 4, false, false, on_pulled },
   { LEVER_2, MAP_A, 9, 4, false, false, on_pulled },
+  { LEVER_3, MAP_A, 3, 15, false, false, on_pulled },
+  { LEVER_4, MAP_A, 12, 24, false, false, on_pulled },
   { END },
 };
 
@@ -159,6 +192,17 @@ static const Door doors[] = {
     false,            // Does the door start opened?
   }
   */
+  // Boss room door
+  { DOOR_1, MAP_A, 8, 1, DOOR_NORMAL, false, false },
+
+  // Next level door
+  { DOOR_2, MAP_B, 3, 2, DOOR_NEXT_LEVEL, false, false },
+
+  // Elite Room Door
+  { DOOR_3, MAP_A, 2, 18, DOOR_NORMAL, false, false },
+
+  // Item Room Door
+  { DOOR_4, MAP_A, 12, 19, DOOR_NORMAL, false, false },
   { END }
 };
 
@@ -167,7 +211,6 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 
 static void on_lit(const Sconce* sconce) {
-
 }
 
 static const Sconce sconces[] = {
