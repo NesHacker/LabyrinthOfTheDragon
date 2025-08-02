@@ -300,6 +300,7 @@ addNamespace('chest_item', 2, {
   '1pots': 'You get a potions!',
   'haste_pot': 'You get a haste potion!',
   'regen_pot': 'You get a regen potion!',
+  '3regen': 'You get 3 regens!',
   '2pots': 'You get 2 potions!',
   '1eth': 'You get an ether!',
   '1eths': 'You get an ethers!',
