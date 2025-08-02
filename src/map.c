@@ -2413,7 +2413,7 @@ void return_from_battle(void) NONBANKED {
 void on_victory(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
-  void (*callback)(void) = encounter.on_victory;
+  void (*callback)(void) BANKED = encounter.on_victory;
   if (encounter.victory)
     callback();
   encounter.on_victory = NULL;

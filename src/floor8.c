@@ -137,22 +137,8 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
-}
-
-static bool boss_encounter(void) {
-  Monster *monster = encounter.monsters;
-  reset_encounter(MONSTER_LAYOUT_1);
-  kobold_generator(monster, player.level, A_TIER);
-  monster->id = 'A';
-  set_on_victory(boss_victory);
-  start_battle();
-  return true;
-}
-
 static bool on_npc_action(const NPC *npc) {
-  map_textbox_with_action(str_floor_common_growl, boss_encounter);
-  return true;
+  return false;
 }
 
 static const NPC npcs[] = {

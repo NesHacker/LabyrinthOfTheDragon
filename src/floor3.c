@@ -218,13 +218,13 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void on_boss_victory(void) NONBANKED {
+static void on_boss_victory(void) BANKED {
   open_door(DOOR_3);
   set_npc_invisible(NPC_1);
   play_sound(sfx_big_door_open);
 }
 
-static void on_elite_victory(void) NONBANKED {
+static void on_elite_victory(void) BANKED {
   set_npc_invisible(NPC_2);
   grant_ability(ABILITY_2);
   play_sound(sfx_big_powerup);

@@ -178,7 +178,7 @@ typedef struct Encounter {
    * Callback to execute upon encounter success. This callback is reset after
    * being called.
    */
-  void (*on_victory)(void);
+  void (*on_victory)(void) BANKED;
 } Encounter;
 
 /**
@@ -196,7 +196,7 @@ extern bool disable_encounters;
  * Sets the victory callback for the encounter.
  * @param callback Victory callback to execute if the player is victorious.
  */
-inline void set_on_victory(void (*callback)(void) NONBANKED) {
+inline void set_on_victory(void (*callback)(void) BANKED) {
   encounter.on_victory = callback;
 }
 

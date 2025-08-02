@@ -213,7 +213,7 @@ static bool boss_cleanup(void) {
   return true;
 }
 
-static void boss_victory(void) NONBANKED {
+static void boss_victory(void) BANKED {
   map_textbox_with_action(str_floor1_boss_defeated, boss_cleanup);
 }
 
