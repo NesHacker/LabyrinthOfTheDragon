@@ -1740,7 +1740,9 @@ static bool handle_exit(void) {
     active_exit.to_col = exit->to_col;
     active_exit.to_row = exit->to_row;
     active_exit.to_floor = exit->to_floor;
-    active_exit.heading = exit->heading;
+    if (exit->heading != HERE)
+      active_exit.heading = exit->heading;
+    active_exit.exit_type = exit->exit_type;
     map_fade_out(MAP_STATE_LOAD_EXIT);
     return true;
   }
@@ -2500,8 +2502,12 @@ void update_map(void) {
     load_exit();
     break;
   case MAP_STATE_EXIT_LOADED:
-    if (active_exit.exit_type != EXIT_HOLE)
+    if (active_exit.exit_type == EXIT_HOLE) {
+        map_state = MAP_STATE_WAITING;
+        hero_state = HERO_STILL;
+    } else {
       start_move(active_exit.heading);
+    }
     break;
   case MAP_STATE_MENU:
     update_map_menu();
