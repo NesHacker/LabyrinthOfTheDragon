@@ -137,7 +137,7 @@ static const Sconce sconces[] = {
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
 
-static void boss_victory(void) NONBANKED {
+static void boss_victory(void) BANKED {
 }
 
 static bool boss_encounter(void) {
