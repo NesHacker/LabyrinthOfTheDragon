@@ -57,7 +57,23 @@ static const Exit exits[] = {
     EXIT_STAIRS   // Type of exit (not sure if we'll use this yet)
   },
   */
-  { MAP_A, 4, 20, MAP_A, 5, 4, RIGHT, EXIT_HOLE },
+
+  // 2nd Floor Holes
+  { MAP_A, 4, 20, MAP_A, 5, 4, HERE, EXIT_HOLE },
+  { MAP_A, 7, 18, MAP_A, 8, 2, HERE, EXIT_HOLE },
+  { MAP_A, 10, 20, MAP_A, 11, 4, HERE, EXIT_HOLE },
+  { MAP_A, 5, 23, MAP_A, 6, 7, HERE, EXIT_HOLE },
+
+  // 3rd Floor Holes
+  { MAP_A, 21, 21, MAP_A, 5, 16, HERE, EXIT_HOLE },
+  { MAP_A, 22, 21, MAP_A, 7, 3, HERE, EXIT_HOLE },
+  { MAP_A, 21, 22, MAP_A, 6, 4, HERE, EXIT_HOLE },
+
+  { MAP_A, 23, 25, MAP_A, 7, 20, HERE, EXIT_HOLE },
+  { MAP_A, 24, 24, MAP_A, 10, 4, HERE, EXIT_HOLE },
+  { MAP_A, 22, 25, MAP_A, 8, 5, HERE, EXIT_HOLE },
+
+
   { END },
 };
 
@@ -238,13 +254,13 @@ static bool on_special(void) {
   case 1:
     if (player_at(3, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 22, 29, LEFT);
+      teleport(MAP_A, 26, 21, UP);
     }
     break;
   case 2:
     if (player_at(13, 2)) {
       play_sound(sfx_no_no_square);
-      teleport(MAP_A, 26, 21, UP);
+      teleport(MAP_A, 22, 29, LEFT);
     }
     break;
   case 3:
