@@ -1031,8 +1031,34 @@ void sfx_magic_missile(void) {
   register_init(&nr24, trigger_magic_missile2);
 }
 
+static const uint8_t freq_falling[] = {
+  2, 0xAC,
+  4, 0x82,
+  8, 0x7B,
+  16, 0x6B,
+  32, 0x37,
+  SOUND_END
+};
+
+static const uint8_t trigger_falling[] = {
+  2, 0x87,
+  4, 0x87,
+  8, 0x87,
+  16, 0x87,
+  32, 0x87,
+  SOUND_END
+};
+
+void sfx_falling(void) {
+  NR10_REG = 0;
+  NR11_REG = 0;
+  NR12_REG = envelope(10, 0, 2);
+  register_init(&nr13, freq_falling);
+  register_init(&nr14, trigger_falling);
+}
+
 void sfx_test(void) {
-  sfx_magic_missile();
+  sfx_falling();
 
   // NR10_REG = sweep(7, 0, 7);
   // NR11_REG = 0;

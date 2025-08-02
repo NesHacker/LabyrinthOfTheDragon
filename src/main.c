@@ -27,6 +27,8 @@ uint8_t joypad_released;
  */
 #define RANDOM_SEED 50
 
+#define SFX_TEST
+
 /**
  * Initializes the normal game. Abstracted out of `initialize` to make it easy
  * to switch between tests and the actual game while handling common setup.
