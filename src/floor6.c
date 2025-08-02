@@ -343,9 +343,9 @@ const palette_color_t portal_color[MAX_PORTAL_COLOR_FRAMES] = {
 
 palette_color_t portal_color_palette[4] = {
   RGB8(220, 0, 220),
-  RGB8(100, 100, 140),
+  RGB8(30, 45, 30),
   RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
+  RGB8(0, 0, 24),
 };
 
 static const EncounterTable encounters_low[] = {
@@ -466,20 +466,20 @@ static void on_draw(void) {
 
 static const palette_color_t palettes[] = {
   // Palette 1 - Core background tiles
-  RGB8(190, 200, 190),
-  RGB8(100, 100, 140),
+  RGB8(100, 100, 0),
+  RGB8(30, 45, 30),
   RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
+  RGB8(0, 0, 24),
   // Palette 2 - Treasure chests
   RGB8(192, 138, 40),
-  RGB8(100, 100, 140),
+  RGB8(30, 45, 30),
   RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
+  RGB8(0, 0, 24),
   // Palette 3 - Active portal
   RGB8(220, 0, 220),
-  RGB8(100, 100, 140),
+  RGB8(30, 45, 30),
   RGB8(40, 60, 40),
-  RGB8(24, 0, 0),
+  RGB8(0, 0, 24),
   // Palette 4
   RGB_WHITE,
   RGB8(120, 120, 120),
