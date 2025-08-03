@@ -1040,6 +1040,21 @@ void set_player_level(uint8_t level) BANKED {
 void init_player(PlayerClass player_class) BANKED {
   player.player_class = player_class;
 
+  switch (player.player_class) {
+  case CLASS_DRUID:
+    sprintf(player.name, "Lyra");
+    break;
+  case CLASS_FIGHTER:
+    sprintf(player.name, "Deneth");
+    break;
+  case CLASS_MONK:
+    sprintf(player.name, "Ken");
+    break;
+  case CLASS_SORCERER:
+    sprintf(player.name, "Tyrion");
+    break;
+  }
+
   player.has_torch = false;
   player.magic_keys = 0;
   clear_inventory();

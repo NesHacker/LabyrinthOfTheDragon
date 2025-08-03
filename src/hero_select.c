@@ -98,24 +98,9 @@ void start_game(void) NONBANKED {
     move_sprite(k, 0, 0);
 
   init_player(selected_hero);
-
-  switch (selected_hero) {
-  case CLASS_DRUID:
-    sprintf(player.name, "Lyra");
-    break;
-  case CLASS_FIGHTER:
-    sprintf(player.name, "Deneth");
-    break;
-  case CLASS_MONK:
-    sprintf(player.name, "Ken");
-    break;
-  case CLASS_SORCERER:
-    sprintf(player.name, "Tyrion");
-    break;
-  }
-
   set_active_floor(&bank_floor1);
   init_world_map();
+
   game_state = GAME_STATE_WORLD_MAP;
 }
 
