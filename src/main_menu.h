@@ -18,6 +18,9 @@ void draw_main_menu(void);
 
 // Title screen
 
+void init_title_screen(void);
+void update_title_screen(void);
+
 void init_fire_animation(void);
 void update_fire_animation(void);
 

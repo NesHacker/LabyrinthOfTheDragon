@@ -20,6 +20,73 @@ static void clear_sprites(void) {
   }
 }
 
+Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
+
+static const palette_color_t fg_palettes[] = {
+  // 1 - Fire
+  RGB_BLACK,
+  RGB8(252, 216, 0),
+  RGB8(252, 108, 0),
+  RGB_WHITE,
+  // 2 - Smoke
+  RGB_BLACK,
+  RGB8(91, 91, 91),
+  RGB8(156, 156, 156),
+  RGB_WHITE,
+};
+
+static const palette_color_t palettes[] = {
+   // Palette 1 - Title
+  RGB8(251, 242, 54),
+  RGB8(48, 96, 130),
+  RGB8(172, 50, 50),
+  RGB_BLACK,
+  // Palette 2 - Face
+  RGB8(252, 216, 0),
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  // Palette 3 - Wings
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB_BLACK,
+  // Palette 4 - Outer Body
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB8(9, 4, 4),
+  RGB_BLACK,
+  // Palette 5 - Head
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB_BLACK,
+  // Palette 6 - PRESS START
+  // RGB8(251, 242, 54),
+  RGB8(200, 0, 200),
+  RGB_BLACK,
+  RGB_BLACK,
+  RGB_BLACK,
+};
+
+
+void init_title_screen(void) {
+  // Load tilesets and palettes
+  core.load_bg_palette(palettes, 0, 6);
+  core.load_sprite_palette(fg_palettes, 0, 2);
+  core.load_title_tiles();
+
+  scroll_bkg(0, 0);
+  SWITCH_ROM(1);
+  core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
+
+  init_smoke_animation();
+}
+
+void update_title_screen(void) {
+  update_smoke_animation();
+}
+
 //------------------------------------------------------------------------------
 // Fire Animation
 //------------------------------------------------------------------------------

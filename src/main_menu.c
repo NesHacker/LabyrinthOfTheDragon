@@ -18,8 +18,6 @@ uint8_t cursor = 0;
 
 Timer menu_walk_timer;
 uint8_t menu_walk_frame;
-
-Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
 Tilemap save_select_tilemap = { 20, 18, 1, tilemap_save_select };
 
 /**
@@ -183,80 +181,27 @@ void update_save_select_sprites(void) {
   set_sprite_tile(SPRITE_HERO3 + 3, 0x71 + hero3_offset);
 }
 
-//------------------------------------------------------------------------------
-// Palettes
-//------------------------------------------------------------------------------
-static const palette_color_t fg_palettes[] = {
-  // 1 - Fire
-  RGB_BLACK,
-  RGB8(252, 216, 0),
-  RGB8(252, 108, 0),
-  RGB_WHITE,
-  // 2 - Smoke
-  RGB_BLACK,
-  RGB8(91, 91, 91),
-  RGB8(156, 156, 156),
-  RGB_WHITE,
-};
-
-static const palette_color_t palettes[] = {
-   // Palette 1 - Title
-  RGB8(251, 242, 54),
-  RGB8(48, 96, 130),
-  RGB8(172, 50, 50),
-  RGB_BLACK,
-  // Palette 2 - Face
-  RGB8(252, 216, 0),
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  // Palette 3 - Wings
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB_BLACK,
-  // Palette 4 - Outer Body
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB8(9, 4, 4),
-  RGB_BLACK,
-  // Palette 5 - Head
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB_BLACK,
-  // Palette 6 - PRESS START
-  // RGB8(251, 242, 54),
-  RGB8(200, 0, 200),
-  RGB_BLACK,
-  RGB_BLACK,
-  RGB_BLACK,
-};
-
 
 
 
 void init_main_menu(void) {
   DISPLAY_OFF;
 
+
+  init_title_screen();
+
+  /*
   // Load tiles
   core.load_font();
   core.load_all_heros();
-  core.load_title_tiles();
 
-  core.load_bg_palette(palettes, 0, 6);
-  core.load_sprite_palette(fg_palettes, 0, 2);
-
-  // Load tilesets and palettes
-  scroll_bkg(0, 0);
-  SWITCH_ROM(1);
-  core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
 
   // Initialize menu state
   cursor = 0;
 
   // init_fire_animation();
   init_smoke_animation();
+  */
 
   DISPLAY_ON;
 }
@@ -264,13 +209,14 @@ void init_main_menu(void) {
 void update_main_menu(void) {
   switch (main_menu_state) {
   case TITLE:
+    update_title_screen();
     // update_fire_animation();
-    update_smoke_animation();
+    // update_smoke_animation();
 
-    if (was_pressed(J_A | J_B | J_START)) {
-      main_menu_state = SAVE_SELECT;
-      init_save_select();
-    }
+    // if (was_pressed(J_A | J_B | J_START)) {
+    //   main_menu_state = SAVE_SELECT;
+    //   init_save_select();
+    // }
     break;
   case SAVE_SELECT:
     move_save_select_cursor();
