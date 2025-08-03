@@ -2503,7 +2503,7 @@ void update_map(void) {
     load_exit();
     break;
   case MAP_STATE_EXIT_LOADED:
-    if (active_exit.exit_type == EXIT_HOLE) {
+    if (active_exit.exit_type == EXIT_HOLE || active_exit.heading == HERE) {
         map_state = MAP_STATE_WAITING;
         hero_state = HERO_STILL;
     } else {
