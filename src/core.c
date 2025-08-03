@@ -95,6 +95,37 @@ static const Tileset monsters_tileset_page3 = {
   96, 15, tile_monsters + BYTES_PER_TILE * 96 * 2
 };
 
+// 224
+
+/**
+ * ...
+ */
+static const Tileset title_tileset_page1 = {
+  128, 1, tile_title
+};
+
+/**
+ * ...
+ */
+static const Tileset title_tileset_page2 = {
+  96, 1, tile_title + BYTES_PER_TILE * 128
+};
+
+/**
+ * ...
+ */
+static const Tileset title_tileset_fire = {
+  80, 1, tile_title_fire
+};
+
+/**
+ * ...
+ */
+static const Tileset title_tileset_smoke = {
+  48, 1, tile_title_smoke
+};
+
+
 static void load_tileset(const Tileset *s, uint8_t *dst) NONBANKED {
   const uint8_t *src = s->data;
   uint8_t size = s->size;
@@ -278,6 +309,20 @@ static void load_monster_tiles(MonsterTiles tiles, MonsterTilePosition pos) {
   core_load_tiles(tileset, vram2, offset2, row_width);
 }
 
+void load_title_tiles(void) {
+  uint8_t *vram1 = (void *)(0x9000);
+  core_load_tiles(&title_tileset_page1, vram1, 0, 128);
+  uint8_t *vram2 = (void *)(0x8800);
+  core_load_tiles(&title_tileset_page2, vram2, 0, 96);
+
+  VBK_REG = VBK_BANK_1;
+  uint8_t *vram_fire = (void *)(0x8000);
+  core_load_tiles(&title_tileset_fire, vram_fire, 0, 80);
+
+  uint8_t *vram_smoke = (void *)(0x8000 + BYTES_PER_TILE * 80);
+  core_load_tiles(&title_tileset_smoke, vram_smoke, 0, 48);
+}
+
 const Core core = {
   load_tileset,
   core_load_tiles,
@@ -295,4 +340,5 @@ const Core core = {
   core_fill,
   load_dungeon_tiles,
   load_monster_tiles,
+  load_title_tiles,
 };

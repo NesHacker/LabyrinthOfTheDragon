@@ -573,6 +573,10 @@ typedef struct Core {
    * @param pos Position where the sprites should be loaded.
    */
   const void (*load_monster_tiles)(MonsterTiles tiles, MonsterTilePosition pos);
+  /**
+   * Loads tiles for the title screen.
+   */
+  const void (*load_title_tiles)(void);
 } Core;
 
 /**

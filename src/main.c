@@ -27,7 +27,6 @@ uint8_t joypad_released;
  */
 #define RANDOM_SEED 50
 
-#define SFX_TEST
 
 /**
  * Initializes the normal game. Abstracted out of `initialize` to make it easy
@@ -48,8 +47,10 @@ static inline void initialize(void) {
   initarand(RANDOM_SEED);
   hide_window();
 
-  test_level();
+  // test_level();
   // test_battle();
+
+  init_main_menu();
 }
 
 /**
