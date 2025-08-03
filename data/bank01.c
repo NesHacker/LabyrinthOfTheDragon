@@ -15,3 +15,6 @@ INCBIN(tilemap_map_menu, "res/tilemaps/map_menu.tilemap")
 INCBIN(tile_title, "res/tiles/title_1.bin")
 INCBIN(tile_title_fire, "res/tiles/title_fire.bin")
 INCBIN(tile_title_smoke, "res/tiles/title_smoke.bin")
+
+INCBIN(tile_neshacker_presents, "res/tiles/neshacker_presents.bin")
+INCBIN(tilemap_neshacker_presents, "res/tilemaps/neshacker_presents.tilemap")

@@ -6,8 +6,26 @@
 
 #include "core.h"
 #include "main_menu.h"
+#include "sound.h"
 
 #define MAX_ANIMATION_SPRITES 20
+
+void init_fire_animation(void);
+void update_fire_animation(void);
+
+void init_smoke_animation(void);
+void stop_smoke_animation(void);
+void update_smoke_animation(void);
+
+void init_neshacker_presents(void);
+void update_neshacker_presents(void);
+
+
+typedef enum TitleState {
+  TITLE_NESHACKER_PRESENTS,
+  TITLE_DRAGON_FIRE,
+  TITLE_PRESS_START,
+} TitleState;
 
 /**
  * Clears all sprites used by a title screen animation.
@@ -21,21 +39,22 @@ static void clear_sprites(void) {
 }
 
 Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
+Tilemap neshacker_presents_tilemap = { 12, 3, 1, tilemap_neshacker_presents };
 
 static const palette_color_t fg_palettes[] = {
-  // 1 - Fire
+  // 0 - Fire
   RGB_BLACK,
   RGB8(252, 216, 0),
   RGB8(252, 108, 0),
   RGB_WHITE,
-  // 2 - Smoke
+  // 1 - Smoke
   RGB_BLACK,
   RGB8(91, 91, 91),
   RGB8(156, 156, 156),
   RGB_WHITE,
 };
 
-static const palette_color_t palettes[] = {
+static const palette_color_t dragon_palette[] = {
    // Palette 1 - Title
   RGB8(251, 242, 54),
   RGB8(48, 96, 130),
@@ -69,22 +88,199 @@ static const palette_color_t palettes[] = {
   RGB_BLACK,
 };
 
+static const palette_color_t neshacker_presents_palette[] = {
+  // 0 - NES
+  RGB_BLACK,
+  RGB8(105, 5, 10),
+  RGB8(64, 2, 4),
+  RGB8(193, 18, 28),
+  // 1 - HACKER
+  RGB_BLACK,
+  RGB8(68, 68, 68),
+  RGB8(43, 43, 43),
+  RGB8(85, 85, 85),
+  // 2 - PRESENTS
+  RGB_BLACK,
+  RGB8(118, 118, 118),
+  RGB_BLACK,
+  RGB_BLACK,
+};
 
 void init_title_screen(void) {
   // Load tilesets and palettes
-  core.load_bg_palette(palettes, 0, 6);
+
+  // core.load_bg_palette(palettes, 0, 6);
+
   core.load_sprite_palette(fg_palettes, 0, 2);
   core.load_title_tiles();
 
   scroll_bkg(0, 0);
   SWITCH_ROM(1);
-  core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
 
-  init_smoke_animation();
+  init_neshacker_presents();
+
+  // core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
+  // init_smoke_animation();
 }
 
 void update_title_screen(void) {
-  update_smoke_animation();
+  // update_smoke_animation();
+  update_neshacker_presents();
+}
+
+//------------------------------------------------------------------------------
+// NESHACKER Presents
+//------------------------------------------------------------------------------
+
+// 4, 8
+/*
+NESHACKER PRESENTS
+2BPP Game Boy Logo
+
+Tilemap:
+- Dimensions: 12x3
+- Starting tile position on screen (4, 8)
+
+Palettes:
+
+*/
+
+static const palette_color_t neshacker_palette[] = {
+  // FRAME 1
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+
+  // FRAME 2
+  RGB_BLACK, RGB8(40, 0, 0), RGB_BLACK, RGB8(80, 0, 0), // nes
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(20, 20, 20), // hacker
+
+  // FRAME 3
+  RGB_BLACK, RGB8(60, 0, 0), RGB8(20, 0, 0), RGB8(100, 0, 0), // nes
+  RGB_BLACK, RGB8(20, 20, 20), RGB_BLACK, RGB8(40, 40, 40), // hacker
+
+  // FRAME 4
+  RGB_BLACK, RGB8(80, 0, 0), RGB8(40, 0, 0), RGB8(130, 0, 0), // nes
+  RGB_BLACK, RGB8(40, 40, 40), RGB8(20, 20, 20), RGB8(60, 60, 60), // hacker
+
+  // FRAME 5
+  RGB_BLACK, RGB8(105, 5, 10), RGB8(64, 2, 4), RGB8(193, 18, 28), // nes
+  RGB_BLACK, RGB8(68, 68, 68), RGB8(43, 43, 43), RGB8(85, 85, 85), // hacker
+};
+
+static const palette_color_t presents_palette[] = {
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,            // Frame 1
+  RGB_BLACK, RGB8(24, 24, 24), RGB_BLACK, RGB_BLACK,      // Frame 2
+  RGB_BLACK, RGB8(50, 50, 50), RGB_BLACK, RGB_BLACK,  // Frame 3
+  RGB_BLACK, RGB8(90, 90, 90), RGB_BLACK, RGB_BLACK,  // Frame 4
+  RGB_BLACK, RGB8(118, 118, 118), RGB_BLACK, RGB_BLACK,  // Frame 5
+};
+
+typedef enum NesHackerPresentsState {
+  NHP_PRE_DELAY,
+  NHP_FADE_IN,
+  NHP_PRESENTS_DELAY,
+  NHP_PRESENTS_FADE_IN,
+  NHP_HOLD,
+  NHP_FADE_OUT,
+  NHP_DONE,
+} NesHackerPresentsState;
+
+NesHackerPresentsState nhp_state = NHP_FADE_IN;
+Timer nhp_timer;
+uint8_t neshacker_palette_idx;
+
+void init_neshacker_presents(void) {
+  // Draw the tilemap
+  core.fill_bg(0xFF, 0b00001010);
+  uint8_t *vram = VRAM_BACKGROUND_XY(4, 8);
+  core.draw_tilemap(neshacker_presents_tilemap, vram);
+
+  // Set the initial animation palettes
+  core.load_bg_palette(neshacker_palette, 0, 2);
+  core.load_bg_palette(presents_palette, 2, 1);
+
+  // Initialize core state
+  nhp_state = NHP_PRE_DELAY;
+  init_timer(nhp_timer, 10);
+}
+
+void update_neshacker_presents(void) {
+  switch (nhp_state) {
+  case NHP_PRE_DELAY:
+    if (!update_timer(nhp_timer))
+      return;
+    play_sound(sfx_neshacker_presents);
+    nhp_state = NHP_FADE_IN;
+    neshacker_palette_idx = 0;
+    init_timer(nhp_timer, 3);
+    break;
+  case NHP_FADE_IN:
+    if (!update_timer(nhp_timer))
+      return;
+
+    neshacker_palette_idx++;
+
+    if (neshacker_palette_idx > 4) {
+      init_timer(nhp_timer, 1);
+      nhp_state = NHP_PRESENTS_DELAY;
+      return;
+    }
+
+    reset_timer(nhp_timer);
+    core.load_bg_palette(neshacker_palette + neshacker_palette_idx * 8, 0, 2);
+
+    break;
+  case NHP_PRESENTS_DELAY:
+    if (!update_timer(nhp_timer))
+      return;
+
+    core.load_bg_palette(presents_palette + 4, 2, 1);
+
+    nhp_state = NHP_PRESENTS_FADE_IN;
+    neshacker_palette_idx = 0;
+    init_timer(nhp_timer, 3);
+    break;
+  case NHP_PRESENTS_FADE_IN:
+    if (!update_timer(nhp_timer))
+      return;
+
+    neshacker_palette_idx++;
+
+    if (neshacker_palette_idx > 4) {
+      nhp_state = NHP_HOLD;
+      init_timer(nhp_timer, 60);
+      return;
+    }
+
+    reset_timer(nhp_timer);
+    core.load_bg_palette(presents_palette + 4 * neshacker_palette_idx, 2, 1);
+
+    break;
+  case NHP_HOLD:
+    if (!update_timer(nhp_timer))
+      return;
+    nhp_state = NHP_FADE_OUT;
+    neshacker_palette_idx = 5;
+    init_timer(nhp_timer, 3);
+    break;
+  case NHP_FADE_OUT:
+    if (!update_timer(nhp_timer))
+      return;
+
+    neshacker_palette_idx--;
+
+    if (neshacker_palette_idx == 0xFF) {
+      // TODO Transition to splash screen
+      nhp_state = NHP_DONE;
+      return;
+    }
+
+    reset_timer(nhp_timer);
+    core.load_bg_palette(neshacker_palette + 8 * neshacker_palette_idx, 0, 2);
+    core.load_bg_palette(presents_palette + 4 * neshacker_palette_idx, 2, 1);
+
+    break;
+  }
 }
 
 //------------------------------------------------------------------------------
