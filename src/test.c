@@ -61,7 +61,7 @@ void test_level(void) {
   fill_inventory(5);
 
   SET_HAS_TORCH;
-  SET_MAGIC_KEYS(9);
+  // SET_MAGIC_KEYS(9);
   PASS_DOORS;
   DISABLE_ENCOUNTERS;
 

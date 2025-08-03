@@ -9,7 +9,7 @@
 
 #define ID 99
 #define DEFAULT_X 8
-#define DEFAULT_Y 31
+#define DEFAULT_Y 30
 
 bool switch_lever_1 = false;
 bool switch_lever_2 = false;
@@ -89,24 +89,24 @@ static const Exit exits[] = {
   },
   */
   // Boss Door
-  { MAP_A, 8, 27, MAP_A, 27, 9, UP, EXIT_STAIRS },
-  { MAP_A, 27, 9, MAP_A, 8, 27, DOWN, EXIT_STAIRS },
+  { MAP_A, 8, 26, MAP_A, 27, 9, UP, EXIT_STAIRS },
+  { MAP_A, 27, 9, MAP_A, 8, 26, DOWN, EXIT_STAIRS },
 
   // Elite Room
-  { MAP_A, 7, 27, MAP_A, 2, 19, UP, EXIT_STAIRS },
-  { MAP_A, 2, 19, MAP_A, 7, 27, DOWN, EXIT_STAIRS },
+  { MAP_A, 7, 26, MAP_A, 2, 19, UP, EXIT_STAIRS },
+  { MAP_A, 2, 19, MAP_A, 7, 26, DOWN, EXIT_STAIRS },
 
   // Item Room
-  { MAP_A, 9, 27, MAP_A, 10, 19, UP, EXIT_STAIRS },
-  { MAP_A, 10, 19, MAP_A, 9, 27, DOWN, EXIT_STAIRS },
+  { MAP_A, 9, 26, MAP_A, 10, 19, UP, EXIT_STAIRS },
+  { MAP_A, 10, 19, MAP_A, 9, 26, DOWN, EXIT_STAIRS },
 
   // Left Wing Portal & Hole
-  { MAP_A, 1, 29, MAP_A, 7, 11, HERE, EXIT_PORTAL },
-  { MAP_A, 9, 6, MAP_A, 7, 30, HERE, EXIT_HOLE },
+  { MAP_A, 1, 28, MAP_A, 7, 11, HERE, EXIT_PORTAL },
+  { MAP_A, 9, 6, MAP_A, 7, 29, HERE, EXIT_HOLE },
 
   // Right Wing Portal & Hole
-  { MAP_A, 15, 29, MAP_A, 13, 11, HERE, EXIT_PORTAL },
-  { MAP_A, 11, 6, MAP_A, 9, 30, HERE, EXIT_HOLE },
+  { MAP_A, 15, 28, MAP_A, 13, 11, HERE, EXIT_PORTAL },
+  { MAP_A, 11, 6, MAP_A, 9, 29, HERE, EXIT_HOLE },
 
   // Secret Maze
   { MAP_A, 24, 7, MAP_A, 31, 29, LEFT, EXIT_STAIRS },
@@ -130,7 +130,7 @@ static const Sign signs[] = {
     "Hi there!" // The message to display
   }
   */
-  { MAP_A, 10, 27, UP, str_floor7_riddle },
+  { MAP_A, 10, 26, UP, str_floor7_riddle },
   { END },
 };
 
@@ -140,13 +140,56 @@ static const Sign signs[] = {
 
 #define START_STUCK true
 
+uint8_t puzzle_state = 0;
+const uint8_t a_lookup[8] = { 1, 4, 1, 1, 3, 6, 7, 7 };
+const uint8_t b_lookup[8] = { 2, 0, 3, 5, 2, 4, 0, 7 };
+
+static void set_eyes(uint8_t a, uint8_t b, uint8_t c) {
+  set_tile_at(MAP_A, 7, 25, a ? 0x35 : 0x36);
+  set_tile_at(MAP_A, 8, 24, b ? 0x35 : 0x36);
+  set_tile_at(MAP_A, 9, 25, c ? 0x35 : 0x36);
+
+  if (a)
+    open_door(DOOR_3);
+  else
+    close_door(DOOR_3);
+
+  if (c)
+    open_door(DOOR_4);
+  else
+    close_door(DOOR_4);
+}
+
 static void on_pulled(const Lever *lever) {
-  // switch (lever->id) {
-  // case LEVER_1:
-  //   break;
-  // case LEVER_2:
-  //   break;
-  // }
+  switch (lever->id) {
+  case LEVER_1:
+    puzzle_state = a_lookup[puzzle_state];
+    break;
+  case LEVER_2:
+    puzzle_state = b_lookup[puzzle_state];
+    break;
+  }
+
+  switch (puzzle_state) {
+  case 0: set_eyes(0, 0, 0); break;
+  case 1: set_eyes(1, 0, 0); break;
+  case 2: set_eyes(0, 1, 0); break;
+  case 3: set_eyes(0, 0, 1); break;
+  case 4: set_eyes(1, 1, 0); break;
+  case 5: set_eyes(1, 0, 1); break;
+  case 6: set_eyes(0, 1, 1); break;
+  case 7: set_eyes(1, 1, 1); break;
+  }
+
+  if (puzzle_state == 7) {
+    open_door(DOOR_2);
+    play_sound(sfx_big_door_open);
+    stick_lever(LEVER_1);
+    stick_lever(LEVER_2);
+    set_palette_at(MAP_A, 8, 26, 4);
+  } else {
+    play_sound(sfx_door_unlock);
+  }
 }
 
 static const Lever levers[] = {
@@ -160,8 +203,8 @@ static const Lever levers[] = {
     NULL,     // Scripting callback for the lever
   }
   */
-  { LEVER_1, MAP_A, 7, 29, false, START_STUCK, on_pulled },
-  { LEVER_2, MAP_A, 9, 29, false, START_STUCK, on_pulled },
+  { LEVER_1, MAP_A, 7, 28, false, START_STUCK, on_pulled },
+  { LEVER_2, MAP_A, 9, 28, false, START_STUCK, on_pulled },
   { END },
 };
 
@@ -181,9 +224,9 @@ static const Door doors[] = {
   }
   */
   { DOOR_1, MAP_A, 27, 5, DOOR_NEXT_LEVEL, false, false },  // Next Level
-  { DOOR_2, MAP_A, 8, 27, DOOR_NEXT_LEVEL, false, false },  // Boss
-  { DOOR_3, MAP_A, 7, 27, DOOR_STAIRS_DOWN, false, false }, // Elite
-  { DOOR_4, MAP_A, 9, 27, DOOR_STAIRS_DOWN, false, false }, // Item Room
+  { DOOR_2, MAP_A, 8, 26, DOOR_NEXT_LEVEL, false, false },  // Boss
+  { DOOR_3, MAP_A, 7, 26, DOOR_STAIRS_DOWN, false, false }, // Elite
+  { DOOR_4, MAP_A, 9, 26, DOOR_STAIRS_DOWN, false, false }, // Item Room
   { DOOR_5, MAP_A, 7, 9, DOOR_NORMAL, true, false },   // Left Wing Locked
   { DOOR_6, MAP_A, 2, 4, DOOR_NORMAL, false, false },  // Left Wing Switch
   { DOOR_7, MAP_A, 13, 9, DOOR_NORMAL, true, false },  // Right Wing Locked
@@ -227,17 +270,17 @@ static const Sconce sconces[] = {
   */
 
   // Left wing puzzle sconces
-  { SCONCE_1, MAP_A, 3, 28, false, FLAME_NONE },
+  { SCONCE_1, MAP_A, 3, 27, false, FLAME_NONE },
   { SCONCE_2, MAP_A, 3, 9, false, FLAME_NONE },
   { SCONCE_3, MAP_A, 3, 4, false, FLAME_NONE, on_lit },
 
   // Right wing puzzle sconces
-  { SCONCE_4, MAP_A, 13, 28, false, FLAME_NONE },
+  { SCONCE_4, MAP_A, 13, 27, false, FLAME_NONE },
   { SCONCE_5, MAP_A, 17, 9, false, FLAME_NONE },
   { SCONCE_6, MAP_A, 17, 4, false, FLAME_NONE, on_lit },
 
   // Prelit sconces
-  { SCONCE_STATIC, MAP_A, 6, 27, true, FLAME_GREEN },
+  { SCONCE_STATIC, MAP_A, 6, 26, true, FLAME_GREEN },
   { SCONCE_STATIC, MAP_A, 22, 27, true, FLAME_GREEN },
   { SCONCE_STATIC, MAP_A, 1, 16, true, FLAME_GREEN },
   { SCONCE_STATIC, MAP_A, 3, 16, true, FLAME_GREEN },
@@ -339,31 +382,35 @@ static bool on_special(void) {
   // Cracked floor holes
   if (player_at(2, 6)) {
     set_tile_at(MAP_A, 2, 6, 0xEC);
-    teleport(MAP_A, 2, 29, HERE, EXIT_HOLE);
-    play_sound(sfx_falling);
+    teleport(MAP_A, 2, 28, HERE, EXIT_HOLE);
+    return true;
   }
 
   if (player_at(18, 6)) {
     set_tile_at(MAP_A, 18, 6, 0xEC);
-    teleport(MAP_A, 14, 29, HERE, EXIT_HOLE);
-    play_sound(sfx_falling);
+    teleport(MAP_A, 14, 28, HERE, EXIT_HOLE);
+    return true;
   }
 
   // Lever Unlock Switches
   if (player_at(7, 5) && !switch_lever_1) {
+    switch_lever_1 = true;
     play_sound(sfx_door_unlock);
     unstick_lever(LEVER_1);
     set_tile_at(MAP_A, 7, 5, 0xF4);
     set_palette_at(MAP_A, 7, 4, 4);
-    set_palette_at(MAP_A, 7, 29, 4);
+    set_palette_at(MAP_A, 7, 28, 4);
+    return true;
   }
 
-  if (player_at(13, 5) && !switch_lever_1) {
+  if (player_at(13, 5) && !switch_lever_2) {
+    switch_lever_2 = true;
     play_sound(sfx_door_unlock);
     unstick_lever(LEVER_2);
     set_tile_at(MAP_A, 13, 5, 0xF4);
     set_palette_at(MAP_A, 13, 4, 4);
-    set_palette_at(MAP_A, 9, 29, 4);
+    set_palette_at(MAP_A, 9, 28, 4);
+    return true;
   }
 
   // Door unlock switches
@@ -377,6 +424,7 @@ static bool on_special(void) {
     }
     set_tile_at(MAP_A, 4, 6, 0xF4);
     set_palette_at(MAP_A, 4, 5, 4);
+    return true;
   }
 
   if (player_at(16, 6) && !switch_door_8) {
@@ -389,6 +437,7 @@ static bool on_special(void) {
     }
     set_tile_at(MAP_A, 16, 6, 0xF4);
     set_palette_at(MAP_A, 16, 5, 4);
+    return true;
   }
 
   return false;
