@@ -10,6 +10,12 @@
 
 #define MAX_ANIMATION_SPRITES 20
 
+void init_dragon_eyes(void);
+void update_dragon_eyes(void);
+
+void init_neshacker_presents(void);
+void update_neshacker_presents(void);
+
 void init_fire_animation(void);
 void update_fire_animation(void);
 
@@ -17,15 +23,6 @@ void init_smoke_animation(void);
 void stop_smoke_animation(void);
 void update_smoke_animation(void);
 
-void init_neshacker_presents(void);
-void update_neshacker_presents(void);
-
-
-typedef enum TitleState {
-  TITLE_NESHACKER_PRESENTS,
-  TITLE_DRAGON_FIRE,
-  TITLE_PRESS_START,
-} TitleState;
 
 /**
  * Clears all sprites used by a title screen animation.
@@ -38,112 +35,70 @@ static void clear_sprites(void) {
   }
 }
 
-Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
-Tilemap neshacker_presents_tilemap = { 12, 3, 1, tilemap_neshacker_presents };
+//------------------------------------------------------------------------------
+// Title Screen Main State Controller
+//------------------------------------------------------------------------------
 
-static const palette_color_t fg_palettes[] = {
-  // 0 - Fire
-  RGB_BLACK,
-  RGB8(252, 216, 0),
-  RGB8(252, 108, 0),
-  RGB_WHITE,
-  // 1 - Smoke
-  RGB_BLACK,
-  RGB8(91, 91, 91),
-  RGB8(156, 156, 156),
-  RGB_WHITE,
-};
+typedef enum TitleState {
+  TITLE_NESHACKER_PRESENTS,
+  TITLE_DRAGON_FIRE,
+  TITLE_PRESS_START,
+} TitleState;
 
-static const palette_color_t dragon_palette[] = {
-   // Palette 1 - Title
-  RGB8(251, 242, 54),
-  RGB8(48, 96, 130),
-  RGB8(172, 50, 50),
-  RGB_BLACK,
-  // Palette 2 - Face
-  RGB8(252, 216, 0),
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  // Palette 3 - Wings
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB_BLACK,
-  // Palette 4 - Outer Body
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB8(9, 4, 4),
-  RGB_BLACK,
-  // Palette 5 - Head
-  RGB8(154, 32, 24),
-  RGB8(54, 11, 13),
-  RGB8(25, 8, 10),
-  RGB_BLACK,
-  // Palette 6 - PRESS START
-  // RGB8(251, 242, 54),
-  RGB8(200, 0, 200),
-  RGB_BLACK,
-  RGB_BLACK,
-  RGB_BLACK,
-};
 
-static const palette_color_t neshacker_presents_palette[] = {
-  // 0 - NES
-  RGB_BLACK,
-  RGB8(105, 5, 10),
-  RGB8(64, 2, 4),
-  RGB8(193, 18, 28),
-  // 1 - HACKER
-  RGB_BLACK,
-  RGB8(68, 68, 68),
-  RGB8(43, 43, 43),
-  RGB8(85, 85, 85),
-  // 2 - PRESENTS
-  RGB_BLACK,
-  RGB8(118, 118, 118),
-  RGB_BLACK,
-  RGB_BLACK,
+const palette_color_t default_palette[] = {
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,
 };
 
 void init_title_screen(void) {
-  // Load tilesets and palettes
+  DISPLAY_OFF;
+  scroll_bkg(0, 0);
 
+  core.load_title_tiles();
+  core.load_bg_palette(default_palette, 0, 8);
+  core.load_sprite_palette(default_palette, 0, 8);
+
+  core.fill_bg(0xFF, 0b00001010);
+  uint8_t *vram = VRAM_BACKGROUND_XY(4, 8);
+
+  // Load tilesets and palettes
   // core.load_bg_palette(palettes, 0, 6);
 
-  core.load_sprite_palette(fg_palettes, 0, 2);
-  core.load_title_tiles();
 
-  scroll_bkg(0, 0);
+  // core.load_sprite_palette(fg_palettes, 0, 2);
+
   SWITCH_ROM(1);
 
-  init_neshacker_presents();
+  // init_neshacker_presents();
+
+  init_dragon_eyes();
+
+
+  // init_fire_animation();
+  // init_smoke_animation();
 
   // core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
-  // init_smoke_animation();
+
+  DISPLAY_ON;
 }
 
 void update_title_screen(void) {
+  // update_fire_animation();
   // update_smoke_animation();
-  update_neshacker_presents();
+  // update_neshacker_presents();
+  update_dragon_eyes();
 }
 
 //------------------------------------------------------------------------------
 // NESHACKER Presents
 //------------------------------------------------------------------------------
-
-// 4, 8
-/*
-NESHACKER PRESENTS
-2BPP Game Boy Logo
-
-Tilemap:
-- Dimensions: 12x3
-- Starting tile position on screen (4, 8)
-
-Palettes:
-
-*/
 
 static const palette_color_t neshacker_palette[] = {
   // FRAME 1
@@ -168,11 +123,11 @@ static const palette_color_t neshacker_palette[] = {
 };
 
 static const palette_color_t presents_palette[] = {
-  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,            // Frame 1
-  RGB_BLACK, RGB8(24, 24, 24), RGB_BLACK, RGB_BLACK,      // Frame 2
-  RGB_BLACK, RGB8(50, 50, 50), RGB_BLACK, RGB_BLACK,  // Frame 3
-  RGB_BLACK, RGB8(90, 90, 90), RGB_BLACK, RGB_BLACK,  // Frame 4
-  RGB_BLACK, RGB8(118, 118, 118), RGB_BLACK, RGB_BLACK,  // Frame 5
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK,           // Frame 1
+  RGB_BLACK, RGB8(24, 24, 24), RGB_BLACK, RGB_BLACK,    // Frame 2
+  RGB_BLACK, RGB8(50, 50, 50), RGB_BLACK, RGB_BLACK,    // Frame 3
+  RGB_BLACK, RGB8(90, 90, 90), RGB_BLACK, RGB_BLACK,    // Frame 4
+  RGB_BLACK, RGB8(118, 118, 118), RGB_BLACK, RGB_BLACK, // Frame 5
 };
 
 typedef enum NesHackerPresentsState {
@@ -188,6 +143,8 @@ typedef enum NesHackerPresentsState {
 NesHackerPresentsState nhp_state = NHP_FADE_IN;
 Timer nhp_timer;
 uint8_t neshacker_palette_idx;
+Tilemap neshacker_presents_tilemap = { 12, 3, 1, tilemap_neshacker_presents };
+
 
 void init_neshacker_presents(void) {
   // Draw the tilemap
@@ -282,6 +239,169 @@ void update_neshacker_presents(void) {
     break;
   }
 }
+
+//------------------------------------------------------------------------------
+// Dragon Eyes
+//------------------------------------------------------------------------------
+
+typedef enum DragonEyesState {
+  DE_PRE_DELAY,
+  DE_FADE_IN,
+  DE_SMILE_DELAY,
+  DE_FADE_OUT_DELAY,
+  DE_FADE_OUT,
+  DE_DONE,
+} DragonEyesState;
+
+const uint8_t eyes_x[] = {
+  64,         88,
+  64, 72, 80, 88,
+      72, 80,
+};
+
+const uint8_t eyes_y[] = {
+   88,            88,
+  104, 104, 104, 104,
+       112, 112,
+};
+
+const palette_color_t eyes_palette[] = {
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(0, 0, 0), // Frame 1
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(50, 0, 0), // Frame 2
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(100, 36, 0), // Frame 3
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(160, 110, 0), // Frame 4
+  RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB8(252, 216, 0), // Frame 5
+};
+
+DragonEyesState de_state = DE_DONE;
+uint8_t de_palette_idx = 0;
+Timer de_timer;
+
+void init_dragon_eyes(void) {
+  core.load_sprite_palette(eyes_palette, 0, 1);
+
+  for (uint8_t k = 0; k < 8; k++) {
+    set_sprite_tile(k, 0xE0 + k);
+    set_sprite_prop(k, 0x00);
+    move_sprite(k, eyes_x[k] + 8, eyes_y[k]);
+  }
+
+  de_state = DE_PRE_DELAY;
+  de_palette_idx = 0;
+  init_timer(de_timer, 5);
+}
+
+void update_dragon_eyes(void) {
+  switch (de_state) {
+  case DE_PRE_DELAY:
+    if (!update_timer(de_timer))
+      return;
+    init_timer(de_timer, 25);
+    de_state = DE_FADE_IN;
+    break;
+  case DE_FADE_IN:
+    if (!update_timer(de_timer))
+      return;
+
+    de_palette_idx++;
+    if (de_palette_idx == 5) {
+      init_timer(de_timer, 45);
+      de_state = DE_SMILE_DELAY;
+      return;
+    }
+
+    reset_timer(de_timer);
+    core.load_sprite_palette(eyes_palette + de_palette_idx * 4, 0, 1);
+
+    break;
+  case DE_SMILE_DELAY:
+    if (!update_timer(de_timer))
+      return;
+
+    for (uint8_t k = 0; k < 8; k++)
+      set_sprite_tile(k, 0xE8 + k);
+
+    de_state = DE_FADE_OUT_DELAY;
+    init_timer(de_timer, 15);
+
+    break;
+  case DE_FADE_OUT_DELAY:
+    if (!update_timer(de_timer))
+      return;
+    de_palette_idx = 4;
+    init_timer(de_timer, 6);
+    de_state = DE_FADE_OUT;
+    break;
+  case DE_FADE_OUT:
+    if (!update_timer(de_timer))
+      return;
+
+    de_palette_idx--;
+    reset_timer(de_timer);
+    core.load_sprite_palette(eyes_palette + de_palette_idx * 4, 0, 1);
+
+    if (de_palette_idx == 0) {
+      init_timer(de_timer, 45);
+      de_state = DE_DONE;
+      return;
+    }
+
+    break;
+  case DE_DONE:
+    break;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Main Title (Dragon Flame, Smoke, Press Start Animations w/ Joypad Input)
+//------------------------------------------------------------------------------
+
+static const palette_color_t fg_palettes[] = {
+  // 0 - Fire
+  RGB_BLACK,
+  RGB8(252, 216, 0),
+  RGB8(252, 108, 0),
+  RGB_WHITE,
+  // 1 - Smoke
+  RGB_BLACK,
+  RGB8(91, 91, 91),
+  RGB8(156, 156, 156),
+  RGB_WHITE,
+};
+
+static const palette_color_t dragon_palette[] = {
+   // Palette 1 - Title
+  RGB8(251, 242, 54),
+  RGB8(48, 96, 130),
+  RGB8(172, 50, 50),
+  RGB_BLACK,
+  // Palette 2 - Face
+  RGB8(252, 216, 0),
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  // Palette 3 - Wings
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB_BLACK,
+  // Palette 4 - Outer Body
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB8(9, 4, 4),
+  RGB_BLACK,
+  // Palette 5 - Head
+  RGB8(154, 32, 24),
+  RGB8(54, 11, 13),
+  RGB8(25, 8, 10),
+  RGB_BLACK,
+  // Palette 6 - PRESS START
+  // RGB8(251, 242, 54),
+  RGB8(200, 0, 200),
+  RGB_BLACK,
+  RGB_BLACK,
+  RGB_BLACK,
+};
 
 //------------------------------------------------------------------------------
 // Fire Animation
@@ -384,6 +504,8 @@ void update_fire_animation(void) {
 #define SMOKE_FRAMES 6
 #define SMOKE_SPRITE_COUNT 18
 #define SMOKE_TILE_OFFSET 0x50
+
+Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
 
 const uint8_t smoke_tiles[] = {
   // Frame 1

@@ -319,7 +319,7 @@ void load_title_tiles(void) {
   uint8_t *vram1 = (void *)(0x9000);
   core_load_tiles(&title_tileset_page1, vram1, 0, 128);
   uint8_t *vram2 = (void *)(0x8800);
-  core_load_tiles(&title_tileset_page2, vram2, 0, 96);
+  core_load_tiles(&title_tileset_page2, vram2, 0, 128);
 
   VBK_REG = VBK_BANK_1;
   uint8_t *vram_fire = (void *)(0x8000);
