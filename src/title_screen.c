@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "core.h"
+#include "hero_select.h"
 #include "sound.h"
 
 #define MAX_ANIMATION_SPRITES 20
@@ -455,7 +456,7 @@ void init_main_title(void) {
   init_timer(flame_palette_timer, 3);
 }
 
-void update_main_title(void) {
+void update_main_title(void) NONBANKED {
   switch (main_title_state) {
   case MAIN_FIRE:
     update_fire_animation();
@@ -471,6 +472,14 @@ void update_main_title(void) {
   case MAIN_WAIT_FOR_INPUT:
     core.load_bg_palette(dragon_palette_frames, 1, 4);
     update_smoke_animation();
+
+    if (was_pressed(J_START)) {
+      DISPLAY_OFF;
+      game_state = GAME_STATE_HERO_SELECT;
+      init_hero_select();
+      return;
+    }
+
     break;
   }
 }

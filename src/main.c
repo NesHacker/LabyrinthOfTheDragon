@@ -40,11 +40,11 @@ static inline void initialize(void) {
   // test_level();
   // test_battle();
 
-  // init_title_screen();
-  // game_state = GAME_STATE_TITLE;
+  init_title_screen();
+  game_state = GAME_STATE_TITLE;
 
-  init_hero_select();
-  game_state = GAME_STATE_HERO_SELECT;
+  // init_hero_select();
+  // game_state = GAME_STATE_HERO_SELECT;
 }
 
 /**
