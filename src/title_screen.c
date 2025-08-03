@@ -113,3 +113,119 @@ void update_fire_animation(void) {
     set_sprite_tile(FIRE_FRAME_SPRITE_0 + k, fire_animation_tiles[tile_offset + k]);
   }
 }
+
+//------------------------------------------------------------------------------
+// Smoke Animation
+//------------------------------------------------------------------------------
+
+#define SMOKE_FRAMES 6
+#define SMOKE_SPRITE_COUNT 18
+#define SMOKE_TILE_OFFSET 0x50
+
+const uint8_t smoke_tiles[] = {
+  // Frame 1
+  0x29, 0x29, 0x00, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+  0x00, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+
+  // Frame 2
+  0x29, 0x01, 0x02, 0x29, 0x03, 0x04, 0x29, 0x29, 0x29,
+  0x02, 0x01, 0x29, 0x04, 0x03, 0x29, 0x29, 0x29, 0x29,
+
+  // Frame 3
+  0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
+  0x07, 0x06, 0x05, 0x0A, 0x09, 0x08, 0x0D, 0x0C, 0x0B,
+
+  // Frame 4
+  0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+  0x10, 0x0F, 0x0E, 0x13, 0x12, 0x11, 0x16, 0x15, 0x14,
+
+  // Frame 5
+  0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+  0x19, 0x18, 0x17, 0x1C, 0x1B, 0x1A, 0x1F, 0x1E, 0x1D,
+
+  // Frame 6
+  0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+  0x21, 0x21, 0x20, 0x25, 0x24, 0x23, 0x28, 0x27, 0x26
+};
+
+typedef enum SmokeAnimationState {
+  SMOKE_ANIMATION_SMOKE,
+  SMOKE_ANIMATION_PAUSE,
+} SmokeAnimationState;
+
+Timer smoke_timer;
+uint8_t smoke_timer_idx = 0;
+SmokeAnimationState smoke_animation_state;
+
+const uint8_t smoke_sprite_x[] = {
+  0, 8, 16, 0, 8, 16, 0, 8, 16,
+  24, 32, 40, 24, 32, 40, 24, 32, 40,
+};
+const uint8_t smoke_sprite_y[] = {
+  0, 0, 0, 8, 8, 8, 16, 16, 16,
+  0, 0, 0, 8, 8, 8, 16, 16, 16,
+};
+
+#define SMOKE_OFFSET_X 7 * 8 - 6
+#define SMOKE_OFFSET_Y 12 * 8 + 6
+
+
+void stop_smoke_animation(void) {
+  smoke_timer_idx = END;
+}
+
+void init_smoke_animation(void) {
+  init_timer(smoke_timer, 6);
+  smoke_animation_state = SMOKE_ANIMATION_SMOKE;
+  smoke_timer_idx = 0;
+
+  for (uint8_t k = 0; k < SMOKE_SPRITE_COUNT; k++) {
+    set_sprite_tile(k, smoke_tiles[k] + 0x50);
+    if (k >= 9)
+      set_sprite_prop(k, 0x29);
+    else
+      set_sprite_prop(k, 0x09);
+
+    uint8_t x_offset = k >= 9 ? 11 : 0;
+    uint8_t y_offset = k >= 9 ? 1 : 0;
+
+    move_sprite(k,
+      smoke_sprite_x[k] + 8 + SMOKE_OFFSET_X + x_offset,
+      smoke_sprite_y[k] + 16 + SMOKE_OFFSET_Y + y_offset);
+  }
+}
+
+void update_smoke_animation(void) {
+  if (smoke_timer_idx == END)
+    return;
+
+  switch(smoke_animation_state) {
+  case SMOKE_ANIMATION_SMOKE:
+    if (!update_timer(smoke_timer))
+      return;
+    reset_timer(smoke_timer);
+
+    smoke_timer_idx++;
+
+    if (smoke_timer_idx >= 6) {
+      init_timer(smoke_timer, 100);
+      smoke_animation_state = SMOKE_ANIMATION_PAUSE;
+      for (uint8_t k = 0; k < SMOKE_SPRITE_COUNT; k++) {
+        set_sprite_tile(k, 0x29 + 0x50);
+      }
+      return;
+    }
+
+    uint8_t frame_offset = smoke_timer_idx * 18;
+    for (uint8_t k = 0; k < SMOKE_SPRITE_COUNT; k++) {
+      set_sprite_tile(k, smoke_tiles[k + frame_offset] + 0x50);
+    }
+
+    break;
+  case SMOKE_ANIMATION_PAUSE:
+    if (!update_timer(smoke_timer))
+      return;
+      init_smoke_animation();
+    break;
+  }
+}

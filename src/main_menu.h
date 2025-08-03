@@ -21,6 +21,10 @@ void draw_main_menu(void);
 void init_fire_animation(void);
 void update_fire_animation(void);
 
+void init_smoke_animation(void);
+void stop_smoke_animation(void);
+void update_smoke_animation(void);
+
 
 
 // Cursor and sprite related constants
