@@ -210,8 +210,6 @@ void update_main_menu(void) {
   switch (main_menu_state) {
   case TITLE:
     update_title_screen();
-    // update_fire_animation();
-    // update_smoke_animation();
 
     // if (was_pressed(J_A | J_B | J_START)) {
     //   main_menu_state = SAVE_SELECT;
