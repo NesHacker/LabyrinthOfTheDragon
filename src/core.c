@@ -196,13 +196,19 @@ static void load_hero_tiles(uint8_t player_class) NONBANKED {
 }
 
 static void load_all_heros(void) NONBANKED {
-  const uint8_t row = 4 * 3;
   VBK_REG = VBK_BANK_0;
-  for (uint8_t k = 0; k < 4; k++) {
-    const uint8_t offset = k * row * 2;
-    uint8_t *vram = VRAM_SPRITE_TILES + 0x20 * k;
-    core_load_tiles(&hero_tileset, vram, offset, row);
-    core_load_tiles(&hero_tileset, vram, offset + row, row);
+
+  uint8_t *vram = VRAM_SPRITE_TILES;
+  for (uint8_t player_class = 0; player_class < 4; player_class++) {
+    const uint8_t row_width = 12;
+    const uint8_t offset = player_class * row_width * 2;
+    const uint8_t offset2 = offset + row_width;
+
+    uint8_t *const vram2 = vram + 16 * BYTES_PER_TILE;
+    core_load_tiles(&hero_tileset, vram, offset, row_width);
+    core_load_tiles(&hero_tileset, vram2, offset2, row_width);
+
+    vram += 0x20 * BYTES_PER_TILE;
   }
 }
 

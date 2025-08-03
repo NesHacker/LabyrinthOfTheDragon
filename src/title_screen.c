@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include "core.h"
-#include "main_menu.h"
 #include "sound.h"
 
 #define MAX_ANIMATION_SPRITES 20

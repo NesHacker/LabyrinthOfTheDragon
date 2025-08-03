@@ -5,11 +5,12 @@
 
 #include "battle.h"
 #include "core.h"
+#include "hero_select.h"
 #include "map.h"
-#include "main_menu.h"
 #include "sound.h"
 #include "stats.h"
 #include "test.h"
+#include "title_screen.h"
 
 GameState game_state = GAME_STATE_TITLE;
 uint8_t joypad_down;
@@ -50,7 +51,11 @@ static inline void initialize(void) {
   // test_level();
   // test_battle();
 
-  init_title_screen();
+  // init_title_screen();
+  // game_state = GAME_STATE_TITLE;
+
+  init_hero_select();
+  game_state = GAME_STATE_HERO_SELECT;
 }
 
 /**
@@ -62,6 +67,7 @@ static inline void game_loop(void) {
     update_title_screen();
     break;
   case GAME_STATE_HERO_SELECT:
+    update_hero_select();
     break;
   case GAME_STATE_WORLD_MAP:
     update_world_map();

@@ -35,6 +35,7 @@ INCBIN_EXTERN(tile_title)
 INCBIN_EXTERN(tile_title_fire)
 INCBIN_EXTERN(tile_title_smoke)
 INCBIN_EXTERN(tile_neshacker_presents)
+INCBIN_EXTERN(tilemap_hero_select)
 
 INCBIN_EXTERN(tile_data_dungeon)
 INCBIN_EXTERN(tile_data_font)
