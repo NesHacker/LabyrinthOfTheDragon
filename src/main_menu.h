@@ -15,14 +15,6 @@ void init_main_menu(void);
 void update_main_menu(void);
 void draw_main_menu(void);
 
-
-// Title screen
-
-void init_title_screen(void);
-void update_title_screen(void);
-
-
-
 // Cursor and sprite related constants
 #define SAVE_SELECT_CURSOR_SAVE1 0
 #define SAVE_SELECT_CURSOR_SAVE2 1

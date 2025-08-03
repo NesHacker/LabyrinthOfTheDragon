@@ -50,7 +50,7 @@ static inline void initialize(void) {
   // test_level();
   // test_battle();
 
-  init_main_menu();
+  init_title_screen();
 }
 
 /**
@@ -59,13 +59,17 @@ static inline void initialize(void) {
 static inline void game_loop(void) {
   switch (game_state) {
   case GAME_STATE_TITLE:
-    update_main_menu();
+    update_title_screen();
+    break;
+  case GAME_STATE_HERO_SELECT:
     break;
   case GAME_STATE_WORLD_MAP:
     update_world_map();
     break;
   case GAME_STATE_BATTLE:
     update_battle();
+    break;
+  case GAME_STATE_DEATH:
     break;
   case GAME_STATE_TEST:
     return;
@@ -77,9 +81,6 @@ static inline void game_loop(void) {
  */
 static inline void render(void) {
   switch (game_state) {
-  case GAME_STATE_TITLE:
-    draw_main_menu();
-    break;
   case GAME_STATE_WORLD_MAP:
     draw_world_map();
     break;

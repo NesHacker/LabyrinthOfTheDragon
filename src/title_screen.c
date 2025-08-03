@@ -75,7 +75,7 @@ const palette_color_t test_palette[] = {
 TitleState title_state;
 Tilemap title_screen_tilemap = { 20, 18, 1, tilemap_title_screen };
 
-void init_title_screen(void) {
+void init_title_screen(void) BANKED {
   DISPLAY_OFF;
 
   scroll_bkg(0, 0);
@@ -92,16 +92,13 @@ void init_title_screen(void) {
   // Draw the main splash screen tiles
   core.draw_tilemap(title_screen_tilemap, VRAM_BACKGROUND);
 
-  // TODO Handle this when we get to hooking this up in main.c
-  // SWITCH_ROM(1);
-
   init_neshacker_presents();
   title_state = TITLE_NESHACKER_PRESENTS;
 
   DISPLAY_ON;
 }
 
-void update_title_screen(void) {
+void update_title_screen(void) BANKED {
   switch (title_state) {
   case TITLE_NESHACKER_PRESENTS:
     update_neshacker_presents();
