@@ -525,6 +525,16 @@ static TileOverrideHashEntry *find_override_entry(
 
 /**
  * TODO document me
+ *
+ * NOTE: There is a very weird bug with collisions going on when rewriting tiles
+ *       and palettes. Turns out hashing (0,7,29) OR (0,9,26) OR (0,9,29) all
+ *       hash to 58.
+ *
+ *       *SOMEHOW* the collsion is not bucketing correctly and it's causing an
+ *       error where the tile for the wrong position gets overriden?
+ *
+ *       I am "fixing" this due to lack of time by shifting the tiles in level
+ *       7's main floor so the collisions no longer take place. *sigh*
  */
 static TileOverrideHashEntry *find_or_create_override_entry(
   uint8_t map_id,
@@ -556,14 +566,12 @@ static TileOverrideHashEntry *find_or_create_override_entry(
   TileOverrideHashEntry *next =
     (TileOverrideHashEntry*)malloc(sizeof(TileOverrideHashEntry));
   entry->next = next;
-  entry = next;
-  entry->next = NULL;
+  next->next = NULL;
+  next->map_id = map_id;
+  next->x = x;
+  next->y = y;
 
-  entry->map_id = map_id;
-  entry->x = x;
-  entry->y = y;
-
-  return entry;
+  return next;
 }
 
 /**
