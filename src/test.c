@@ -63,7 +63,7 @@ void test_level(void) {
   SET_HAS_TORCH;
   // SET_MAGIC_KEYS(9);
   PASS_DOORS;
-  DISABLE_ENCOUNTERS;
+  // DISABLE_ENCOUNTERS;
 
   // Monster *monster = encounter.monsters;
   // reset_encounter(MONSTER_LAYOUT_3S);
