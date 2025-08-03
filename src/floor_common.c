@@ -37,6 +37,45 @@ bool floor7_chest_on_open(const Chest *chest) {
   return false;
 }
 
+uint8_t portal_color_idx = 0;
+Timer portal_color_timer;
+#define MAX_PORTAL_COLOR_FRAMES 6
+
+const palette_color_t portal_color[MAX_PORTAL_COLOR_FRAMES] = {
+  RGB8(220, 0, 220),
+  RGB8(180, 0, 240),
+  RGB8(100, 120, 120),
+  RGB8(20, 240, 0),
+  RGB8(0, 200, 0),
+  RGB8(100, 0, 100),
+};
+
+palette_color_t portal_color_palette[4] = {
+  RGB8(220, 0, 220),
+  RGB8(30, 45, 30),
+  RGB8(40, 60, 40),
+  RGB8(0, 0, 24),
+};
+
+void init_teleporter_animation(uint8_t p, const palette_color_t *colors) NONBANKED {
+  init_timer(portal_color_timer, 4);
+  for (uint8_t k = 0; k < 4; k++)
+    portal_color_palette[k] = colors[4 * p + k];
+}
+
+void animate_teleporter_colors(uint8_t palette_number) BANKED {
+  if (!update_timer(portal_color_timer))
+    return;
+  reset_timer(portal_color_timer);
+
+  portal_color_idx++;
+  if (portal_color_idx >= MAX_PORTAL_COLOR_FRAMES)
+    portal_color_idx = 0;
+
+  portal_color_palette[0] = portal_color[portal_color_idx];
+  core.load_bg_palette(portal_color_palette, palette_number, 1);
+}
+
 const Item chest_item_2pot_1eth[] = {
   { ITEM_POTION, 2 },
   { ITEM_ETHER, 1 },
