@@ -15,7 +15,7 @@
 #include "sound.h"
 #include "strings.h"
 
-Player player = { "", CLASS_DRUID };
+Player player = { "", CLASS_TEST };
 const Ability *class_abilities[6];
 const Ability *player_abilities[6];
 uint8_t player_num_abilities = 0;
@@ -1039,20 +1039,22 @@ void set_player_level(uint8_t level) BANKED {
 
 void init_player(PlayerClass player_class) BANKED {
   player.player_class = player_class;
+
+  player.has_torch = false;
+  player.magic_keys = 0;
+  clear_inventory();
+
   set_class_abilities();
   player.ability_flags = 0;
+
   grant_ability(ABILITY_0);
-  set_player_level(1);
+  set_player_level(4);
   reset_player_stats();
 
+  player.message_speed = AUTO_PAGE_MED;
   player.aspect_immune = 0;
   player.aspect_resist = 0;
   player.aspect_vuln = 0;
-
-  // TODO Move these assignments into the character creator
-  sprintf(player.name, "Hero");
-  player.message_speed = AUTO_PAGE_MED;
-
 }
 
 bool level_up(uint16_t xp) BANKED {

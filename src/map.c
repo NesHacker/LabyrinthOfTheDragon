@@ -389,7 +389,6 @@ static void on_load(void) NONBANKED {
  * Switches to the floor's bank and calls the `on_draw` function.
  */
 static void on_draw(void) NONBANKED {
-  *(debug + 0x20) = *(debug + 0x20) + 1;
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
   if (floor_bank->floor->on_draw)

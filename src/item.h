@@ -78,6 +78,12 @@ inline uint8_t remove_item(ItemId id) {
   return --item->quantity;
 }
 
+inline uint8_t clear_inventory(void) {
+  Item *item = inventory;
+  for (uint8_t k = 0; k < 8; k++, item++)
+    inventory->quantity = 0;
+}
+
 /**
  * Whether or not an item can be used.
  */

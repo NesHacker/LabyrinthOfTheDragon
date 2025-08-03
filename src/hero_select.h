@@ -6,11 +6,11 @@
 /**
  * Initializes the hero select screen.
  */
-void init_hero_select(void) BANKED;
+void init_hero_select(void) NONBANKED;
 
 /**
  * Performs game loop updates for the hero select screen.
  */
-void update_hero_select(void) BANKED;
+void update_hero_select(void) NONBANKED;
 
 #endif

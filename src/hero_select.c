@@ -3,10 +3,13 @@
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "core.h"
+#include "floor.h"
 #include "hero_select.h"
 #include "player.h"
+#include "map.h"
 
 #define HERO_OFFSET_X 8 + 33
 #define HERO_OFFSET_Y 78 + 8
@@ -60,7 +63,7 @@ uint8_t selected_hero = 0;
 Timer selected_walk_timer;
 uint8_t selected_walk_frame = 0;
 
-void init_hero_select(void) BANKED {
+void init_hero_select(void) NONBANKED {
   DISPLAY_OFF;
 
   core.load_font();
@@ -88,8 +91,32 @@ void init_hero_select(void) BANKED {
   DISPLAY_ON;
 }
 
-void start_game(void) {
-  // TODO implement me
+void start_game(void) NONBANKED {
+  DISPLAY_OFF;
+
+  for (uint8_t k = 0; k < 16; k++)
+    move_sprite(k, 0, 0);
+
+  init_player(selected_hero);
+
+  switch (selected_hero) {
+  case CLASS_DRUID:
+    sprintf(player.name, "Lyra");
+    break;
+  case CLASS_FIGHTER:
+    sprintf(player.name, "Deneth");
+    break;
+  case CLASS_MONK:
+    sprintf(player.name, "Ken");
+    break;
+  case CLASS_SORCERER:
+    sprintf(player.name, "Tyrion");
+    break;
+  }
+
+  set_active_floor(&bank_floor1);
+  init_world_map();
+  game_state = GAME_STATE_WORLD_MAP;
 }
 
 void change_hero(void) {
@@ -105,7 +132,7 @@ void change_hero(void) {
   selected_walk_frame = 0;
 }
 
-void update_hero_select(void) BANKED {
+void update_hero_select(void) NONBANKED {
   if (was_pressed(J_LEFT)) {
     selected_hero = selected_hero == 0 ? 3 : selected_hero - 1;
     change_hero();
@@ -114,6 +141,7 @@ void update_hero_select(void) BANKED {
     change_hero();
   } else if (was_pressed(J_START)) {
     start_game();
+    return;
   }
 
   if (!update_timer(selected_walk_timer))

@@ -19,10 +19,10 @@
  * Enumeration of all classes in the game. Decides stat tiers, abilities, etc.
  */
 typedef enum PlayerClass {
-  CLASS_DRUID,
-  CLASS_FIGHTER,
-  CLASS_MONK,
-  CLASS_SORCERER,
+  CLASS_DRUID = 0 ,
+  CLASS_FIGHTER = 1,
+  CLASS_MONK = 2,
+  CLASS_SORCERER = 3,
   CLASS_TEST = 0xFF,
 } PlayerClass;
 

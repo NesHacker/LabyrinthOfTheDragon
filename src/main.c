@@ -28,17 +28,6 @@ uint8_t joypad_released;
  */
 #define RANDOM_SEED 50
 
-
-/**
- * Initializes the normal game. Abstracted out of `initialize` to make it easy
- * to switch between tests and the actual game while handling common setup.
- */
-static void initialize_game(void) {
-  init_player(CLASS_DRUID);
-  init_world_map();
-  game_state = GAME_STATE_WORLD_MAP;
-}
-
 /**
  * Initializes the core game engine.
  */
