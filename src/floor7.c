@@ -367,9 +367,50 @@ static const NPC npcs[] = {
 };
 
 //------------------------------------------------------------------------------
-// Scripting Callbacks
+// Palette Colors
 //------------------------------------------------------------------------------
 
+static const palette_color_t palettes[] = {
+  // Palette 1 - Core background tiles
+  RGB8(80, 120, 70),
+  RGB8(0, 50, 70),
+  RGB8(24, 0, 40),
+  RGB8(24, 0, 0),
+  // Palette 2 - Treasure chests
+  RGB8(192, 138, 40),
+  RGB8(0, 50, 70),
+  RGB8(24, 0, 40),
+  RGB8(24, 0, 0),
+  // Palette 3
+  RGB_WHITE,
+  RGB8(0, 50, 70),
+  RGB8(24, 0, 40),
+  RGB8(24, 0, 0),
+  // Palette 4
+  RGB8(40, 0, 0),
+  RGB8(0, 50, 70),
+  RGB8(24, 0, 40),
+  RGB8(24, 0, 0),
+  // Palette 5
+  RGB8(20, 180, 20),
+  RGB8(0, 50, 70),
+  RGB8(24, 0, 40),
+  RGB8(24, 0, 0),
+  // Palette 6
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+  // Palette 7
+  RGB_WHITE,
+  RGB8(120, 120, 120),
+  RGB8(60, 60, 60),
+  RGB_BLACK,
+};
+
+//------------------------------------------------------------------------------
+// Scripting Callbacks
+//------------------------------------------------------------------------------
 static const EncounterTable encounters_low[] = {
   {
     ODDS_15P, MONSTER_LAYOUT_1,
@@ -421,6 +462,7 @@ static bool on_init(void) {
   switch_door_6 = false;
   switch_door_8 = false;
   config_random_encounter(4, 1, 1, true);
+  init_teleporter_animation(2, palettes);
   return false;
 }
 
@@ -505,47 +547,9 @@ static bool on_action(void) {
   return false;
 }
 
-//------------------------------------------------------------------------------
-// Palette Colors
-//------------------------------------------------------------------------------
-
-static const palette_color_t palettes[] = {
-  // Palette 1 - Core background tiles
-  RGB8(80, 120, 70),
-  RGB8(0, 50, 70),
-  RGB8(24, 0, 40),
-  RGB8(24, 0, 0),
-  // Palette 2 - Treasure chests
-  RGB8(192, 138, 40),
-  RGB8(0, 50, 70),
-  RGB8(24, 0, 40),
-  RGB8(24, 0, 0),
-  // Palette 3
-  RGB_WHITE,
-  RGB8(0, 50, 70),
-  RGB8(24, 0, 40),
-  RGB8(24, 0, 0),
-  // Palette 4
-  RGB8(40, 0, 0),
-  RGB8(0, 50, 70),
-  RGB8(24, 0, 40),
-  RGB8(24, 0, 0),
-  // Palette 5
-  RGB8(20, 180, 20),
-  RGB8(0, 50, 70),
-  RGB8(24, 0, 40),
-  RGB8(24, 0, 0),
-  // Palette 6
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
-  // Palette 7
-  RGB_WHITE,
-  RGB8(120, 120, 120),
-  RGB8(60, 60, 60),
-  RGB_BLACK,
-};
+static void on_draw(void) {
+  animate_teleporter_colors(2);
+}
 
 //------------------------------------------------------------------------------
 // Area Definition (shouldn't have to touch this)
@@ -564,4 +568,6 @@ const Floor floor7 = {
   on_special,
   on_move,
   on_action,
+  NULL,
+  on_draw
 };

@@ -83,8 +83,8 @@ void test_level(void) {
   // set_active_floor(&bank_floor3);
   // set_active_floor(&bank_floor4);
   // set_active_floor(&bank_floor5);
-  // set_active_floor(&bank_floor6);
-  set_active_floor(&bank_floor7);
+  set_active_floor(&bank_floor6);
+  // set_active_floor(&bank_floor7);
   // set_active_floor(&bank_floor8);
 
   init_world_map();
