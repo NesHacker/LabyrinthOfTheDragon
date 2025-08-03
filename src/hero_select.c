@@ -135,12 +135,9 @@ void update_hero_select(void) NONBANKED {
   reset_timer(selected_walk_timer);
   selected_walk_frame = (selected_walk_frame + 1) & 0x1;
 
-
-
   for (uint8_t k = 0; k < 4; k++) {
     uint8_t id = k + selected_hero * 4;
     uint8_t offset = selected_walk_frame ? 2 : 0;
     set_sprite_tile(id, hero_tiles[id] + offset);
   }
-
 }
