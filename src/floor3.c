@@ -105,7 +105,7 @@ static const Exit exits[] = {
   { MAP_A, 3, 5, MAP_A, 17, 6, DOWN, EXIT_STAIRS },
 
   // TODO Fix this to point to floor 4
-  { MAP_A, 4, 12, MAP_A, DEFAULT_X, DEFAULT_Y, UP, EXIT_STAIRS, &bank_floor3},
+  { MAP_A, 4, 12, MAP_A, 24, 30, UP, EXIT_STAIRS, &bank_floor4},
 
   {END},
 };

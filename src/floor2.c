@@ -109,8 +109,7 @@ static const Exit exits[] = {
   { MAP_B, 6, 2, MAP_B, 24, 8, UP, EXIT_STAIRS },
   { MAP_B, 24, 8, MAP_B, 6, 2, DOWN, EXIT_STAIRS },
 
-  // TODO: add next level door (instead of looping)
-  { MAP_A, 10, 1, MAP_A, 10, 13, UP, EXIT_STAIRS, &bank_floor2 },
+  { MAP_A, 10, 1, MAP_A, 26, 17, UP, EXIT_STAIRS, &bank_floor3 },
 
   { END },
 };

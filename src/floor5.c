@@ -84,8 +84,7 @@ static const Exit exits[] = {
   { MAP_B, 19, 5, MAP_A, 2, 9, DOWN, EXIT_STAIRS },
 
   // Next Level
-  // TODO Map this to floor 6
-  { MAP_B, 3, 1, MAP_A, 12, 30, UP, EXIT_STAIRS, &bank_floor5 },
+  { MAP_B, 3, 1, MAP_A, 8, 7, UP, EXIT_STAIRS, &bank_floor6 },
   { END },
 };
 
