@@ -2418,6 +2418,18 @@ void return_from_battle(void) NONBANKED {
   map_fade_in(MAP_STATE_WAITING);
 }
 
+void return_from_death(void) NONBANKED {
+  SWITCH_ROM(MAP_SYSTEM_BANK);
+
+  player.hp = player.max_hp;
+  player.sp = player.max_sp;
+
+  set_active_floor(&bank_floor1);
+  initialize_world_map();
+
+  map_fade_in(MAP_STATE_WAITING);
+}
+
 void on_victory(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);

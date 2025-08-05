@@ -1227,6 +1227,11 @@ inline void start_battle(void) {
 }
 
 /**
+ * Called when returning to the map system after death.
+ */
+void return_from_death(void) NONBANKED;
+
+/**
  * Called when returning to the map system from the battle system.
  */
 void return_from_battle(void) NONBANKED;

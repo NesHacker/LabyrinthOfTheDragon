@@ -226,6 +226,10 @@ typedef enum BattleState {
    */
   BATTLE_PLAYER_DIED,
   /**
+   * Delays a few moments before sending the player to the "You Died" screen.
+   */
+  BATTLE_DIED_DELAY,
+  /**
    * End of round logic is being performed (skipping player turn etc.).
    */
   BATTLE_END_ROUND,

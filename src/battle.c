@@ -37,6 +37,8 @@ Timer monster_death_timer;
 uint8_t monster_death_step = 0;
 MonsterDeathAnimation monster_death_state = MONSTER_DEATH_START;
 static Timer no_post_sfx_timer;
+Timer death_delay_timer;
+bool player_died = false;
 
 /**
  * Used for timing continuous cursor movement.
@@ -1360,6 +1362,7 @@ void initialize_battle(void) {
   battle_state = BATTLE_FADE_IN;
   fade_in();
   game_state = GAME_STATE_BATTLE;
+  player_died = false;
 
   DISPLAY_ON;
 }
@@ -1464,8 +1467,17 @@ void update_battle(void) NONBANKED {
     break;
   case BATTLE_PLAYER_DIED:
     // Transition to the game over screen.
+    player_died = true;
     text_writer.update();
-    // TODO Handle Game Over State
+    if (text_writer_done()) {
+      init_timer(death_delay_timer, 90);
+      battle_state = BATTLE_DIED_DELAY;
+    }
+    break;
+  case BATTLE_DIED_DELAY:
+    if (!update_timer(death_delay_timer))
+      return;
+    leave_battle();
     break;
   case BATTLE_END_ROUND:
     battle_state = BATTLE_STATE_MENU;
@@ -1516,7 +1528,13 @@ void draw_battle(void) NONBANKED {
       DISPLAY_OFF;
       cleanup_isr();
       battle_state = BATTLE_INACTIVE;
-      return_from_battle();
+
+      if (player_died) {
+        player_died = false;
+        return_from_death();
+      } else {
+        return_from_battle();
+      }
       return;
     }
     break;
