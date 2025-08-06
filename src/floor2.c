@@ -139,6 +139,7 @@ static const Sign signs[] = {
 void on_pulled(const Lever *lever) {
   switch (lever->id) {
   case LEVER_1:
+    play_sound(sfx_door_unlock);
     toggle_door(DOOR_4);
     toggle_door(DOOR_5);
     toggle_door(DOOR_6);
