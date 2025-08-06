@@ -18,6 +18,22 @@ uint8_t joypad_pressed;
 uint8_t joypad_released;
 
 /**
+ * Enumerates initial game modes. These are used in testing and development to
+ * immediately jump to a specific test state.
+ */
+typedef enum InitialGameMode {
+  GAME_MODE_NORMAL,
+  GAME_MODE_HERO_SELECT,
+  GAME_MODE_TEST_LEVEL,
+  GAME_MODE_TEST_BATTLE,
+} InitialGameMode;
+
+/**
+ * Determines the initial game mode for the game.
+ */
+const InitialGameMode initial_mode = GAME_MODE_TEST_LEVEL;
+
+/**
  * Uncomment to enable sound effect testing when pressing the 'B' button.
  */
 // #define SFX_TEST
@@ -28,6 +44,7 @@ uint8_t joypad_released;
  */
 #define RANDOM_SEED 50
 
+
 /**
  * Initializes the core game engine.
  */
@@ -37,14 +54,23 @@ static inline void initialize(void) {
   initarand(RANDOM_SEED);
   hide_window();
 
-  // test_level();
-  // test_battle();
 
-  init_title_screen();
-  game_state = GAME_STATE_TITLE;
-
-  // init_hero_select();
-  // game_state = GAME_STATE_HERO_SELECT;
+  switch (initial_mode) {
+  case GAME_MODE_NORMAL:
+    init_title_screen();
+    game_state = GAME_STATE_TITLE;
+    break;
+  case GAME_MODE_HERO_SELECT:
+    init_hero_select();
+    game_state = GAME_STATE_HERO_SELECT;
+    break;
+  case GAME_MODE_TEST_LEVEL:
+    test_level();
+    break;
+  case GAME_MODE_TEST_BATTLE:
+    test_battle();
+    break;
+  }
 }
 
 /**
