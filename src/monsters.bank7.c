@@ -21,14 +21,16 @@ static void mindflayer_take_turn(Monster *monster) {
   const uint16_t base_damage = get_monster_dmg(monster->level, tier);
 
   if (
-    d8() < 3 &&
-    !(monster->parameter & MIND_FLAYER_MIND_BLAST)
+    d8() < 3 && !(monster->parameter & MIND_FLAYER_MIND_BLAST)
   ) {
     // Mind blast
-    sprintf(battle_pre_message, str_monster2_mindflayer_mind_blast, monster->id);
+    sprintf(battle_pre_message,
+      str_monster2_mindflayer_mind_blast, monster->id);
+
     if (player.debuff_immune & DEBUFF_CONFUSED) {
       monster->parameter |= MIND_FLAYER_MIND_BLAST;
       sprintf(battle_post_message, str_monster2_mindflayer_mind_blast_miss);
+      SFX_MISS;
     } else if (roll_attack_monster(monster->matk, player.mdef)) {
       monster->parameter |= MIND_FLAYER_MIND_BLAST;
       uint16_t damage = damage_player(base_damage / 2, DAMAGE_MAGICAL);
@@ -37,7 +39,7 @@ static void mindflayer_take_turn(Monster *monster) {
       apply_confused(
         encounter.player_status_effects, tier, 3, player.debuff_immune);
     } else {
-      sprintf(battle_post_message, str_monster2_mindflayer_mind_blast_miss);
+      sprintf(battle_post_message, str_monster2_monster_miss);
       SFX_FAIL;
     }
 
@@ -54,10 +56,11 @@ static void mindflayer_take_turn(Monster *monster) {
       battle_pre_message, str_monster2_mindflayer_extract_brain, monster->id);
 
     if (roll_attack_monster(level_offset(monster->level, -15), player.def)) {
-      sprintf(battle_post_message,  str_monster2_mindflayer_extract_brain_hit);
+      sprintf(battle_post_message, str_monster2_mindflayer_extract_brain_hit);
       player.hp = 0;
+      SFX_SPECIAL_CRIT;
     } else {
-      sprintf(battle_post_message, str_monster_miss);
+      sprintf(battle_post_message, str_monster2_monster_miss);
       SFX_FAIL;
     }
 
@@ -66,10 +69,10 @@ static void mindflayer_take_turn(Monster *monster) {
 
   // Tentacle attack
   sprintf(battle_pre_message, str_monster2_mindflayer_tentacle, monster->id);
-  if (roll_attack_monster(monster->atk, player.def))
+  if (roll_attack_monster(monster->atk, player.def)) {
     damage_player(base_damage, DAMAGE_PHYSICAL);
-  else {
-    sprintf(battle_post_message, str_monster_miss);
+  } else {
+    sprintf(battle_post_message, str_monster2_monster_miss);
     SFX_MISS;
   }
 }
