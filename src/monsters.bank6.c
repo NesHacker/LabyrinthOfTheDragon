@@ -254,8 +254,10 @@ static void bugbear_take_turn(Monster *monster) {
       apply_scared(encounter.player_status_effects, C_TIER, 2, 0);
       sprintf(battle_post_message, str_monster_bugbear_for_hruggek_hit);
       monster->parameter--;
+      SFX_MAGIC;
     } else {
       sprintf(battle_post_message, str_monster_bugbear_for_hruggek_miss);
+      SFX_FAIL;
     }
     return;
   }
@@ -288,8 +290,10 @@ static void bugbear_take_turn(Monster *monster) {
 
   if (roll_attack_monster(atk, player.def))
     damage_player(base_damage, DAMAGE_PHYSICAL);
-  else
+  else {
     sprintf(battle_post_message, str_monster_miss);
+    SFX_MISS;
+  }
 
 }
 
