@@ -162,13 +162,23 @@ static void on_pulled(const Lever *lever) {
   case (LEVER_3):
     open_door(DOOR_3);
     play_sound(sfx_big_door_open);
+    stick_lever(LEVER_3);
     break;
   case (LEVER_4):
     open_door(DOOR_4);
     play_sound(sfx_big_door_open);
+    stick_lever(LEVER_4);
     break;
   default:
     pull_routing_lever(lever);
+    return;
+  }
+
+  if (lever->id == LEVER_3 || lever->id == LEVER_4) {
+    if (is_door_open(DOOR_3) && is_door_open(DOOR_4)) {
+      open_door(DOOR_1);
+      map_textbox(str_floor2_door_opens);
+    }
   }
 }
 
