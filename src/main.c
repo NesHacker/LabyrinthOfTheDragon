@@ -44,7 +44,6 @@ const InitialGameMode initial_mode = GAME_MODE_TEST_LEVEL;
  */
 #define RANDOM_SEED 50
 
-
 /**
  * Initializes the core game engine.
  */
