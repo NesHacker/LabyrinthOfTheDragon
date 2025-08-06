@@ -31,6 +31,11 @@
 #define SFX_CRIT battle_sfx = sfx_monster_critical
 
 /**
+ * Plays the "special critical" attack sound during battle.
+ */
+#define SFX_SPECIAL_CRIT battle_sfx = sfx_big_door_open
+
+/**
  * Plays the "healing" sound during battle.
  */
 #define SFX_HEAL battle_sfx = sfx_heal

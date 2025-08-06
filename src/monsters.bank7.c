@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "battle.h"
+#include "battle.effects.h"
 #include "data.h"
 #include "monster.h"
 #include "stats.h"
@@ -28,9 +29,7 @@ static void mindflayer_take_turn(Monster *monster) {
     if (player.debuff_immune & DEBUFF_CONFUSED) {
       monster->parameter |= MIND_FLAYER_MIND_BLAST;
       sprintf(battle_post_message, str_monster2_mindflayer_mind_blast_miss);
-    }
-
-    if (roll_attack_monster(monster->matk, player.mdef)) {
+    } else if (roll_attack_monster(monster->matk, player.mdef)) {
       monster->parameter |= MIND_FLAYER_MIND_BLAST;
       uint16_t damage = damage_player(base_damage / 2, DAMAGE_MAGICAL);
       sprintf(
@@ -39,6 +38,7 @@ static void mindflayer_take_turn(Monster *monster) {
         encounter.player_status_effects, tier, 3, player.debuff_immune);
     } else {
       sprintf(battle_post_message, str_monster2_mindflayer_mind_blast_miss);
+      SFX_FAIL;
     }
 
     return;
@@ -58,6 +58,7 @@ static void mindflayer_take_turn(Monster *monster) {
       player.hp = 0;
     } else {
       sprintf(battle_post_message, str_monster_miss);
+      SFX_FAIL;
     }
 
     return;
@@ -67,8 +68,10 @@ static void mindflayer_take_turn(Monster *monster) {
   sprintf(battle_pre_message, str_monster2_mindflayer_tentacle, monster->id);
   if (roll_attack_monster(monster->atk, player.def))
     damage_player(base_damage, DAMAGE_PHYSICAL);
-  else
+  else {
     sprintf(battle_post_message, str_monster_miss);
+    SFX_MISS;
+  }
 }
 
 void mindflayer_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
@@ -116,6 +119,7 @@ static void beholder_take_turn(Monster *monster) {
     sprintf(battle_pre_message, str_monster2_beholder_shoot_ray, monster->id);
     if (!hit) {
       sprintf(battle_post_message, str_monster2_beholder_ray_miss);
+      SFX_FAIL;
       return;
     }
 
@@ -147,8 +151,13 @@ static void beholder_take_turn(Monster *monster) {
         turns,
         player.debuff_immune
       );
-      if (debuff_result == STATUS_RESULT_SUCCESS)
+      if (debuff_result == STATUS_RESULT_SUCCESS) {
         sprintf(battle_post_message, str_monster2_beholder_ray_paralyze, damage);
+        SFX_MAGIC;
+      } else {
+        sprintf(battle_post_message, str_monster2_beholder_ray_resist);
+        SFX_FAIL;
+      }
       return;
     case BEHOLDER_FEAR:
       debuff_result = apply_scared(
@@ -157,8 +166,13 @@ static void beholder_take_turn(Monster *monster) {
         turns,
         player.debuff_immune
       );
-      if (debuff_result == STATUS_RESULT_SUCCESS)
+      if (debuff_result == STATUS_RESULT_SUCCESS) {
         sprintf(battle_post_message, str_monster2_beholder_ray_fear, damage);
+        SFX_MAGIC;
+      } else {
+        sprintf(battle_post_message, str_monster2_beholder_ray_resist);
+        SFX_FAIL;
+      }
       return;
     case BEHOLDER_SLOW:
       debuff_result = apply_agl_down(
@@ -167,8 +181,13 @@ static void beholder_take_turn(Monster *monster) {
         turns,
         player.debuff_immune
       );
-      if (debuff_result == STATUS_RESULT_SUCCESS)
+      if (debuff_result == STATUS_RESULT_SUCCESS) {
         sprintf(battle_post_message, str_monster2_beholder_ray_slow, damage);
+        SFX_MAGIC;
+      } else {
+        sprintf(battle_post_message, str_monster2_beholder_ray_resist);
+        SFX_FAIL;
+      }
       return;
     case BEHOLDER_NECRO:
       debuff_result = apply_poison(
@@ -177,18 +196,28 @@ static void beholder_take_turn(Monster *monster) {
         turns,
         player.debuff_immune
       );
-      if (debuff_result == STATUS_RESULT_SUCCESS)
+      if (debuff_result == STATUS_RESULT_SUCCESS) {
         sprintf(battle_post_message, str_monster2_beholder_ray_necro, damage);
+        SFX_MAGIC;
+      } else {
+        sprintf(battle_post_message, str_monster2_beholder_ray_resist);
+        SFX_FAIL;
+      }
       return;
     case BEHOLDER_TRIP:
       player.trip_turns = turns;
       sprintf(battle_post_message, str_monster2_beholder_ray_trip, damage);
+      SFX_MELEE;
       return;
     default:
       bool player_died = d256() < 3;
       if (player_died) {
         player.hp = 0;
         sprintf(battle_post_message, str_monster2_beholder_ray_death);
+        SFX_SPECIAL_CRIT;
+      } else {
+        sprintf(battle_post_message, str_monster2_beholder_ray_resist);
+        SFX_FAIL;
       }
       return;
     }
@@ -199,7 +228,8 @@ static void beholder_take_turn(Monster *monster) {
   if (roll_attack_monster(monster->atk, player.def)) {
     damage_player(get_monster_dmg(monster->level, exp_tier), DAMAGE_PHYSICAL);
   } else {
-    sprintf(battle_post_message, str_monster2_beholder_bit_miss);
+    sprintf(battle_post_message, str_monster2_beholder_bite_miss);
+    SFX_MISS;
   }
 }
 
@@ -227,7 +257,6 @@ void beholder_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {
 // -----------------------------------------------------------------------------
 // Monster 12 - Dragon
 // -----------------------------------------------------------------------------
-
 
 #define DRAGON_FIREBREATH_MASK 0b10000000
 #define DRAGON_FRIGHT_MASK     0b00001100
@@ -299,6 +328,7 @@ static void dragon_take_turn(Monster *monster) {
         );
       } else {
         sprintf(battle_post_message, str_monster2_dragon_legendary_tail_miss);
+        SFX_MISS;
       }
       return;
     case LEGENDARY_WING_FLAP:
@@ -317,6 +347,7 @@ static void dragon_take_turn(Monster *monster) {
         );
       } else {
         sprintf(battle_post_message, str_monster2_dragon_legendary_wing_miss);
+        SFX_MISS;
       }
       return;
     }
@@ -343,10 +374,14 @@ static void dragon_take_turn(Monster *monster) {
         scared = true;
     }
 
-    if (scared)
+    if (scared) {
       sprintf(battle_post_message, str_monster2_dragon_fright_hit);
-    else
+      SFX_MAGIC;
+    }
+    else {
       sprintf(battle_post_message, str_monster2_dragon_fright_miss);
+      SFX_MISS;
+    }
 
     return;
   }
@@ -370,6 +405,8 @@ static void dragon_take_turn(Monster *monster) {
       return;
 
     sprintf(battle_post_message, str_monster2_dragon_fire_breath_miss, damage);
+    SFX_MISS;
+
     return;
   } else if (d8() < 2) {
     dragon_restore_firebreath(monster);
@@ -386,6 +423,7 @@ static void dragon_take_turn(Monster *monster) {
 
   if (hits == 0) {
     sprintf(battle_post_message, str_monster2_dragon_miss);
+    SFX_MISS;
     return;
   }
 
@@ -398,6 +436,8 @@ static void dragon_take_turn(Monster *monster) {
     sprintf(battle_post_message, str_monster2_dragon_hit_double, damage);
   else
     sprintf(battle_post_message, str_monster2_dragon_hit_single, damage);
+
+  SFX_MELEE;
 }
 
 void dragon_generator(Monster *m, uint8_t level, PowerTier tier) BANKED {

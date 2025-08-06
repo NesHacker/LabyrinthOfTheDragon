@@ -429,7 +429,8 @@ addNamespace('monster2', 7, {
   'beholder_ray_trip': 'You take %damage damage and fall prone!',
   'beholder_ray_death': 'Your soul escapes your body...',
   'beholder_ray_miss': 'But you dodge the ray!',
-  'beholder_bit_miss': 'But their bite misses!',
+  'beholder_bite_miss': 'But their bite misses!',
+  'beholder_ray_resist': 'But you resist the ray!',
   // Dragon Specials
   'dragon_attack': 'Dragon %c swoops down and attacks!',
   'dragon_miss': 'But their attacks miss!',
