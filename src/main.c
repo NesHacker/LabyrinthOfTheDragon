@@ -31,7 +31,7 @@ typedef enum InitialGameMode {
 /**
  * Determines the initial game mode for the game.
  */
-const InitialGameMode initial_mode = GAME_MODE_TEST_LEVEL;
+const InitialGameMode initial_mode = GAME_MODE_NORMAL;
 
 /**
  * Uncomment to enable sound effect testing when pressing the 'B' button.
