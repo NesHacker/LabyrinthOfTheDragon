@@ -54,7 +54,6 @@ static inline void initialize(void) {
   initarand(RANDOM_SEED);
   hide_window();
 
-
   switch (initial_mode) {
   case GAME_MODE_NORMAL:
     init_title_screen();
