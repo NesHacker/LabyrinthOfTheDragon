@@ -80,10 +80,13 @@ void test_level(void) {
 }
 
 void test_battle(void) {
-  reset_encounter(MONSTER_LAYOUT_2);
+  init_test_player(CLASS_TEST, 90);
+  reset_encounter(MONSTER_LAYOUT_1);
+
   Monster *monster = encounter.monsters;
-  dragon_generator(monster++, 10, C_TIER);
-  dragon_generator(monster++, 10, B_TIER);
+  bugbear_generator(monster, 10, C_TIER);
+  monster->id = 'A';
+  monster++;
 
   test_battle_init();
 }
