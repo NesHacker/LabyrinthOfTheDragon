@@ -335,15 +335,15 @@ static bool on_npc_action(const NPC *npc) {
   switch (npc->id) {
   case NPC_1:
     if (player.level < 45) {
-      map_textbox(str_floor6_boss_not_yet);
+      map_textbox(str_floor7_boss_not_yet);
       return true;
     }
     play_sound(sfx_monster_attack2);
-    map_textbox_with_action(str_floor6_boss, on_boss_encouter);
+    map_textbox_with_action(str_floor7_boss, on_boss_encouter);
     return true;
   case NPC_2:
     play_sound(sfx_monster_attack1);
-    map_textbox_with_action(str_floor6_elite_attack, on_elite_encouter);
+    map_textbox_with_action(str_floor7_elite_attack, on_elite_encouter);
     return true;
   }
   return false;
