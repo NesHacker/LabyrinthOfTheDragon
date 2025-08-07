@@ -89,5 +89,6 @@ extern const Item chest_item_1elixer[];
 extern const Item chest_item_1atkup_1defup[];
 extern const Item chest_item_3regen[];
 extern const Item chest_item_3elixers[];
+extern const Item chest_item_3haste[];
 
 #endif

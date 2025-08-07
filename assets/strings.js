@@ -260,8 +260,10 @@ addNamespace('floor7', 2, {
 });
 
 addNamespace('floor8', 2, {
-  'boss': '...',
-  'boss_not_yet': '...',
+  'boss': 'Finally, I have awaited this...',
+  'elite': 'STARING EVEN MORE',
+  'healing_mirror': 'You look in the mirror and your wounds vanish!',
+  'healing_mirror_none': 'The mirror has lost its luster...',
 });
 
 addNamespace('floor_common', 2, {
@@ -321,7 +323,8 @@ addNamespace('chest_item', 2, {
   '3ethers': 'You get 3 ethers!',
   '1elixer': 'You get an elixer!',
   '1atkup_1defup': 'You get an ATK& and DEF&!',
-  '3elixers': 'You get 3 elixers!'
+  '3elixers': 'You get 3 elixers!',
+  '3haste': 'You get 3 haste potions!',
 });
 
 addNamespace('items', 3, {

@@ -142,3 +142,8 @@ extern const Item chest_item_3elixers[] = {
   { ITEM_ELIXER, 3 },
   { END },
 };
+
+extern const Item chest_item_3haste[] = {
+  { ITEM_HASTE, 3 },
+  { END },
+};
