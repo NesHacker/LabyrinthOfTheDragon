@@ -1,6 +1,7 @@
 #pragma bank 8
 
 #include "core.h"
+#include "credits.h"
 #include "floor.h"
 #include "sound.h"
 
@@ -328,12 +329,6 @@ static const Sconce sconces[] = {
 //------------------------------------------------------------------------------
 // NPCs (IMPLS YET)
 //------------------------------------------------------------------------------
-static void on_boss_victory(void) BANKED {
-  open_door(DOOR_2);
-  set_npc_invisible(NPC_1);
-  play_sound(sfx_big_door_open);
-}
-
 static void on_elite_victory(void) BANKED {
   current_mini_boss = MINI_BOSS_BEHOLDER;
   on_mini_boss_victory();
@@ -345,7 +340,7 @@ static bool on_boss_encouter(void) {
   reset_encounter(MONSTER_LAYOUT_1);
   dragon_generator(monster, 60, A_TIER);
   monster->id = 'A';
-  set_on_victory(on_boss_victory);
+  encounter.is_final_boss = true;
   start_battle();
   return true;
 }

@@ -9,6 +9,7 @@
 
 #include "battle.h"
 #include "core.h"
+#include "credits.h"
 #include "encounter.h"
 #include "map.h"
 #include "monster.h"
@@ -1532,6 +1533,8 @@ void draw_battle(void) NONBANKED {
       if (player_died) {
         player_died = false;
         return_from_death();
+      } else if (encounter.is_final_boss) {
+        init_credits();
       } else {
         return_from_battle();
       }

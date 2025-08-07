@@ -175,6 +175,10 @@ typedef struct Encounter {
    */
   bool is_test;
   /**
+   * Denotes that this is the final boss of the game.
+   */
+  bool is_final_boss;
+  /**
    * Callback to execute upon encounter success. This callback is reset after
    * being called.
    */

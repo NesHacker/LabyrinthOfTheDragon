@@ -453,5 +453,43 @@ addNamespace('monster2', 7, {
   'dragon_fire_breath_miss': 'You dodge, but still take %damage damage!',
 })
 
+addNamespace('credits', 1, {
+  //           X123456789012345678X
+  'story1_1': 'With a last gasp',
+  'story1_2': 'and puff of smoke',
+  'story1_3': 'The dragon was',
+  'story1_4': 'Defeated...',
+
+  'story2_1': 'The quest done,',
+  'story2_2': 'the hero ascended',
+  'story2_3': 'an ancient',
+  'story2_4': 'staircase.',
+
+  'story3_1': 'And at long last...',
+  'story3_2': 'was free of the',
+  'story3_3': 'The dungeon and',
+  'story3_4': '   the dragon.',
+
+  'developed_by': 'DEVELOPED BY',
+  'programming': 'PROGRAMMING',
+  'game_design': 'GAME DESIGN',
+  'monster_art': 'MONSTER ART',
+  'title_art': 'TITLE ART',
+  'dungeon_art': 'DUNGEON ART',
+
+  'neshacker': 'NESHACKER',
+  'ryan': 'Ryan Richards',
+  'tommy': 'Tommy',
+  'mono': 'Mono',
+  'ledu': 'Ledu',
+  'patreon': 'SPECIAL THANKS',
+  'nh_patreon': 'NesHacker Patreon',
+  'nh_patreon2': 'patreon.com/',
+  'nh_patreon3': '   NesHacker',
+
+  'thank_you': 'Thank you',
+  'for_playing': 'for playing!',
+});
+
 // Export the namespaces
 module.exports = namespaces;
