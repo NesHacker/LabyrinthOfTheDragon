@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <rand.h>
 
 #include "battle.h"
@@ -484,17 +483,11 @@ static void hash_object(
   int8_t x,
   int8_t y
 ) {
-  TileHashEntry *entry = tile_object_hashtable + hash(map_id, x, y);
-
-  if (entry->data) {
-    while (entry->next) {
-      entry = entry->next;
-    }
-
-    TileHashEntry *next = (TileHashEntry *)malloc(sizeof(TileHashEntry));
-    entry->next = next;
-    entry = next;
-    entry->next = NULL;
+  uint8_t hash_idx = hash(map_id, x, y);
+  TileHashEntry *entry = tile_object_hashtable + hash_idx;
+  while (entry->data) {
+    hash_idx = (hash_idx + 1) & (TILE_HASHTABLE_SIZE - 1);
+    entry = tile_object_hashtable + hash_idx;
   }
 
   entry->map_id = map_id;
@@ -512,14 +505,17 @@ static TileOverrideHashEntry *find_override_entry(
   int8_t y
 ) {
   uint8_t map_id = active_map->id;
-  TileOverrideHashEntry *entry = tile_override_hashtable + hash(map_id, x, y);
-  while (entry) {
-    if (entry->map_id == 0xFF)
-      return NULL;
+  uint8_t hash_idx = hash(map_id, x, y);
+
+  TileOverrideHashEntry *entry = tile_override_hashtable + hash_idx;
+  while (entry->map_id != 0xFF) {
     if (entry->map_id == map_id && entry->x == x && entry->y == y)
       return entry;
-    entry = entry->next;
+
+    hash_idx = (hash_idx + 1) & (TILE_HASHTABLE_SIZE - 1);
+    entry = tile_override_hashtable + hash_idx;
   }
+
   return NULL;
 }
 
@@ -541,37 +537,25 @@ static TileOverrideHashEntry *find_or_create_override_entry(
   int8_t x,
   int8_t y
 ) {
-  TileOverrideHashEntry *entry = tile_override_hashtable + hash(map_id, x, y);
+  uint8_t hash_idx = hash(map_id, x, y);
+  TileOverrideHashEntry *entry = tile_override_hashtable + hash_idx;
 
-  // The first bucket item is empty, so reserve it
-  if (entry->map_id == 0xFF) {
-    entry->map_id = map_id;
-    entry->x = x;
-    entry->y = y;
-    return entry;
-  }
-
-  // We've found the override entry for the given coordinates
-  if (entry->map_id == map_id && entry->x == x && entry->y == y)
-    return entry;
-
-  // Handle collisions
-  while (entry->next) {
-    entry = entry->next;
+  while (entry->map_id != 0xFF) {
+    // We've found the override entry for the given coordinates
     if (entry->map_id == map_id && entry->x == x && entry->y == y)
       return entry;
+
+    // Handle collisions
+    hash_idx = (hash_idx + 1) & (TILE_HASHTABLE_SIZE - 1);
+    entry = tile_override_hashtable + hash_idx;
   }
 
   // All previous entries were set for other coorindates, make a new entry
-  TileOverrideHashEntry *next =
-    (TileOverrideHashEntry*)malloc(sizeof(TileOverrideHashEntry));
-  entry->next = next;
-  next->next = NULL;
-  next->map_id = map_id;
-  next->x = x;
-  next->y = y;
+  entry->map_id = map_id;
+  entry->x = x;
+  entry->y = y;
 
-  return next;
+  return entry;
 }
 
 /**
@@ -579,13 +563,15 @@ static TileOverrideHashEntry *find_or_create_override_entry(
  */
 static TileHashEntry *get_hash_entry(int8_t x, int8_t y) {
   const uint8_t map_id = active_map->id;
-  const uint8_t hash_idx = hash(map_id, x, y);
+  uint8_t hash_idx = hash(map_id, x, y);
   TileHashEntry *entry = tile_object_hashtable + hash_idx;
 
-  while (entry && entry->data) {
+  while (entry->data) {
     if (entry->map_id == map_id && entry->x == x && entry->y == y)
       return entry;
-    entry = entry->next;
+
+    hash_idx = (hash_idx + 1) & (TILE_HASHTABLE_SIZE - 1);
+    entry = tile_object_hashtable + hash_idx;
   }
 
   return NULL;
@@ -602,15 +588,6 @@ static void reset_hashtables(void) {
     entry->map_id = 0xFF;
     entry->x = (int8_t)0xFF;
     entry->y = (int8_t)0xFF;
-
-    TileHashEntry *sibling = entry->next;
-    entry->next = NULL;
-
-    while (sibling) {
-      TileHashEntry *tmp = sibling;
-      sibling = sibling->next;
-      free(tmp);
-    }
   }
 
   TileOverrideHashEntry *override = tile_override_hashtable;
@@ -620,15 +597,6 @@ static void reset_hashtables(void) {
     override->y = (int8_t)0xFF;
     override->palette = 0xFF;
     override->tile = 0xFF;
-
-    TileOverrideHashEntry *sibling = override->next;
-    override->next = NULL;
-
-    while (sibling) {
-      TileOverrideHashEntry *tmp = sibling;
-      sibling = sibling->next;
-      free(tmp);
-    }
   }
 }
 

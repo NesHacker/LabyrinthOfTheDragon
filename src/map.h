@@ -976,11 +976,6 @@ typedef struct TileHashEntry {
    * Pointer to the data associated with the tile.
    */
   void *data;
-  /**
-   * Pointer to the next entry in the bucket. This will only be set if there is
-   * a hashing coflict between two positions.
-   */
-  struct TileHashEntry *next;
 } TileHashEntry;
 
 
@@ -1005,11 +1000,6 @@ typedef struct TileOverrideHashEntry {
    * Override for the tile palette.
    */
   uint8_t palette;
-  /**
-   * Pointer to the next entry in the bucket. This will only be set if there is
-   * a hashing coflict between two positions.
-   */
-  struct TileOverrideHashEntry *next;
 } TileOverrideHashEntry;
 
 /**
