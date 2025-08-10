@@ -50,7 +50,7 @@ static const Chest chests[] = {
 
   // Treasure Room Chests
   { CHEST_5, MAP_B, 17, 3, true, true, str_chest_item_3ethers, chest_item_3ethers },
-  { CHEST_6, MAP_B, 19, 2, true, true, str_chest_item_1elixer, chest_item_1elixer },
+  { CHEST_6, MAP_B, 19, 2, true, true, str_chest_item_1elixir, chest_item_1elixir },
   { CHEST_7, MAP_B, 21, 3, true, true, str_chest_item_1atkup_1defup, chest_item_1atkup_1defup },
 
   { END },

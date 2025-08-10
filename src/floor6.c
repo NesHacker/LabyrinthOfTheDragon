@@ -40,7 +40,7 @@ static const Chest chests[] = {
   }
   */
   // Puzzle floors
-  { CHEST_1, MAP_A, 12, 16, false, false, str_chest_item_1elixer, chest_item_1elixer },
+  { CHEST_1, MAP_A, 12, 16, false, false, str_chest_item_1elixir, chest_item_1elixir },
   { CHEST_2, MAP_A, 7, 25, false, false, NULL, NULL, chest_add_magic_key },
   { CHEST_3, MAP_A, 20, 25, false, false, NULL, NULL, chest_add_magic_key },
 

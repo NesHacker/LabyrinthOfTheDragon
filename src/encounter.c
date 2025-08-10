@@ -402,7 +402,7 @@ inline void monster_turn(void) {
   if (monster->trip_turns > 0) {
     monster->trip_turns--;
     if (monster->trip_turns == 0) {
-      sprintf(battle_pre_message, str_battle_monter_gets_up,
+      sprintf(battle_pre_message, str_battle_monster_gets_up,
         monster->name, monster->id);
     } else {
       sprintf(battle_pre_message, str_battle_monster_lies_prone,

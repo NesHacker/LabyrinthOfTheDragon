@@ -122,8 +122,8 @@ const Item chest_item_3ethers[] = {
   { END },
 };
 
-const Item chest_item_1elixer[] = {
-  { ITEM_ELIXER, 1 },
+const Item chest_item_1elixir[] = {
+  { ITEM_ELIXIR, 1 },
   { END },
 };
 
@@ -138,8 +138,8 @@ const Item chest_item_3regen[] = {
   { END },
 };
 
-extern const Item chest_item_3elixers[] = {
-  { ITEM_ELIXER, 3 },
+extern const Item chest_item_3elixirs[] = {
+  { ITEM_ELIXIR, 3 },
   { END },
 };
 

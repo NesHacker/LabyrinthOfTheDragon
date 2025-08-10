@@ -39,7 +39,7 @@ const Ability druid1 = {
 };
 
 const Ability druid2 = {
-  3, str_ability_druid_ligtning,
+  3, str_ability_druid_lightning,
   TARGET_SINGLE, 15, druid_lightning,
 };
 
@@ -145,7 +145,7 @@ const Ability sorcerer3 = {
 };
 
 const Ability sorcerer4 = {
-  5, str_ability_sorc_disintigrate,
+  5, str_ability_sorc_disintegrate,
   TARGET_SINGLE, 28, sorcerer_disintegrate
 };
 

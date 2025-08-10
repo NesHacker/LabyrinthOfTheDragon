@@ -94,10 +94,10 @@ static inline void use_defup_potion(void) {
   SFX_MID_POWERUP;
 }
 
-static inline void use_elixer(void) {
+static inline void use_elixir(void) {
   player.hp = player.max_hp;
   player.sp = player.max_sp;
-  sprintf(battle_pre_message, str_items_use_elixer);
+  sprintf(battle_pre_message, str_items_use_elixir);
   SFX_HEAL;
   SKIP_POST_MSG;
 }
@@ -138,7 +138,7 @@ bool can_use_item(ItemId id) {
         return true;
     }
     return false;
-  case ITEM_ELIXER:
+  case ITEM_ELIXIR:
     return player.hp < player.max_hp || player.sp < player.max_sp;
   case ITEM_ATK_UP:
     return can_add_item_buff(BUFF_ATK_UP);
@@ -171,8 +171,8 @@ void use_item(ItemId id) {
     case ITEM_DEF_UP:
       use_defup_potion();
       return;
-    case ITEM_ELIXER:
-      use_elixer();
+    case ITEM_ELIXIR:
+      use_elixir();
       return;
     case ITEM_REGEN:
       use_regen_potion();
@@ -190,7 +190,7 @@ Item inventory[8] = {
   { ITEM_REMEDY, 0, str_misc_remedy },
   { ITEM_ATK_UP, 0, str_misc_atk_up_potion },
   { ITEM_DEF_UP, 0, str_misc_def_up_potion },
-  { ITEM_ELIXER, 0, str_misc_elixer },
+  { ITEM_ELIXIR, 0, str_misc_elixir },
   { ITEM_REGEN, 0, str_misc_regen_pot },
   { ITEM_HASTE, 0, str_misc_haste_pot },
 };
