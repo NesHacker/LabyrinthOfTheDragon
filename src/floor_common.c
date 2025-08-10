@@ -18,6 +18,8 @@ bool chest_add_torch(Chest *chest) {
   if (is_chest_locked(chest->id)) {
     map_textbox(str_maps_chest_locked);
     return false;
+  } else if (player.has_torch) {
+    map_textbox(str_maps_already_has_torch);
   } else {
     player.has_torch = true;
     map_textbox(str_maps_get_torch);
