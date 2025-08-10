@@ -937,6 +937,7 @@ typedef struct FloorBank {
 
 /**
  * Number of entries in the map object hash table.
+ * This must be a power of two for index wrapping logic.
  */
 #define TILE_HASHTABLE_SIZE 64
 
