@@ -184,6 +184,15 @@ function encodeString(namespace, key, str, debugOn=false) {
 
   imr.forEach(rep => {
     debug('Compiling IMR', rep);
+
+    // Don't try to line-wrap on a newline character.
+    if (rep.encoded == "\\n") {
+      currentLineLen = 0;
+      result += '\\n';
+      addLength(1);
+      return;
+    }
+
     if (currentLineLen + rep.length > maxLineLength) {
       debug('Line length exceeded, adding \\n');
       currentLineLen = 0;
