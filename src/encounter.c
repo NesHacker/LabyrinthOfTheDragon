@@ -1,5 +1,8 @@
 #pragma bank 3
 
+// disable "conditional flow changed by optimizer" warning due to jump table optimization in update_player_status_effects()
+#pragma disable_warning 110
+
 #include <stdio.h>
 
 #include "battle.effects.h"
@@ -136,9 +139,6 @@ static void update_player_status_effects(void) {
       player.debuffs |= effect->flag;
     else
       player.buffs |= effect->flag;
-
-    // disable "conditional flow changed by optimizer" warning due to jump table optimization.
-    #pragma disable_warning 110
 
     switch (k) {
     case DEBUFF_BLIND:
