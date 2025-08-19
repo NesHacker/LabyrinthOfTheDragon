@@ -133,6 +133,7 @@ static const Sign signs[] = {
 //------------------------------------------------------------------------------
 
 static void on_lever_pull(const Lever *lever) {
+  (void)lever;
   play_sound(sfx_monster_critical);
   open_door(DOOR_1);
   map_textbox(str_floor2_door_opens);
@@ -179,6 +180,7 @@ static const Door doors[] = {
 //------------------------------------------------------------------------------
 
 static void on_lit(const Sconce* sconce) {
+  (void)sconce;
 }
 
 static const Sconce sconces[] = {

@@ -399,14 +399,14 @@ static void on_draw(void) NONBANKED {
 /**
  * Calls the `on_open` callback for a chest.
  */
-static bool on_open(Chest *chest) NONBANKED {
+static bool on_open(const Chest *chest) NONBANKED {
   return chest->on_open(chest);
 }
 
 /**
  * Calls the `on_pull` callback for a lever.
  */
-static void on_pull(Lever *lever) NONBANKED {
+static void on_pull(const Lever *lever) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
   lever->on_pull(lever);
@@ -416,7 +416,7 @@ static void on_pull(Lever *lever) NONBANKED {
 /**
  * Calls the `on_lit` callback for a sconce.
  */
-static void on_lit(Sconce *sconce) NONBANKED {
+static void on_lit(const Sconce *sconce) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   SWITCH_ROM(floor_bank->bank);
   sconce->on_lit(sconce);
@@ -426,7 +426,7 @@ static void on_lit(Sconce *sconce) NONBANKED {
 /**
  * Calls the `on_action` callback for an npc.
  */
-static bool on_npc_action(NPC *npc) NONBANKED {
+static bool on_npc_action(const NPC *npc) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   bool value;
   SWITCH_ROM(floor_bank->bank);
@@ -745,11 +745,11 @@ static MonsterTiles monster_tiles_by_type(MonsterType type) {
  * @return Palette colors for the monster.
  * @param type Type of monster for which to find the palette colors.
  */
-static palette_color_t *monster_palette_by_type(
+static const palette_color_t *monster_palette_by_type(
   MonsterType type,
   PowerTier tier
 ) {
-  palette_color_t *palette;
+  const palette_color_t *palette;
 
   switch (type) {
   case MONSTER_GOBLIN:
@@ -807,7 +807,7 @@ static void init_npcs(void) {
     npc++, pos++
   ) {
     MonsterTiles monster_tiles = monster_tiles_by_type(npc->monster_type);
-    palette_color_t *palette = monster_palette_by_type(
+    const palette_color_t *palette = monster_palette_by_type(
       npc->monster_type, npc->power_tier);
 
     const uint8_t palette_num = pos + 6;
@@ -2123,7 +2123,7 @@ static void redraw_tile(uint8_t map_id, int8_t x, int8_t y) {
   // Bounds checking
   if (x < 0 || y < 0)
     return;
-  if (x >= active_map->width || y >= active_map->height)
+  if (x >= (int8_t)active_map->width || y >= (int8_t)active_map->height)
     return;
 
   // Not in the render window

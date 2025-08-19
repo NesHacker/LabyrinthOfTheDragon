@@ -9,7 +9,7 @@
 #define MAP_MENU_X 0x00
 #define MAP_MENU_Y 0x0E
 
-#define CURSOR_TILE_ID 0x8A
+#define CURSOR_TILE_ID 0x8Au
 #define CURSOR_SPRITE_ID 16
 
 #define CURSOR_X_SAVE 16 - 2
@@ -116,10 +116,10 @@ void init_map_menu(void) {
   core.draw_tilemap(map_menu_tilemap, VRAM_WINDOW_XY(MAP_MENU_X, MAP_MENU_Y));
   map_menu.cursor = MAP_MENU_CURSOR_SAVE;
 
-  set_sprite_tile(CURSOR_SPRITE_ID + 0, CURSOR_TILE_ID + 0);
-  set_sprite_tile(CURSOR_SPRITE_ID + 1, CURSOR_TILE_ID + 1);
-  set_sprite_tile(CURSOR_SPRITE_ID + 2, CURSOR_TILE_ID + 2);
-  set_sprite_tile(CURSOR_SPRITE_ID + 3, CURSOR_TILE_ID + 3);
+  set_sprite_tile(CURSOR_SPRITE_ID + 0, CURSOR_TILE_ID + 0u);
+  set_sprite_tile(CURSOR_SPRITE_ID + 1, CURSOR_TILE_ID + 1u);
+  set_sprite_tile(CURSOR_SPRITE_ID + 2, CURSOR_TILE_ID + 2u);
+  set_sprite_tile(CURSOR_SPRITE_ID + 3, CURSOR_TILE_ID + 3u);
 
   set_sprite_prop(CURSOR_SPRITE_ID + 0, 0b00001100);
   set_sprite_prop(CURSOR_SPRITE_ID + 1, 0b00001100);

@@ -7,6 +7,7 @@
 #include "core.h"
 #include "main_menu.h"
 #include "player.h"
+#include "title_screen.h"
 
 
 /**

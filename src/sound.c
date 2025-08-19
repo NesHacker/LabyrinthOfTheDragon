@@ -33,7 +33,7 @@
  * @param ratio Dividing ratio frequency.
  */
 #define noise_freq(shift, steps, ratio) \
-  ((((shift) & 0xF) << 4) | ((steps & 0x1) << 3) | (ratio & 0x3))
+  (uint8_t)((((shift) & 0xF) << 4) | ((steps & 0x1) << 3) | (ratio & 0x3))
 
 /**
  * Sound register data structure.

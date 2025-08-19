@@ -137,6 +137,9 @@ static void update_player_status_effects(void) {
     else
       player.buffs |= effect->flag;
 
+    // disable "conditional flow changed by optimizer" warning due to jump table optimization.
+    #pragma disable_warning 110
+
     switch (k) {
     case DEBUFF_BLIND:
       player.atk = 0;
@@ -662,6 +665,8 @@ StatusEffectInstance *get_effect_slot(
   PowerTier tier,
   uint8_t duration
 ) {
+  (void)duration;
+
   StatusEffectInstance *e;
   StatusEffect opposing = get_opposing_effect(effect);
 

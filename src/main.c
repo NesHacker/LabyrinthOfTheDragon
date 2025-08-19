@@ -55,6 +55,12 @@ static inline void initialize(void) {
   initarand(RANDOM_SEED);
   hide_window();
 
+  // disable "unreachable code" warning since initial_mode is const.
+  #pragma disable_warning 126
+
+  // disable "conditional flow changed by optimizer" warning due to single function call optimization.
+  #pragma disable_warning 110
+
   switch (initial_mode) {
   case GAME_MODE_NORMAL:
     init_title_screen();

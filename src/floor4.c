@@ -154,6 +154,8 @@ static const Sign signs[] = {
 //------------------------------------------------------------------------------
 
 static void on_pull(const Lever *lever) {
+  (void)lever;
+
   const bool lever1 = is_lever_on(LEVER_1);
   const bool lever2 = is_lever_on(LEVER_2);
   const bool lever3 = is_lever_on(LEVER_3);
