@@ -14,7 +14,7 @@ RAM_BANKS=4
 CART_TYPE=0x1B
 
 LCC = $(GBDK_HOME)bin/lcc
-LCCFLAGS = -Wm-yC -Wm-yt$(CART_TYPE) -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS)
+LCCFLAGS = -Wm-yC -Wm-yt$(CART_TYPE) -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS) -Wf--Werror
 
 PNG2BIN := ./tools/png2bin
 TABLES2C := ./tools/tables2c
