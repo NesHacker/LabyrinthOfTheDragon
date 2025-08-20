@@ -451,10 +451,12 @@ typedef struct Map {
   uint8_t *data;
   /**
    * Width for the map (in map tiles).
+   * Must be in the range of 0 - 127 to support various signed comparisons.
    */
   uint8_t width;
   /**
    * Height for the map (in map tiles).
+   * Must be in the range of 0 - 127 to support various signed comparisons.
    */
   uint8_t height;
 } Map;

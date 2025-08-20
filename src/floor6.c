@@ -235,10 +235,6 @@ static const Door doors[] = {
 // Sconces
 //------------------------------------------------------------------------------
 
-static void on_lit(const Sconce* sconce) {
-  (void)sconce;
-}
-
 static const Sconce sconces[] = {
   /*
   {
