@@ -90,7 +90,7 @@ inline uint8_t clear_inventory(void) {
 bool can_use_item(ItemId id);
 
 /**
- * Uses an item. Only performs the action for the item, inventory quantitiy
+ * Uses an item. Only performs the action for the item, inventory quantity
  * state must be managed with `remove_item`.
  * @param item Item to use.
  */

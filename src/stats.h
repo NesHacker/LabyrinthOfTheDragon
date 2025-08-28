@@ -493,14 +493,14 @@ inline bool is_fumble(uint8_t d16_roll) {
 /**
  * @return `true` If immune to the given effect.
  * @param immune Immunity bitfield.
- * @param effec Status effect to check.
+ * @param effect Status effect to check.
  */
 inline bool is_debuff_immmune(uint8_t immune, StatusEffect effect) {
   return immune & FLAG(effect);
 }
 
 /**
- * Caluclates if a scared entity flees or not.
+ * Calculates if a scared entity flees or not.
  * @param tier Tier of the scared debuff.
  * @return `
  */

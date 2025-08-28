@@ -61,22 +61,22 @@
 #define TORCH_GAUGE_FLAME 24
 
 /**
- * Sprite id for the torch gauge body positon 1.
+ * Sprite id for the torch gauge body position 1.
  */
 #define TORCH_GAUGE_BODY_1 25
 
 /**
- * Sprite id for the torch gauge body positon 2.
+ * Sprite id for the torch gauge body position 2.
  */
 #define TORCH_GAUGE_BODY_2 26
 
 /**
- * Sprite id for the torch gauge body positon 3.
+ * Sprite id for the torch gauge body position 3.
  */
 #define TORCH_GAUGE_BODY_3 27
 
 /**
- * Sprite id for the torch gauge body positon 4.
+ * Sprite id for the torch gauge body position 4.
  */
 #define TORCH_GAUGE_BODY_4 28
 
@@ -285,7 +285,7 @@ typedef enum MapId {
  */
 typedef enum MapTileAttribute {
   /**
-   * Denotes an impassible wall.
+   * Denotes an impassable wall.
    */
   MAP_WALL,
   /**
@@ -365,7 +365,7 @@ typedef enum HeroState {
 } HeroState;
 
 /**
- * Main state enumaration for the world map controller.
+ * Main state enumeration for the world map controller.
  */
 typedef enum MapState {
   /**
@@ -386,7 +386,7 @@ typedef enum MapState {
    */
   MAP_STATE_FADE_OUT,
   /**
-   * Denotes that the graphics are fading back in after a progessive map/area
+   * Denotes that the graphics are fading back in after a progressive map/area
    * load.
    */
   MAP_STATE_FADE_IN,
@@ -967,7 +967,7 @@ typedef struct TileHashEntry {
    */
   int8_t x;
   /**
-   * Vertical positon for the associated tile in the map.
+   * Vertical position for the associated tile in the map.
    */
   int8_t y;
   /**
@@ -991,7 +991,7 @@ typedef struct TileOverrideHashEntry {
    */
   int8_t x;
   /**
-   * Vertical positon for the associated tile in the map.
+   * Vertical position for the associated tile in the map.
    */
   int8_t y;
   /**
@@ -1056,7 +1056,7 @@ extern MapState map_state;
 extern int8_t map_x;
 
 /**
- * Veritcal map coordinate.
+ * Vertical map coordinate.
  */
 extern int8_t map_y;
 
@@ -1180,7 +1180,7 @@ inline void set_map_position(int8_t x, int8_t y) {
 
 /**
  * Sets position of map based on hero position. Does not re-render the map. You
- * must call `refresh_map_screen()` or load the screen progresively.
+ * must call `refresh_map_screen()` or load the screen progressively.
  */
 inline void set_hero_position(int8_t x, int8_t y) {
   map_x = x - HERO_X_OFFSET;
@@ -1211,7 +1211,7 @@ void draw_world_map(void);
 
 /**
  * Initiates battle using the currently configured encounter. This should be
- * called by area handlers to start battle after initalizing the `encounter`
+ * called by area handlers to start battle after initializing the `encounter`
  * state used by the battle system.
  */
 inline void start_battle(void) {

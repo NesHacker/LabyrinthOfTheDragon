@@ -52,7 +52,7 @@ uint8_t move_step;
 int8_t vram_x;
 
 /**
- * Curren VRAM progressive load origin y-position.
+ * Current VRAM progressive load origin y-position.
  */
 int8_t vram_y;
 
@@ -67,7 +67,7 @@ uint8_t buffer_pos;
 uint8_t buffer_max;
 
 /**
- * VRAM start colum to use during a progressive load.
+ * VRAM start column to use during a progressive load.
  */
 int8_t vram_col;
 
@@ -124,7 +124,7 @@ Timer flame_timer;
 uint8_t flame_frame;
 
 /**
- * Timer used to slowly reduce the amount of torch guage remaining.
+ * Timer used to slowly reduce the amount of torch gauge remaining.
  */
 Timer torch_timer;
 
@@ -526,8 +526,8 @@ static TileOverrideHashEntry *find_override_entry(
  *       and palettes. Turns out hashing (0,7,29) OR (0,9,26) OR (0,9,29) all
  *       hash to 58.
  *
- *       *SOMEHOW* the collsion is not bucketing correctly and it's causing an
- *       error where the tile for the wrong position gets overriden?
+ *       *SOMEHOW* the collision is not bucketing correctly and it's causing an
+ *       error where the tile for the wrong position gets overridden?
  *
  *       I am "fixing" this due to lack of time by shifting the tiles in level
  *       7's main floor so the collisions no longer take place. *sigh*

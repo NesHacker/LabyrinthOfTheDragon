@@ -122,7 +122,7 @@ typedef struct Monster {
    */
   uint8_t matk_base;
   /**
-   * Current magical attack. Calculed via status effects, etc.
+   * Current magical attack. Calculated via status effects, etc.
    */
   uint8_t matk;
   /**

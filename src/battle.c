@@ -86,7 +86,7 @@ static bool is_screen_shaking = false;
 
 /**
  * Finds the monster currently selected by the screen cursor.
- * @return Monster intance for the selected monster.
+ * @return Monster instance for the selected monster.
  */
 static Monster *get_monster_at_cursor(void) {
   uint8_t monster_idx = 0;
@@ -233,7 +233,7 @@ static void toggle_hp_bar_palette(MonsterPosition pos) {
 /**
  * Draws an HP bar for the monster at a given position.
  * @param pos Position of the monster on the battle screen.
- * @param hp Curent HP for the monster.
+ * @param hp Current HP for the monster.
  * @param max Max HP for the monster.
  */
 static void draw_hp_bar(MonsterPosition pos, uint16_t hp, uint16_t max) {
@@ -809,7 +809,7 @@ static void redraw_submenu_text(void) {
 }
 
 /**
- * Initalizes a submenu for the given entry lines and number of entries.
+ * Initializes a submenu for the given entry lines and number of entries.
  * @param lines Line buffers to draw.
  * @param entries Total number of entries for the battle_menu.
  */

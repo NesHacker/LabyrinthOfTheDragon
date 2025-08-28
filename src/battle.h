@@ -195,7 +195,7 @@ typedef enum BattleState {
    */
   BATTLE_NEXT_TURN,
   /**
-   * Enitity status effects are updated, effects applied, and messages provided
+   * Entity status effects are updated, effects applied, and messages provided
    * for specific actions (e.g. effect falls off, regen health, etc.)
    */
   BATTLE_UPDATE_STATUS_EFFECTS,
@@ -242,7 +242,7 @@ typedef enum BattleState {
    */
   BATTLE_UI_UPDATE,
   /**
-   * Battle is over and successful, calulates & displays rewards, etc.
+   * Battle is over and successful, calculates & displays rewards, etc.
    */
   BATTLE_SUCCESS,
   /**

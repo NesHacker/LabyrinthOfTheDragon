@@ -229,7 +229,7 @@ typedef struct Player {
    */
   FlameColor torch_color;
   /**
-   * Number of magic keys the player currently posesses.
+   * Number of magic keys the player currently possesses.
    */
   uint8_t magic_keys;
   /**

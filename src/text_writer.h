@@ -145,7 +145,7 @@ typedef struct TextWriter {
    */
   void (*print)(const char *string);
   /**
-   * Called to proceeed to the next page. Calling this outside of a page wait
+   * Called to proceed to the next page. Calling this outside of a page wait
    * will clear the screen and continue printing characters.
    */
   void (*next_page)(void);
