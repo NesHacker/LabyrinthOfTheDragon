@@ -322,7 +322,7 @@ static const EncounterTable encounters_low[] = {
 // Max Level: 23
 static const EncounterTable encounters_high[] = {
   {
-    ODDS_20P, MONSTER_LAYOUT_2,
+    ODDS_20P, MONSTER_LAYOUT_1,
     MONSTER_ZOMBIE, 21, A_TIER,
   },
   {
